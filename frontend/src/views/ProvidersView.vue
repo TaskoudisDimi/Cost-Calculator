@@ -147,8 +147,8 @@ async function deleteTemplate(id: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-900">Πάροχοί μου</h2>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900">Πάροχοί μου</h2>
       <div class="flex gap-2">
         <button
           @click="openTemplateModal"
@@ -168,7 +168,7 @@ async function deleteTemplate(id: string) {
     <!-- Active user providers -->
     <div v-if="store.userProviders.length > 0" class="mb-8">
       <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Ενεργοί</h3>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
           v-for="up in store.userProviders"
           :key="up.id"
@@ -203,7 +203,7 @@ async function deleteTemplate(id: string) {
         <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           {{ categoryLabel(cat) }}
         </h3>
-        <div class="grid grid-cols-4 gap-3">
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
           <!-- Seeded providers -->
           <div
             v-for="p in providersByCategory(cat)"
@@ -253,7 +253,7 @@ async function deleteTemplate(id: string) {
     </div>
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" @click.self="closeModal">
+    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="closeModal">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
 
         <!-- Mode toggle -->

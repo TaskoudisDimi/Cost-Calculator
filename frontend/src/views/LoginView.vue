@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { sendPasswordResetEmail } from 'firebase/auth'
+import { auth as firebaseAuth } from '@/firebase'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -10,6 +12,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+
+const showReset = ref(false)
+const resetEmail = ref('')
+const resetLoading = ref(false)
+const resetError = ref('')
+const resetSent = ref(false)
 
 async function submit() {
   error.value = ''
@@ -21,6 +29,27 @@ async function submit() {
     error.value = 'Λάθος email ή κωδικός.'
   } finally {
     loading.value = false
+  }
+}
+
+function openReset() {
+  resetEmail.value = email.value
+  resetError.value = ''
+  resetSent.value = false
+  showReset.value = true
+}
+
+async function sendReset() {
+  if (!resetEmail.value) return
+  resetLoading.value = true
+  resetError.value = ''
+  try {
+    await sendPasswordResetEmail(firebaseAuth, resetEmail.value)
+    resetSent.value = true
+  } catch {
+    resetError.value = 'Δεν βρέθηκε λογαριασμός με αυτό το email.'
+  } finally {
+    resetLoading.value = false
   }
 }
 </script>
@@ -49,7 +78,16 @@ async function submit() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Κωδικός</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-sm font-medium text-gray-700">Κωδικός</label>
+              <button
+                type="button"
+                @click="openReset"
+                class="text-xs text-blue-600 hover:underline"
+              >
+                Ξέχασα τον κωδικό μου
+              </button>
+            </div>
             <input
               v-model="password"
               type="password"
@@ -74,6 +112,59 @@ async function submit() {
           Δεν έχεις λογαριασμό;
           <RouterLink to="/register" class="text-blue-600 hover:underline font-medium">Εγγραφή</RouterLink>
         </p>
+      </div>
+    </div>
+
+    <!-- Password reset modal -->
+    <div v-if="showReset" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Επαναφορά κωδικού</h3>
+
+        <div v-if="resetSent" class="text-center py-4">
+          <div class="text-4xl mb-3">📧</div>
+          <p class="text-sm text-gray-700 font-medium">Στάλθηκε email επαναφοράς!</p>
+          <p class="text-sm text-gray-500 mt-1">Ελέγξτε το inbox σας (και το spam).</p>
+          <button
+            @click="showReset = false"
+            class="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+          >
+            Κλείσιμο
+          </button>
+        </div>
+
+        <template v-else>
+          <p class="text-sm text-gray-500 mb-4">Δώσε το email σου και θα σου στείλουμε σύνδεσμο επαναφοράς.</p>
+
+          <div class="space-y-3">
+            <input
+              v-model="resetEmail"
+              type="email"
+              required
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="you@example.com"
+            />
+
+            <p v-if="resetError" class="text-red-500 text-xs">{{ resetError }}</p>
+
+            <div class="flex gap-3">
+              <button
+                type="button"
+                @click="showReset = false"
+                class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Ακύρωση
+              </button>
+              <button
+                type="button"
+                :disabled="resetLoading || !resetEmail"
+                @click="sendReset"
+                class="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium transition-colors"
+              >
+                {{ resetLoading ? 'Αποστολή...' : 'Αποστολή' }}
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>

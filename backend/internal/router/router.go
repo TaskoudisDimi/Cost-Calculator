@@ -28,10 +28,9 @@ func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gi
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     allowedOrigins(),
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization"},
 	}))
 
 	providersH := handlers.NewProvidersHandler(fs)

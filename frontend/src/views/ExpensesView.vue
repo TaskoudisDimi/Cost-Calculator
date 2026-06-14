@@ -71,14 +71,14 @@ async function remove(id: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Αγορές</h2>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900">Αγορές</h2>
         <p class="text-sm text-gray-400 mt-0.5 capitalize">
-          {{ monthLabel(month) }} · Προγραμματισμένες: <span class="font-semibold text-amber-600">{{ formatAmount(totalPlanned) }}</span>
+          {{ monthLabel(month) }} · <span class="font-semibold text-amber-600">{{ formatAmount(totalPlanned) }}</span>
         </p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <input
           v-model="month"
           type="month"
@@ -87,9 +87,9 @@ async function remove(id: string) {
         />
         <button
           @click="showModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
         >
-          + Νέα αγορά
+          + Νέα
         </button>
       </div>
     </div>
@@ -157,7 +157,7 @@ async function remove(id: string) {
     </div>
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-5">Νέα αγορά</h3>
 

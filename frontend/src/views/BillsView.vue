@@ -150,13 +150,13 @@ async function onFileSelected(event: Event) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-900">Λογαριασμοί</h2>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900">Λογαριασμοί</h2>
       <button
         @click="openCreate"
-        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors"
       >
-        + Νέος λογαριασμός
+        + Νέος
       </button>
     </div>
 
@@ -238,7 +238,8 @@ async function onFileSelected(event: Event) {
           <p class="text-sm font-semibold text-gray-900">
             {{ bill.user_provider.nickname || bill.user_provider.provider.name }}
           </p>
-          <p class="text-xs text-gray-400">Λήξη: {{ formatDate(bill.due_date) }}</p>
+          <p class="text-xs text-gray-400 hidden sm:block">Λήξη: {{ formatDate(bill.due_date) }}</p>
+          <p class="text-xs text-gray-400 sm:hidden">{{ formatDate(bill.due_date) }}</p>
         </div>
 
         <span class="px-2 py-1 rounded-full text-xs font-medium shrink-0" :class="statusClass(bill.status)">
@@ -251,7 +252,7 @@ async function onFileSelected(event: Event) {
           <button
             v-if="bill.status !== 'paid'"
             @click="markPaid(bill.id)"
-            class="text-xs bg-green-50 hover:bg-green-100 text-green-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+            class="text-xs bg-green-50 hover:bg-green-100 text-green-700 font-medium px-2 py-1.5 rounded-lg transition-colors hidden sm:block"
           >
             Πληρώθηκε
           </button>
@@ -290,7 +291,7 @@ async function onFileSelected(event: Event) {
     />
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+    <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-lg font-semibold text-gray-900">

@@ -15,5 +15,11 @@ frontend/node_modules/
 backend/data/
 backend/bin/
 
+# Capacitor build artifacts (keep ios/ and android/ in git, ignore build output)
+frontend/ios/App/App/public/
+frontend/android/app/src/main/assets/public/
+frontend/android/.gradle/
+frontend/android/app/build/
+
 # OS
 .DS_Store

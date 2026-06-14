@@ -73,9 +73,10 @@ async function onMonthChange() {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-5 gap-3">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h2>
         <p class="text-sm text-gray-400 capitalize mt-0.5">{{ monthLabel(month) }}</p>
       </div>
       <input
@@ -86,27 +87,27 @@ async function onMonthChange() {
       />
     </div>
 
-    <div v-if="d" class="space-y-5">
+    <div v-if="d" class="space-y-4">
 
       <!-- Budget summary -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Μηνιαίος προϋπολογισμός</h3>
-        <div class="grid grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-5">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Μηνιαίος προϋπολογισμός</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="text-center">
             <p class="text-xs text-gray-400 mb-1">Έσοδα</p>
-            <p class="text-xl font-bold text-green-600">{{ formatAmount(d.total_income) }}</p>
+            <p class="text-lg md:text-xl font-bold text-green-600">{{ formatAmount(d.total_income) }}</p>
           </div>
           <div class="text-center">
             <p class="text-xs text-gray-400 mb-1">Λογαριασμοί</p>
-            <p class="text-xl font-bold text-gray-800">−{{ formatAmount(d.amount_bills) }}</p>
+            <p class="text-lg md:text-xl font-bold text-gray-800">−{{ formatAmount(d.amount_bills) }}</p>
           </div>
           <div class="text-center">
             <p class="text-xs text-gray-400 mb-1">Αγορές</p>
-            <p class="text-xl font-bold text-amber-600">−{{ formatAmount(d.amount_expenses_planned) }}</p>
+            <p class="text-lg md:text-xl font-bold text-amber-600">−{{ formatAmount(d.amount_expenses_planned) }}</p>
           </div>
-          <div class="text-center border-l border-gray-100 pl-4">
+          <div class="text-center md:border-l md:border-gray-100 md:pl-4 pt-2 md:pt-0 border-t border-gray-100 col-span-2 md:col-span-1">
             <p class="text-xs text-gray-400 mb-1">Διαθέσιμο</p>
-            <p class="text-xl font-bold" :class="d.remaining >= 0 ? 'text-blue-600' : 'text-red-600'">
+            <p class="text-xl md:text-xl font-bold" :class="d.remaining >= 0 ? 'text-blue-600' : 'text-red-600'">
               {{ formatAmount(d.remaining) }}
             </p>
           </div>
@@ -115,14 +116,10 @@ async function onMonthChange() {
         <!-- Progress bar -->
         <div v-if="d.total_income > 0" class="mt-4">
           <div class="h-2 bg-gray-100 rounded-full overflow-hidden flex">
-            <div
-              class="h-full bg-red-400 transition-all"
-              :style="{ width: Math.min((d.amount_bills / d.total_income) * 100, 100) + '%' }"
-            />
-            <div
-              class="h-full bg-amber-400 transition-all"
-              :style="{ width: Math.min((d.amount_expenses_planned / d.total_income) * 100, 100) + '%' }"
-            />
+            <div class="h-full bg-red-400 transition-all"
+              :style="{ width: Math.min((d.amount_bills / d.total_income) * 100, 100) + '%' }" />
+            <div class="h-full bg-amber-400 transition-all"
+              :style="{ width: Math.min((d.amount_expenses_planned / d.total_income) * 100, 100) + '%' }" />
           </div>
           <div class="flex gap-4 mt-1.5 text-xs text-gray-400">
             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>Λογαριασμοί</span>
@@ -132,9 +129,9 @@ async function onMonthChange() {
       </div>
 
       <!-- Income section -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-5">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Έσοδα μήνα</h3>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Έσοδα μήνα</h3>
           <div class="flex items-center gap-3">
             <button
               v-if="selectedIncomes.size > 0"
@@ -143,10 +140,7 @@ async function onMonthChange() {
             >
               Διαγραφή ({{ selectedIncomes.size }})
             </button>
-            <button
-              @click="showIncomeModal = true"
-              class="text-xs text-blue-600 hover:text-blue-700 font-medium"
-            >
+            <button @click="showIncomeModal = true" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
               + Προσθήκη
             </button>
           </div>
@@ -155,29 +149,21 @@ async function onMonthChange() {
         <div v-if="budgetStore.incomes.length === 0" class="text-sm text-gray-400 py-2">
           Δεν έχεις προσθέσει έσοδα για αυτόν τον μήνα.
         </div>
-
         <div v-else class="space-y-1">
           <div
             v-for="inc in budgetStore.incomes"
             :key="inc.id"
-            class="flex items-center gap-3 py-1.5 px-2 rounded-lg transition-colors cursor-pointer"
+            class="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors cursor-pointer"
             :class="selectedIncomes.has(inc.id) ? 'bg-blue-50' : 'hover:bg-gray-50'"
             @click="toggleIncomeSelect(inc.id)"
           >
-            <input
-              type="checkbox"
-              :checked="selectedIncomes.has(inc.id)"
-              @click.stop
-              @change="toggleIncomeSelect(inc.id)"
-              class="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer shrink-0"
-            />
-            <span class="text-sm text-gray-700 flex-1">{{ inc.description }}</span>
-            <div class="flex items-center gap-3">
+            <input type="checkbox" :checked="selectedIncomes.has(inc.id)"
+              @click.stop @change="toggleIncomeSelect(inc.id)"
+              class="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer shrink-0" />
+            <span class="text-sm text-gray-700 flex-1 truncate">{{ inc.description }}</span>
+            <div class="flex items-center gap-3 shrink-0">
               <span class="text-sm font-semibold text-green-600">+{{ formatAmount(inc.amount) }}</span>
-              <button
-                @click.stop="removeIncome(inc.id)"
-                class="text-gray-300 hover:text-red-400 text-sm transition-colors"
-              >✕</button>
+              <button @click.stop="removeIncome(inc.id)" class="text-gray-300 hover:text-red-400 text-sm transition-colors">✕</button>
             </div>
           </div>
           <div class="flex justify-between pt-2 border-t border-gray-100 mt-1">
@@ -187,13 +173,13 @@ async function onMonthChange() {
         </div>
       </div>
 
-      <!-- Bill stats + planned expenses -->
-      <div class="grid grid-cols-3 gap-4">
+      <!-- Bill stats + planned expenses (stack on mobile, 3-col on desktop) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         <!-- Pending bills -->
         <div class="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
           <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Εκκρεμείς λογαριασμοί</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Εκκρεμείς</p>
             <span class="text-xs font-bold text-blue-600">{{ formatAmount(d.amount_bills - d.amount_overdue) }}</span>
           </div>
           <p v-if="pendingBills.length === 0" class="text-sm text-gray-400">Κανένας εκκρεμής</p>
@@ -259,34 +245,36 @@ async function onMonthChange() {
       </div>
 
       <!-- Upcoming bills -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Επόμενοι λογαριασμοί</h3>
+      <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-5">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Επόμενοι λογαριασμοί</h3>
         <div v-if="d.upcoming_bills.length === 0" class="text-center py-6 text-gray-400 text-sm">
           Δεν υπάρχουν εκκρεμείς λογαριασμοί
         </div>
         <div v-else class="space-y-1">
           <div v-for="bill in d.upcoming_bills" :key="bill.id"
-            class="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+            class="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0 gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
                 :style="{ backgroundColor: bill.user_provider.provider.color }">
                 {{ bill.user_provider.provider.name.charAt(0) }}
               </div>
-              <div>
-                <p class="text-sm font-medium text-gray-900">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">
                   {{ bill.user_provider.nickname || bill.user_provider.provider.name }}
                 </p>
-                <p class="text-xs text-gray-400">{{ categoryLabel(bill.user_provider.provider.category) }}</p>
+                <p class="text-xs text-gray-400 hidden sm:block">{{ categoryLabel(bill.user_provider.provider.category) }}</p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <p class="text-xs" :class="bill.status === 'overdue' ? 'text-red-500' : 'text-gray-400'">
+            <div class="flex items-center gap-2 shrink-0">
+              <p class="text-xs hidden sm:block" :class="bill.status === 'overdue' ? 'text-red-500' : 'text-gray-400'">
                 {{ formatDate(bill.due_date) }}
               </p>
               <p class="text-sm font-semibold text-gray-900">{{ formatAmount(bill.amount) }}</p>
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="statusClass(bill.status)">
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium hidden sm:inline" :class="statusClass(bill.status)">
                 {{ statusLabel(bill.status) }}
               </span>
+              <span class="w-2 h-2 rounded-full sm:hidden shrink-0"
+                :class="bill.status === 'overdue' ? 'bg-red-400' : 'bg-blue-400'" />
             </div>
           </div>
         </div>
@@ -296,7 +284,7 @@ async function onMonthChange() {
     <div v-else class="flex items-center justify-center h-64 text-gray-400">Φόρτωση...</div>
 
     <!-- Income modal -->
-    <div v-if="showIncomeModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+    <div v-if="showIncomeModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-5">Προσθήκη εσόδου</h3>
         <form @submit.prevent="addIncome" class="space-y-4">
