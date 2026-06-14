@@ -65,6 +65,9 @@ if [ "$MODE" = "cloudrun" ]; then
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA" \
     --role="roles/storage.objectAdmin" --quiet
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA" \
+    --role="roles/secretmanager.secretAccessor" --quiet
   ok "Permissions granted to $SA"
 
   step "Storing service account key in Secret Manager"
