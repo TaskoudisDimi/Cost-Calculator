@@ -1,7 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { collection, query, where, orderBy, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { db, auth } from '@/firebase'
 import api from '@/api/client'
 import type { Bill, UserProvider, Provider, DashboardSummary, UserProviderTemplate, ScanResult } from '@/types'
+
+function tsToISO(v: any): string {
+  if (!v) return ''
+  return typeof v.toDate === 'function' ? v.toDate().toISOString() : String(v)
+}
+function tsToISOOrNull(v: any): string | null {
+  if (!v) return null
+  return typeof v.toDate === 'function' ? v.toDate().toISOString() : String(v)
+}
 
 export const useBillsStore = defineStore('bills', () => {
   const bills = ref<Bill[]>([])
@@ -123,11 +134,56 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
+  // ── Real-time sync via Firestore onSnapshot ─────────────────────────────────
+  let billsUnsub: Unsubscribe | null = null
+  let providersUnsub: Unsubscribe | null = null
+
+  function startRealtimeSync() {
+    const uid = auth.currentUser?.uid
+    if (!uid || billsUnsub) return
+
+    billsUnsub = onSnapshot(
+      query(collection(db, 'bills'), where('user_id', '==', uid), orderBy('due_date', 'desc')),
+      snap => {
+        bills.value = snap.docs.map(d => {
+          const data = d.data()
+          return {
+            id: d.id,
+            user_provider_id: data.user_provider_id ?? '',
+            user_provider: data.user_provider ?? {},
+            amount: data.amount ?? 0,
+            due_date: tsToISO(data.due_date),
+            issued_date: tsToISOOrNull(data.issued_date),
+            status: data.status ?? 'pending',
+            paid_at: tsToISOOrNull(data.paid_at),
+            notes: data.notes ?? '',
+            created_at: tsToISO(data.created_at),
+            updated_at: tsToISO(data.updated_at),
+          } as Bill
+        })
+      },
+      err => console.error('[bills] sync error:', err),
+    )
+
+    providersUnsub = onSnapshot(
+      query(collection(db, 'userProviders'), where('user_id', '==', uid)),
+      snap => {
+        userProviders.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as UserProvider))
+      },
+      err => console.error('[userProviders] sync error:', err),
+    )
+  }
+
+  function stopRealtimeSync() {
+    billsUnsub?.(); billsUnsub = null
+    providersUnsub?.(); providersUnsub = null
+  }
+
   return {
     bills, userProviders, providers, providerTemplates, dashboard, loading,
     fetchDashboard, fetchBills, createBill, updateBill, markPaid, deleteBill, bulkDeleteBills,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
-    scanBill,
+    scanBill, startRealtimeSync, stopRealtimeSync,
   }
 })

@@ -101,6 +101,18 @@ export interface ScanResult {
   notes: string | null
 }
 
+export interface UserCredential {
+  id: string
+  user_id: string
+  label: string
+  username: string
+  password: string
+  url: string
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
 export interface AuthResponse {
   token: string
   user: User
