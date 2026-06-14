@@ -56,6 +56,17 @@ if [ "$MODE" = "cloudrun" ]; then
     --project "$PROJECT_ID" --quiet
   ok "APIs enabled"
 
+  step "Granting Cloud Build permissions to default service account"
+  PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
+  SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA" \
+    --role="roles/cloudbuild.builds.builder" --quiet
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA" \
+    --role="roles/storage.objectAdmin" --quiet
+  ok "Permissions granted to $SA"
+
   step "Storing service account key in Secret Manager"
   if gcloud secrets describe firebase-service-account --project "$PROJECT_ID" &>/dev/null; then
     warn "Secret exists — updating version..."
