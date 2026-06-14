@@ -1,0 +1,19 @@
+# Firebase credentials - NEVER commit these
+backend/serviceAccountKey.json
+backend/*.json
+!backend/go.sum
+
+# Frontend env (contains Firebase config)
+frontend/.env.local
+frontend/.env.*.local
+
+# Build output
+frontend/dist/
+frontend/node_modules/
+
+# Go
+backend/data/
+backend/bin/
+
+# OS
+.DS_Store

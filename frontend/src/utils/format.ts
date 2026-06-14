@@ -1,0 +1,61 @@
+import type { BillStatus, ProviderCategory, ExpenseCategory, ExpenseStatus } from '@/types'
+
+export function formatAmount(amount: number): string {
+  return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' }).format(amount)
+}
+
+export function formatDate(date: string): string {
+  return new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(date))
+}
+
+export function statusLabel(status: BillStatus): string {
+  return { pending: 'Εκκρεμής', paid: 'Πληρωμένος', overdue: 'Ληξιπρόθεσμος' }[status]
+}
+
+export function statusClass(status: BillStatus): string {
+  return {
+    pending: 'bg-blue-100 text-blue-700',
+    paid: 'bg-green-100 text-green-700',
+    overdue: 'bg-red-100 text-red-700',
+  }[status]
+}
+
+export function categoryLabel(cat: string): string {
+  const labels: Record<string, string> = {
+    energy: 'Ρεύμα',
+    water: 'Νερό',
+    telecom: 'Τηλεπικοινωνίες',
+    streaming: 'Streaming',
+    subscription: 'Συνδρομές',
+    housing: 'Κατοικία',
+    finance: 'Οικονομικά',
+    car: 'Αυτοκίνητο',
+    other: 'Άλλο',
+  }
+  return labels[cat] ?? cat
+}
+
+export function expenseCategoryLabel(cat: ExpenseCategory): string {
+  return {
+    shopping: 'Ψώνια', food: 'Φαγητό', transport: 'Μεταφορά',
+    health: 'Υγεία', entertainment: 'Ψυχαγωγία', other: 'Άλλο',
+  }[cat]
+}
+
+export function expenseStatusLabel(s: ExpenseStatus): string {
+  return { planned: 'Προγραμματισμένο', bought: 'Αγοράστηκε' }[s]
+}
+
+export function expenseStatusClass(s: ExpenseStatus): string {
+  return { planned: 'bg-amber-100 text-amber-700', bought: 'bg-green-100 text-green-700' }[s]
+}
+
+export function currentMonth(): string {
+  return new Date().toISOString().slice(0, 7)
+}
+
+export function monthLabel(month: string): string {
+  const [year, m] = month.split('-')
+  return new Intl.DateTimeFormat('el-GR', { month: 'long', year: 'numeric' })
+    .format(new Date(Number(year), Number(m) - 1))
+}
