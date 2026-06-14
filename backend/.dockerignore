@@ -1,0 +1,5 @@
+serviceAccountKey.json
+*.json
+!go.sum
+data/
+bin/
