@@ -68,18 +68,18 @@ const navItems = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-900 flex">
 
     <!-- Desktop sidebar -->
     <aside
-      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-white border-r border-gray-200 transition-[width] duration-200 overflow-hidden"
+      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-gray-800 border-r border-gray-700 transition-[width] duration-200 overflow-hidden"
       :class="sidebarOpen ? 'w-56' : 'w-14'"
     >
       <!-- Header with toggle -->
-      <div class="flex items-center gap-2 px-3 py-4 border-b border-gray-200 min-h-[60px]">
+      <div class="flex items-center gap-2 px-3 py-4 border-b border-gray-700 min-h-[60px]">
         <button
           @click="toggleSidebar"
-          class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 shrink-0 transition-colors"
+          class="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 shrink-0 transition-colors"
           :title="sidebarOpen ? 'Σύμπτυξη' : 'Ανάπτυξη'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
@@ -87,7 +87,7 @@ const navItems = [
           </svg>
         </button>
         <div v-show="sidebarOpen" class="overflow-hidden whitespace-nowrap">
-          <h1 class="text-base font-bold text-gray-900">BillTracker</h1>
+          <h1 class="text-base font-bold text-gray-50">BillTracker</h1>
           <p class="text-xs text-gray-400 truncate max-w-[140px]">{{ auth.user?.email }}</p>
         </div>
       </div>
@@ -99,8 +99,8 @@ const navItems = [
           :to="{ name: item.name }"
           class="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors"
           :class="route.name === item.name
-            ? 'bg-blue-50 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'"
+            ? 'bg-blue-900/20 text-blue-400'
+            : 'text-gray-400 hover:bg-gray-700'"
           :title="!sidebarOpen ? item.label : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -110,10 +110,10 @@ const navItems = [
         </RouterLink>
       </nav>
 
-      <div class="px-2 py-4 border-t border-gray-200">
+      <div class="px-2 py-4 border-t border-gray-700">
         <button
           @click="logout"
-          class="flex items-center gap-3 px-2.5 py-2 w-full rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          class="flex items-center gap-3 px-2.5 py-2 w-full rounded-lg text-sm font-medium text-gray-400 hover:bg-red-900/20 hover:text-red-400 transition-colors"
           :title="!sidebarOpen ? 'Αποσύνδεση' : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 shrink-0">
@@ -125,9 +125,9 @@ const navItems = [
     </aside>
 
     <!-- Mobile top header -->
-    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-4 h-14">
-      <h1 class="text-base font-bold text-gray-900">BillTracker</h1>
-      <button @click="logout" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
+    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 h-14">
+      <h1 class="text-base font-bold text-gray-50">BillTracker</h1>
+      <button @click="logout" class="p-2 text-gray-400 hover:text-red-400 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/>
         </svg>
@@ -143,7 +143,7 @@ const navItems = [
     </main>
 
     <!-- Mobile bottom tab bar -->
-    <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-gray-200"
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-800 border-t border-gray-700"
       style="padding-bottom: env(safe-area-inset-bottom)">
       <div class="flex">
         <RouterLink
@@ -151,7 +151,7 @@ const navItems = [
           :key="item.name"
           :to="{ name: item.name }"
           class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors"
-          :class="route.name === item.name ? 'text-blue-600' : 'text-gray-400'"
+          :class="route.name === item.name ? 'text-blue-400' : 'text-gray-400'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             stroke-width="1.75" stroke="currentColor" class="w-5 h-5"

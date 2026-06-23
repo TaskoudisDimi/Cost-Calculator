@@ -14,9 +14,9 @@ export function statusLabel(status: BillStatus): string {
 
 export function statusClass(status: BillStatus): string {
   return {
-    pending: 'bg-blue-100 text-blue-700',
-    paid: 'bg-green-100 text-green-700',
-    overdue: 'bg-red-100 text-red-700',
+    pending: 'bg-blue-900/30 text-blue-400',
+    paid: 'bg-green-900/30 text-green-400',
+    overdue: 'bg-red-900/30 text-red-400',
   }[status]
 }
 
@@ -47,7 +47,7 @@ export function expenseStatusLabel(s: ExpenseStatus): string {
 }
 
 export function expenseStatusClass(s: ExpenseStatus): string {
-  return { planned: 'bg-amber-100 text-amber-700', bought: 'bg-green-100 text-green-700' }[s]
+  return { planned: 'bg-amber-900/30 text-amber-400', bought: 'bg-green-900/30 text-green-400' }[s]
 }
 
 export function currentMonth(): string {

@@ -28,16 +28,16 @@ const { visible, options, accept, cancel } = useConfirm()
           leave-to-class="opacity-0 scale-95"
           appear
         >
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <div class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <!-- Icon + Title -->
             <div class="flex items-start gap-4 mb-4">
               <div
                 class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                :class="options.variant === 'warning' ? 'bg-amber-100' : 'bg-red-100'"
+                :class="options.variant === 'warning' ? 'bg-amber-900/30' : 'bg-red-900/30'"
               >
                 <svg
                   v-if="options.variant !== 'warning'"
-                  class="w-5 h-5 text-red-500"
+                  class="w-5 h-5 text-red-400"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -45,7 +45,7 @@ const { visible, options, accept, cancel } = useConfirm()
                 </svg>
                 <svg
                   v-else
-                  class="w-5 h-5 text-amber-500"
+                  class="w-5 h-5 text-amber-400"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -53,10 +53,10 @@ const { visible, options, accept, cancel } = useConfirm()
                 </svg>
               </div>
               <div>
-                <h3 class="text-base font-semibold text-gray-900">
+                <h3 class="text-base font-semibold text-gray-50">
                   {{ options.title ?? (options.variant === 'warning' ? 'Προσοχή' : 'Διαγραφή') }}
                 </h3>
-                <p class="text-sm text-gray-500 mt-1">{{ options.message }}</p>
+                <p class="text-sm text-gray-400 mt-1">{{ options.message }}</p>
               </div>
             </div>
 
@@ -64,14 +64,14 @@ const { visible, options, accept, cancel } = useConfirm()
             <div class="flex gap-3 mt-6">
               <button
                 @click="cancel"
-                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-700/60 transition-colors"
               >
                 Ακύρωση
               </button>
               <button
                 @click="accept"
                 class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors"
-                :class="options.variant === 'warning' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-red-500 hover:bg-red-600'"
+                :class="options.variant === 'warning' ? 'bg-amber-900/200 hover:bg-amber-600' : 'bg-red-900/200 hover:bg-red-600'"
               >
                 {{ options.confirmLabel ?? 'Διαγραφή' }}
               </button>

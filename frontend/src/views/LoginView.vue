@@ -55,35 +55,35 @@ async function sendReset() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="min-h-screen bg-gray-900/50 flex items-center justify-center px-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">BillTracker</h1>
-        <p class="text-gray-500 mt-1">Διαχείριση λογαριασμών</p>
+        <h1 class="text-3xl font-bold text-gray-50">BillTracker</h1>
+        <p class="text-gray-400 mt-1">Διαχείριση λογαριασμών</p>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Σύνδεση</h2>
+      <div class="bg-gray-800 rounded-2xl shadow-sm border border-gray-700 p-8">
+        <h2 class="text-xl font-semibold text-gray-100 mb-6">Σύνδεση</h2>
 
         <form @submit.prevent="submit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
               v-model="email"
               type="email"
               required
-              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="block text-sm font-medium text-gray-700">Κωδικός</label>
+              <label class="block text-sm font-medium text-gray-300">Κωδικός</label>
               <button
                 type="button"
                 @click="openReset"
-                class="text-xs text-blue-600 hover:underline"
+                class="text-xs text-blue-400 hover:underline"
               >
                 Ξέχασα τον κωδικό μου
               </button>
@@ -92,12 +92,12 @@ async function sendReset() {
               v-model="password"
               type="password"
               required
-              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="••••••••"
             />
           </div>
 
-          <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+          <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
 
           <button
             type="submit"
@@ -108,22 +108,22 @@ async function sendReset() {
           </button>
         </form>
 
-        <p class="text-center text-sm text-gray-500 mt-6">
+        <p class="text-center text-sm text-gray-400 mt-6">
           Δεν έχεις λογαριασμό;
-          <RouterLink to="/register" class="text-blue-600 hover:underline font-medium">Εγγραφή</RouterLink>
+          <RouterLink to="/register" class="text-blue-400 hover:underline font-medium">Εγγραφή</RouterLink>
         </p>
       </div>
     </div>
 
     <!-- Password reset modal -->
     <div v-if="showReset" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">Επαναφορά κωδικού</h3>
+      <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-50 mb-1">Επαναφορά κωδικού</h3>
 
         <div v-if="resetSent" class="text-center py-4">
           <div class="text-4xl mb-3">📧</div>
-          <p class="text-sm text-gray-700 font-medium">Στάλθηκε email επαναφοράς!</p>
-          <p class="text-sm text-gray-500 mt-1">Ελέγξτε το inbox σας (και το spam).</p>
+          <p class="text-sm text-gray-300 font-medium">Στάλθηκε email επαναφοράς!</p>
+          <p class="text-sm text-gray-400 mt-1">Ελέγξτε το inbox σας (και το spam).</p>
           <button
             @click="showReset = false"
             class="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
@@ -133,24 +133,24 @@ async function sendReset() {
         </div>
 
         <template v-else>
-          <p class="text-sm text-gray-500 mb-4">Δώσε το email σου και θα σου στείλουμε σύνδεσμο επαναφοράς.</p>
+          <p class="text-sm text-gray-400 mb-4">Δώσε το email σου και θα σου στείλουμε σύνδεσμο επαναφοράς.</p>
 
           <div class="space-y-3">
             <input
               v-model="resetEmail"
               type="email"
               required
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="you@example.com"
             />
 
-            <p v-if="resetError" class="text-red-500 text-xs">{{ resetError }}</p>
+            <p v-if="resetError" class="text-red-400 text-xs">{{ resetError }}</p>
 
             <div class="flex gap-3">
               <button
                 type="button"
                 @click="showReset = false"
-                class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                class="flex-1 px-4 py-2.5 rounded-lg border border-gray-600 text-sm font-medium text-gray-300 hover:bg-gray-700/60 transition-colors"
               >
                 Ακύρωση
               </button>

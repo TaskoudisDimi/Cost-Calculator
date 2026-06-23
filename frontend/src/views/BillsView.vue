@@ -151,7 +151,7 @@ async function onFileSelected(event: Event) {
 <template>
   <div>
     <div class="flex items-center justify-between mb-5">
-      <h2 class="text-xl md:text-2xl font-bold text-gray-900">Λογαριασμοί</h2>
+      <h2 class="text-xl md:text-2xl font-bold text-gray-50">Λογαριασμοί</h2>
       <button
         @click="openCreate"
         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors"
@@ -167,7 +167,7 @@ async function onFileSelected(event: Event) {
         :key="f"
         @click="filterStatus = f; clearSelection()"
         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'"
+        :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
       >
         {{ f === 'all' ? 'Όλοι' : statusLabel(f) }}
       </button>
@@ -176,19 +176,19 @@ async function onFileSelected(event: Event) {
     <!-- Bulk action bar -->
     <div
       v-if="selected.size > 0"
-      class="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4"
+      class="flex items-center justify-between bg-red-900/20 border border-red-200 rounded-xl px-4 py-3 mb-4"
     >
-      <span class="text-sm font-medium text-red-700">{{ selected.size }} επιλεγμένοι</span>
+      <span class="text-sm font-medium text-red-400">{{ selected.size }} επιλεγμένοι</span>
       <div class="flex gap-2">
         <button
           @click="clearSelection"
-          class="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 bg-white"
+          class="text-sm text-gray-400 hover:text-gray-300 px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800"
         >
           Ακύρωση
         </button>
         <button
           @click="bulkDelete"
-          class="text-sm font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors"
+          class="text-sm font-medium text-white bg-red-900/200 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors"
         >
           Διαγραφή ({{ selected.size }})
         </button>
@@ -198,33 +198,33 @@ async function onFileSelected(event: Event) {
     <!-- Bills list -->
     <div v-if="store.loading" class="text-center py-16 text-gray-400">Φόρτωση...</div>
 
-    <div v-else-if="filteredBills.length === 0" class="text-center py-16 text-gray-400 bg-white rounded-xl border border-gray-200">
+    <div v-else-if="filteredBills.length === 0" class="text-center py-16 text-gray-400 bg-gray-800 rounded-xl border border-gray-700">
       Δεν βρέθηκαν λογαριασμοί
     </div>
 
-    <div v-else class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+    <div v-else class="bg-gray-800 rounded-xl border border-gray-700 divide-y divide-gray-700">
       <!-- Select all header -->
-      <div class="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-t-xl">
+      <div class="flex items-center gap-3 px-4 py-2 bg-gray-900/50 rounded-t-xl">
         <input
           type="checkbox"
           :checked="allSelected"
           @change="toggleSelectAll"
-          class="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+          class="w-4 h-4 rounded border-gray-600 accent-blue-600 cursor-pointer"
         />
-        <span class="text-xs text-gray-500">Επιλογή όλων</span>
+        <span class="text-xs text-gray-400">Επιλογή όλων</span>
       </div>
 
       <div
         v-for="bill in filteredBills"
         :key="bill.id"
-        class="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
-        :class="selected.has(bill.id) ? 'bg-blue-50' : ''"
+        class="flex items-center gap-4 p-4 hover:bg-gray-700/60 transition-colors"
+        :class="selected.has(bill.id) ? 'bg-blue-900/20' : ''"
       >
         <input
           type="checkbox"
           :checked="selected.has(bill.id)"
           @change="toggleSelect(bill.id)"
-          class="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer shrink-0"
+          class="w-4 h-4 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0"
         />
 
         <div
@@ -235,7 +235,7 @@ async function onFileSelected(event: Event) {
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-gray-900">
+          <p class="text-sm font-semibold text-gray-50">
             {{ bill.user_provider.nickname || bill.user_provider.provider.name }}
           </p>
           <p class="text-xs text-gray-400 hidden sm:block">Λήξη: {{ formatDate(bill.due_date) }}</p>
@@ -246,13 +246,13 @@ async function onFileSelected(event: Event) {
           {{ statusLabel(bill.status) }}
         </span>
 
-        <p class="text-base font-bold text-gray-900 w-24 text-right shrink-0">{{ formatAmount(bill.amount) }}</p>
+        <p class="text-base font-bold text-gray-50 w-24 text-right shrink-0">{{ formatAmount(bill.amount) }}</p>
 
         <div class="flex items-center gap-2 shrink-0">
           <button
             v-if="bill.status !== 'paid'"
             @click="markPaid(bill.id)"
-            class="text-xs bg-green-50 hover:bg-green-100 text-green-700 font-medium px-2 py-1.5 rounded-lg transition-colors hidden sm:block"
+            class="text-xs bg-green-900/20 hover:bg-green-900/20 text-green-400 font-medium px-2 py-1.5 rounded-lg transition-colors hidden sm:block"
           >
             Πληρώθηκε
           </button>
@@ -261,19 +261,19 @@ async function onFileSelected(event: Event) {
             :href="bill.user_provider.provider.payment_url"
             target="_blank"
             rel="noopener"
-            class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+            class="text-xs bg-gray-700 hover:bg-gray-200 text-gray-300 font-medium px-2.5 py-1.5 rounded-lg transition-colors"
           >
             Πληρωμή →
           </a>
           <button
             @click="openEdit(bill.id)"
-            class="text-xs text-gray-400 hover:text-gray-700 px-1.5 py-1.5 rounded-lg transition-colors"
+            class="text-xs text-gray-400 hover:text-gray-300 px-1.5 py-1.5 rounded-lg transition-colors"
           >
             ✎
           </button>
           <button
             @click="deleteBill(bill.id)"
-            class="text-xs text-gray-400 hover:text-red-500 px-1.5 py-1.5 rounded-lg transition-colors"
+            class="text-xs text-gray-400 hover:text-red-400 px-1.5 py-1.5 rounded-lg transition-colors"
           >
             ✕
           </button>
@@ -292,9 +292,9 @@ async function onFileSelected(event: Event) {
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
         <div class="flex items-center justify-between mb-5">
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-lg font-semibold text-gray-50">
             {{ editingBill ? 'Επεξεργασία' : 'Νέος λογαριασμός' }}
           </h3>
           <!-- Scan button (only for new bills) -->
@@ -303,7 +303,7 @@ async function onFileSelected(event: Event) {
             type="button"
             @click="triggerScan"
             :disabled="scanning"
-            class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors disabled:opacity-60"
+            class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-600 hover:bg-gray-700/60 text-gray-400 transition-colors disabled:opacity-60"
           >
             <span v-if="scanning" class="animate-spin">⏳</span>
             <span v-else>📷</span>
@@ -311,15 +311,15 @@ async function onFileSelected(event: Event) {
           </button>
         </div>
 
-        <p v-if="scanError" class="text-red-500 text-xs mb-3 bg-red-50 px-3 py-2 rounded-lg">{{ scanError }}</p>
+        <p v-if="scanError" class="text-red-400 text-xs mb-3 bg-red-900/20 px-3 py-2 rounded-lg">{{ scanError }}</p>
 
         <form @submit.prevent="submitForm" class="space-y-4">
           <div v-if="!editingBill">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Πάροχος</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Πάροχος</label>
             <select
               v-model="form.user_provider_id"
               required
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="" disabled>Επίλεξε πάροχο</option>
               <option v-for="up in store.userProviders" :key="up.id" :value="up.id">
@@ -329,44 +329,44 @@ async function onFileSelected(event: Event) {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Ποσό (€)</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Ποσό (€)</label>
             <input
               v-model="form.amount"
               type="number"
               step="0.01"
               min="0"
               required
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0.00"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Ημ. λήξης</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">Ημ. λήξης</label>
               <input
                 v-model="form.due_date"
                 type="date"
                 required
-                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Ημ. έκδοσης</label>
+              <label class="block text-sm font-medium text-gray-300 mb-1">Ημ. έκδοσης</label>
               <input
                 v-model="form.issued_date"
                 type="date"
-                class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Σημειώσεις</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Σημειώσεις</label>
             <input
               v-model="form.notes"
               type="text"
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Προαιρετικό"
             />
           </div>
@@ -375,7 +375,7 @@ async function onFileSelected(event: Event) {
             <button
               type="button"
               @click="showModal = false"
-              class="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              class="flex-1 px-4 py-2.5 rounded-lg border border-gray-600 text-sm font-medium text-gray-300 hover:bg-gray-700/60 transition-colors"
             >
               Ακύρωση
             </button>

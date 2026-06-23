@@ -27,52 +27,52 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="min-h-screen bg-gray-900/50 flex items-center justify-center px-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">BillTracker</h1>
-        <p class="text-gray-500 mt-1">Διαχείριση λογαριασμών</p>
+        <h1 class="text-3xl font-bold text-gray-50">BillTracker</h1>
+        <p class="text-gray-400 mt-1">Διαχείριση λογαριασμών</p>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Εγγραφή</h2>
+      <div class="bg-gray-800 rounded-2xl shadow-sm border border-gray-700 p-8">
+        <h2 class="text-xl font-semibold text-gray-100 mb-6">Εγγραφή</h2>
 
         <form @submit.prevent="submit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Όνομα</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Όνομα</label>
             <input
               v-model="name"
               type="text"
               required
-              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Γιώργης Παπαδόπουλος"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
               v-model="email"
               type="email"
               required
-              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Κωδικός</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Κωδικός</label>
             <input
               v-model="password"
               type="password"
               required
               minlength="8"
-              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Τουλάχιστον 8 χαρακτήρες"
             />
           </div>
 
-          <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+          <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
 
           <button
             type="submit"
@@ -83,9 +83,9 @@ async function submit() {
           </button>
         </form>
 
-        <p class="text-center text-sm text-gray-500 mt-6">
+        <p class="text-center text-sm text-gray-400 mt-6">
           Έχεις ήδη λογαριασμό;
-          <RouterLink to="/login" class="text-blue-600 hover:underline font-medium">Σύνδεση</RouterLink>
+          <RouterLink to="/login" class="text-blue-400 hover:underline font-medium">Σύνδεση</RouterLink>
         </p>
       </div>
     </div>
