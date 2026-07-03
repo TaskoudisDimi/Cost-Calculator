@@ -252,9 +252,9 @@ async function onFileSelected(event: Event) {
           <button
             v-if="bill.status !== 'paid'"
             @click="markPaid(bill.id)"
-            class="text-xs bg-green-900/20 hover:bg-green-900/20 text-green-400 font-medium px-2 py-1.5 rounded-lg transition-colors hidden sm:block"
+            class="text-xs bg-gray-700 hover:bg-green-900/30 text-gray-300 hover:text-green-400 font-medium px-2 py-1.5 rounded-lg border border-gray-600 hover:border-green-700 transition-colors hidden sm:block"
           >
-            Πληρώθηκε
+            ✓ Πλήρωσα
           </button>
           <a
             v-if="bill.user_provider.provider.payment_url"

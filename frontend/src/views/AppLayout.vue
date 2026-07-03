@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
+import CalculatorModal from '@/components/CalculatorModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -141,6 +142,9 @@ const navItems = [
     >
       <RouterView />
     </main>
+
+    <!-- Floating calculator -->
+    <CalculatorModal />
 
     <!-- Mobile bottom tab bar -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-800 border-t border-gray-700"

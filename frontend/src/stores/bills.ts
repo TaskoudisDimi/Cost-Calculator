@@ -1,18 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { collection, query, where, orderBy, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db, auth } from '@/firebase'
 import api from '@/api/client'
 import type { Bill, UserProvider, Provider, DashboardSummary, UserProviderTemplate, ScanResult } from '@/types'
 
-function tsToISO(v: any): string {
-  if (!v) return ''
-  return typeof v.toDate === 'function' ? v.toDate().toISOString() : String(v)
-}
-function tsToISOOrNull(v: any): string | null {
-  if (!v) return null
-  return typeof v.toDate === 'function' ? v.toDate().toISOString() : String(v)
-}
 
 export const useBillsStore = defineStore('bills', () => {
   const bills = ref<Bill[]>([])
@@ -142,33 +134,22 @@ export const useBillsStore = defineStore('bills', () => {
     const uid = auth.currentUser?.uid
     if (!uid || billsUnsub) return
 
+    let firstBills = true
     billsUnsub = onSnapshot(
-      query(collection(db, 'bills'), where('user_id', '==', uid), orderBy('due_date', 'desc')),
-      snap => {
-        bills.value = snap.docs.map(d => {
-          const data = d.data()
-          return {
-            id: d.id,
-            user_provider_id: data.user_provider_id ?? '',
-            user_provider: data.user_provider ?? {},
-            amount: data.amount ?? 0,
-            due_date: tsToISO(data.due_date),
-            issued_date: tsToISOOrNull(data.issued_date),
-            status: data.status ?? 'pending',
-            paid_at: tsToISOOrNull(data.paid_at),
-            notes: data.notes ?? '',
-            created_at: tsToISO(data.created_at),
-            updated_at: tsToISO(data.updated_at),
-          } as Bill
-        })
+      query(collection(db, 'bills'), where('user_id', '==', uid)),
+      () => {
+        if (firstBills) { firstBills = false; return }
+        fetchBills()
       },
       err => console.error('[bills] sync error:', err),
     )
 
+    let firstProviders = true
     providersUnsub = onSnapshot(
       query(collection(db, 'userProviders'), where('user_id', '==', uid)),
-      snap => {
-        userProviders.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as UserProvider))
+      () => {
+        if (firstProviders) { firstProviders = false; return }
+        fetchUserProviders()
       },
       err => console.error('[userProviders] sync error:', err),
     )
