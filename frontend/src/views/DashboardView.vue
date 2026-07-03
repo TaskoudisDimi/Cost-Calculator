@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
@@ -10,18 +11,18 @@ const { confirm } = useConfirm()
 const billsStore = useBillsStore()
 const budgetStore = useBudgetStore()
 
+const { dashboard } = storeToRefs(billsStore)
+const { incomes } = storeToRefs(budgetStore)
+
 const month = ref(currentMonth())
 const showIncomeModal = ref(false)
 const incomeForm = ref({ description: '', amount: '' })
 const selectedIncomes = ref<Set<string>>(new Set())
 
-const d = computed(() => billsStore.dashboard)
-const pendingBills = computed(() => d.value?.upcoming_bills.filter(b => b.status === 'pending') ?? [])
-const overdueBills = computed(() => d.value?.upcoming_bills.filter(b => b.status === 'overdue') ?? [])
-
-const totalIncome = computed(() =>
-  budgetStore.incomes.reduce((s, i) => s + i.amount, 0)
-)
+const d = computed(() => dashboard.value)
+const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
+const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
+const totalIncome = computed(() => (incomes.value ?? []).reduce((s, i) => s + i.amount, 0))
 
 onMounted(async () => {
   await Promise.all([
@@ -146,12 +147,12 @@ async function onMonthChange() {
           </div>
         </div>
 
-        <div v-if="budgetStore.incomes.length === 0" class="text-sm text-gray-400 py-2">
+        <div v-if="incomes.length === 0" class="text-sm text-gray-400 py-2">
           Δεν έχεις προσθέσει έσοδα για αυτόν τον μήνα.
         </div>
         <div v-else class="space-y-1">
           <div
-            v-for="inc in budgetStore.incomes"
+            v-for="inc in incomes"
             :key="inc.id"
             class="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors cursor-pointer"
             :class="selectedIncomes.has(inc.id) ? 'bg-blue-900/20' : 'hover:bg-gray-700/60'"
@@ -187,10 +188,10 @@ async function onMonthChange() {
             <li v-for="b in pendingBills" :key="b.id" class="flex items-center justify-between">
               <div class="flex items-center gap-2 min-w-0">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  :style="{ backgroundColor: b.user_provider.provider.color }">
-                  {{ b.user_provider.provider.name.charAt(0) }}
+                  :style="{ backgroundColor: b.user_provider?.provider?.color }">
+                  {{ b.user_provider?.provider?.name.charAt(0) }}
                 </div>
-                <span class="text-sm text-gray-300 truncate">{{ b.user_provider.nickname || b.user_provider.provider.name }}</span>
+                <span class="text-sm text-gray-300 truncate">{{ b.user_provider?.nickname || b.user_provider?.provider?.name }}</span>
               </div>
               <div class="text-right shrink-0 ml-2">
                 <p class="text-sm font-semibold text-gray-50">{{ formatAmount(b.amount) }}</p>
@@ -211,10 +212,10 @@ async function onMonthChange() {
             <li v-for="b in overdueBills" :key="b.id" class="flex items-center justify-between">
               <div class="flex items-center gap-2 min-w-0">
                 <div class="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  :style="{ backgroundColor: b.user_provider.provider.color }">
-                  {{ b.user_provider.provider.name.charAt(0) }}
+                  :style="{ backgroundColor: b.user_provider?.provider?.color }">
+                  {{ b.user_provider?.provider?.name.charAt(0) }}
                 </div>
-                <span class="text-sm text-gray-300 truncate">{{ b.user_provider.nickname || b.user_provider.provider.name }}</span>
+                <span class="text-sm text-gray-300 truncate">{{ b.user_provider?.nickname || b.user_provider?.provider?.name }}</span>
               </div>
               <div class="text-right shrink-0 ml-2">
                 <p class="text-sm font-semibold text-red-600">{{ formatAmount(b.amount) }}</p>
@@ -255,14 +256,14 @@ async function onMonthChange() {
             class="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0 gap-2">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
-                :style="{ backgroundColor: bill.user_provider.provider.color }">
-                {{ bill.user_provider.provider.name.charAt(0) }}
+                :style="{ backgroundColor: bill.user_provider?.provider?.color }">
+                {{ bill.user_provider?.provider?.name.charAt(0) }}
               </div>
               <div class="min-w-0">
                 <p class="text-sm font-medium text-gray-50 truncate">
-                  {{ bill.user_provider.nickname || bill.user_provider.provider.name }}
+                  {{ bill.user_provider?.nickname || bill.user_provider?.provider?.name }}
                 </p>
-                <p class="text-xs text-gray-400 hidden sm:block">{{ categoryLabel(bill.user_provider.provider.category) }}</p>
+                <p class="text-xs text-gray-400 hidden sm:block">{{ categoryLabel(bill.user_provider?.provider?.category) }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">

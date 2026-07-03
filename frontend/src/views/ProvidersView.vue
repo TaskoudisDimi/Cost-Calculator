@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { categoryLabel } from '@/utils/format'
@@ -7,6 +8,7 @@ import { categoryLabel } from '@/utils/format'
 const { confirm } = useConfirm()
 
 const store = useBillsStore()
+const { providers, userProviders, providerTemplates } = storeToRefs(store)
 const showModal = ref(false)
 const modalMode = ref<'list' | 'template'>('list')
 const error = ref('')
@@ -43,7 +45,7 @@ const builtinCategories = [
 
 // All categories (seeded order + any extra from user templates)
 const allCategories = computed(() => {
-  const templateCats = new Set(store.providerTemplates.map(t => t.category))
+  const templateCats = new Set((providerTemplates.value ?? []).map(t => t.category))
   const extra = [...templateCats].filter(c => !seededCategoryOrder.includes(c))
   return [...seededCategoryOrder, ...extra]
 })
@@ -53,15 +55,15 @@ onMounted(async () => {
 })
 
 function providersByCategory(cat: string) {
-  return store.providers.filter(p => p.category === cat)
+  return (providers.value ?? []).filter(p => p.category === cat)
 }
 
 function templatesByCategory(cat: string) {
-  return store.providerTemplates.filter(t => t.category === cat)
+  return (providerTemplates.value ?? []).filter(t => t.category === cat)
 }
 
 function isAdded(providerId: string) {
-  return store.userProviders.some(up => up.provider_id === providerId)
+  return (userProviders.value ?? []).some(up => up.provider_id === providerId)
 }
 
 function hasAnythingInCategory(cat: string) {
@@ -166,11 +168,11 @@ async function deleteTemplate(id: string) {
     </div>
 
     <!-- Active user providers -->
-    <div v-if="store.userProviders.length > 0" class="mb-8">
+    <div v-if="userProviders.length > 0" class="mb-8">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Ενεργοί</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
-          v-for="up in store.userProviders"
+          v-for="up in userProviders"
           :key="up.id"
           class="bg-gray-800 rounded-xl border border-gray-700 p-4 flex items-center justify-between"
         >

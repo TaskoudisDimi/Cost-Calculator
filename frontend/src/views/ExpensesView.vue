@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatAmount, formatDate, expenseCategoryLabel, expenseStatusLabel, expenseStatusClass, currentMonth, monthLabel } from '@/utils/format'
@@ -8,6 +9,7 @@ import type { ExpenseCategory } from '@/types'
 const { confirm } = useConfirm()
 
 const store = useBudgetStore()
+const { expenses, loading } = storeToRefs(store)
 const showModal = ref(false)
 const filterStatus = ref<'all' | 'planned' | 'bought'>('all')
 const month = ref(currentMonth())
@@ -31,12 +33,13 @@ const categories: { value: ExpenseCategory; label: string }[] = [
 ]
 
 const filtered = computed(() => {
-  if (filterStatus.value === 'all') return store.expenses
-  return store.expenses.filter(e => e.status === filterStatus.value)
+  const all = Array.isArray(expenses.value) ? expenses.value : []
+  if (filterStatus.value === 'all') return all
+  return all.filter(e => e.status === filterStatus.value)
 })
 
 const totalPlanned = computed(() =>
-  store.expenses.filter(e => e.status === 'planned').reduce((s, e) => s + e.amount, 0)
+  (Array.isArray(expenses.value) ? expenses.value : []).filter(e => e.status === 'planned').reduce((s, e) => s + e.amount, 0)
 )
 
 onMounted(() => store.fetchExpenses(month.value))
@@ -107,7 +110,7 @@ async function remove(id: string) {
       </button>
     </div>
 
-    <div v-if="store.loading" class="text-center py-16 text-gray-400">Φόρτωση...</div>
+    <div v-if="loading" class="text-center py-16 text-gray-400">Φόρτωση...</div>
 
     <div v-else-if="filtered.length === 0" class="text-center py-16 text-gray-400 bg-gray-800 rounded-xl border border-gray-700">
       Δεν βρέθηκαν αγορές
