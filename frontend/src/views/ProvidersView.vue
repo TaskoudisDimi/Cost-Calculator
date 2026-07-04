@@ -44,8 +44,12 @@ const builtinCategories = [
 ]
 
 // All categories (seeded order + any extra from user templates)
+const safeProviders = computed(() => Array.isArray(providers.value) ? providers.value : [])
+const safeUserProviders = computed(() => Array.isArray(userProviders.value) ? userProviders.value : [])
+const safeTemplates = computed(() => Array.isArray(providerTemplates.value) ? providerTemplates.value : [])
+
 const allCategories = computed(() => {
-  const templateCats = new Set((providerTemplates.value ?? []).map(t => t.category))
+  const templateCats = new Set(safeTemplates.value.map(t => t.category))
   const extra = [...templateCats].filter(c => !seededCategoryOrder.includes(c))
   return [...seededCategoryOrder, ...extra]
 })
@@ -55,15 +59,15 @@ onMounted(async () => {
 })
 
 function providersByCategory(cat: string) {
-  return (providers.value ?? []).filter(p => p.category === cat)
+  return safeProviders.value.filter(p => p.category === cat)
 }
 
 function templatesByCategory(cat: string) {
-  return (providerTemplates.value ?? []).filter(t => t.category === cat)
+  return safeTemplates.value.filter(t => t.category === cat)
 }
 
 function isAdded(providerId: string) {
-  return (userProviders.value ?? []).some(up => up.provider_id === providerId)
+  return safeUserProviders.value.some(up => up.provider_id === providerId)
 }
 
 function hasAnythingInCategory(cat: string) {
@@ -168,24 +172,24 @@ async function deleteTemplate(id: string) {
     </div>
 
     <!-- Active user providers -->
-    <div v-if="userProviders.length > 0" class="mb-8">
+    <div v-if="safeUserProviders.length > 0" class="mb-8">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Ενεργοί</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
-          v-for="up in userProviders"
+          v-for="up in safeUserProviders"
           :key="up.id"
           class="bg-gray-800 rounded-xl border border-gray-700 p-4 flex items-center justify-between"
         >
           <div class="flex items-center gap-3">
             <div
               class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-              :style="{ backgroundColor: up.provider.color }"
+              :style="{ backgroundColor: up.provider?.color }"
             >
-              {{ (up.nickname || up.provider.name).charAt(0).toUpperCase() }}
+              {{ (up.nickname || up.provider?.name || '?').charAt(0).toUpperCase() }}
             </div>
             <div>
-              <p class="text-sm font-semibold text-gray-50">{{ up.nickname || up.provider.name }}</p>
-              <p class="text-xs text-gray-400">{{ categoryLabel(up.provider.category) }}</p>
+              <p class="text-sm font-semibold text-gray-50">{{ up.nickname || up.provider?.name }}</p>
+              <p class="text-xs text-gray-400">{{ categoryLabel(up.provider?.category) }}</p>
               <p v-if="up.account_num" class="text-xs text-gray-400">{{ up.account_num }}</p>
             </div>
           </div>

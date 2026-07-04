@@ -139,8 +139,8 @@ async function onFileSelected(event: Event) {
     if (result.provider_name) {
       const name = result.provider_name.toLowerCase()
       const match = (userProviders.value ?? []).find(up =>
-        (up.nickname || up.provider.name).toLowerCase().includes(name) ||
-        name.includes((up.nickname || up.provider.name).toLowerCase())
+        (up.nickname || up.provider?.name || '').toLowerCase().includes(name) ||
+        name.includes((up.nickname || up.provider?.name || '').toLowerCase())
       )
       if (match) form.value.user_provider_id = match.id
     }
@@ -327,7 +327,7 @@ async function onFileSelected(event: Event) {
             >
               <option value="" disabled>Επίλεξε πάροχο</option>
               <option v-for="up in userProviders" :key="up.id" :value="up.id">
-                {{ up.nickname || up.provider.name }}
+                {{ up.nickname || up.provider?.name }}
               </option>
             </select>
           </div>

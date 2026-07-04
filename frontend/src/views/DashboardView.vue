@@ -22,7 +22,7 @@ const selectedIncomes = ref<Set<string>>(new Set())
 const d = computed(() => dashboard.value)
 const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
 const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
-const totalIncome = computed(() => (incomes.value ?? []).reduce((s, i) => s + i.amount, 0))
+const totalIncome = computed(() => (Array.isArray(incomes.value) ? incomes.value : []).reduce((s, i) => s + i.amount, 0))
 
 onMounted(async () => {
   await Promise.all([
