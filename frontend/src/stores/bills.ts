@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, isRef } from 'vue'
+
+function safeArr<T>(ref: any): T[] {
+  const v = isRef(ref) ? ref.value : ref
+  return Array.isArray(v) ? v : []
+}
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db, auth } from '@/firebase'
 import api from '@/api/client'
@@ -38,28 +43,31 @@ export const useBillsStore = defineStore('bills', () => {
     notes?: string
   }) {
     const { data } = await api.post<Bill>('/bills', payload)
-    bills.value.unshift(data)
+    const arr = safeArr<Bill>(bills)
+    bills.value = [data, ...arr]
     return data
   }
 
   async function updateBill(id: string, payload: Partial<Pick<Bill, 'amount' | 'due_date' | 'issued_date' | 'notes'>>) {
     const { data } = await api.put<Bill>(`/bills/${id}`, payload)
-    const idx = bills.value.findIndex(b => b.id === id)
-    if (idx !== -1) bills.value[idx] = data
+    const arr = safeArr<Bill>(bills)
+    const idx = arr.findIndex(b => b.id === id)
+    bills.value = idx !== -1 ? arr.map((b, i) => i === idx ? data : b) : arr
     return data
   }
 
   async function markPaid(id: string) {
     const { data } = await api.patch<Bill>(`/bills/${id}/pay`)
-    const idx = bills.value.findIndex(b => b.id === id)
-    if (idx !== -1) bills.value[idx] = data
+    const arr = safeArr<Bill>(bills)
+    const idx = arr.findIndex(b => b.id === id)
+    bills.value = idx !== -1 ? arr.map((b, i) => i === idx ? data : b) : arr
     await fetchDashboard()
     return data
   }
 
   async function deleteBill(id: string) {
     await api.delete(`/bills/${id}`)
-    bills.value = bills.value.filter(b => b.id !== id)
+    bills.value = safeArr<Bill>(bills).filter(b => b.id !== id)
   }
 
   async function fetchProviders() {
@@ -82,18 +90,18 @@ export const useBillsStore = defineStore('bills', () => {
     account_num?: string
   }) {
     const { data } = await api.post<UserProvider>('/user/providers', payload)
-    userProviders.value.push(data)
+    userProviders.value = [...safeArr<UserProvider>(userProviders), data]
     return data
   }
 
   async function deleteUserProvider(id: string) {
     await api.delete(`/user/providers/${id}`)
-    userProviders.value = userProviders.value.filter(p => p.id !== id)
+    userProviders.value = safeArr<UserProvider>(userProviders).filter(p => p.id !== id)
   }
 
   async function bulkDeleteBills(ids: string[]) {
     await api.delete('/bills', { data: { ids } })
-    bills.value = bills.value.filter(b => !ids.includes(b.id))
+    bills.value = safeArr<Bill>(bills).filter(b => !ids.includes(b.id))
   }
 
   async function fetchProviderTemplates() {
@@ -108,13 +116,13 @@ export const useBillsStore = defineStore('bills', () => {
     payment_url?: string
   }) {
     const { data } = await api.post<UserProviderTemplate>('/user/provider-templates', payload)
-    providerTemplates.value.push(data)
+    providerTemplates.value = [...safeArr<UserProviderTemplate>(providerTemplates), data]
     return data
   }
 
   async function deleteProviderTemplate(id: string) {
     await api.delete(`/user/provider-templates/${id}`)
-    providerTemplates.value = providerTemplates.value.filter(t => t.id !== id)
+    providerTemplates.value = safeArr<UserProviderTemplate>(providerTemplates).filter(t => t.id !== id)
   }
 
   async function scanBill(file: File): Promise<ScanResult> {

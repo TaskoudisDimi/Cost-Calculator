@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, isRef } from 'vue'
+
+function safeArr<T>(r: any): T[] {
+  const v = isRef(r) ? r.value : r
+  return Array.isArray(v) ? v : []
+}
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db, auth } from '@/firebase'
 import api from '@/api/client'
@@ -31,20 +36,21 @@ export const useBudgetStore = defineStore('budget', () => {
     store?: string; notes?: string; planned_date?: string
   }) {
     const { data } = await api.post<Expense>('/expenses', payload)
-    expenses.value.unshift(data)
+    expenses.value = [data, ...safeArr<Expense>(expenses)]
     return data
   }
 
   async function markBought(id: string) {
     const { data } = await api.patch<Expense>(`/expenses/${id}/buy`)
-    const idx = expenses.value.findIndex(e => e.id === id)
-    if (idx !== -1) expenses.value[idx] = data
+    const arr = safeArr<Expense>(expenses)
+    const idx = arr.findIndex(e => e.id === id)
+    expenses.value = idx !== -1 ? arr.map((e, i) => i === idx ? data : e) : arr
     return data
   }
 
   async function deleteExpense(id: string) {
     await api.delete(`/expenses/${id}`)
-    expenses.value = expenses.value.filter(e => e.id !== id)
+    expenses.value = safeArr<Expense>(expenses).filter(e => e.id !== id)
   }
 
   async function fetchIncomes(month?: string) {
@@ -56,18 +62,18 @@ export const useBudgetStore = defineStore('budget', () => {
 
   async function createIncome(payload: { description: string; amount: number; month: string }) {
     const { data } = await api.post<Income>('/income', payload)
-    incomes.value.unshift(data)
+    incomes.value = [data, ...safeArr<Income>(incomes)]
     return data
   }
 
   async function deleteIncome(id: string) {
     await api.delete(`/income/${id}`)
-    incomes.value = incomes.value.filter(i => i.id !== id)
+    incomes.value = safeArr<Income>(incomes).filter(i => i.id !== id)
   }
 
   async function bulkDeleteIncome(ids: string[]) {
     await api.delete('/income', { data: { ids } })
-    incomes.value = incomes.value.filter(i => !ids.includes(i.id))
+    incomes.value = safeArr<Income>(incomes).filter(i => !ids.includes(i.id))
   }
 
   // ── Real-time sync: detect changes from other devices, refetch current month ─
