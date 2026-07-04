@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { storeToRefs } from 'pinia'
+import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
@@ -11,18 +10,16 @@ const { confirm } = useConfirm()
 const billsStore = useBillsStore()
 const budgetStore = useBudgetStore()
 
-const { dashboard } = storeToRefs(billsStore)
-const { incomes } = storeToRefs(budgetStore)
-
 const month = ref(currentMonth())
 const showIncomeModal = ref(false)
 const incomeForm = ref({ description: '', amount: '' })
 const selectedIncomes = ref<Set<string>>(new Set())
 
-const d = computed(() => dashboard.value)
+const d = computed(() => unref(billsStore.dashboard))
+const safeIncomes = computed(() => { const v = unref(budgetStore.incomes); return Array.isArray(v) ? v : [] })
 const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
 const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
-const totalIncome = computed(() => (Array.isArray(incomes.value) ? incomes.value : []).reduce((s, i) => s + i.amount, 0))
+const totalIncome = computed(() => safeIncomes.value.reduce((s, i) => s + i.amount, 0))
 
 onMounted(async () => {
   await Promise.all([
@@ -147,12 +144,12 @@ async function onMonthChange() {
           </div>
         </div>
 
-        <div v-if="incomes.length === 0" class="text-sm text-gray-400 py-2">
+        <div v-if="safeIncomes.length === 0" class="text-sm text-gray-400 py-2">
           Δεν έχεις προσθέσει έσοδα για αυτόν τον μήνα.
         </div>
         <div v-else class="space-y-1">
           <div
-            v-for="inc in incomes"
+            v-for="inc in safeIncomes"
             :key="inc.id"
             class="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors cursor-pointer"
             :class="selectedIncomes.has(inc.id) ? 'bg-blue-900/20' : 'hover:bg-gray-700/60'"
@@ -231,9 +228,9 @@ async function onMonthChange() {
             <p class="text-xs font-semibold text-amber-400 uppercase tracking-wide">Αγορές μήνα</p>
             <span class="text-xs font-bold text-amber-400">{{ formatAmount(d.amount_expenses_planned) }}</span>
           </div>
-          <p v-if="d.planned_expenses.length === 0" class="text-sm text-gray-400">Καμία αγορά</p>
+          <p v-if="(d.planned_expenses ?? []).length === 0" class="text-sm text-gray-400">Καμία αγορά</p>
           <ul v-else class="space-y-2">
-            <li v-for="e in d.planned_expenses" :key="e.id" class="flex items-center justify-between">
+            <li v-for="e in (d.planned_expenses ?? [])" :key="e.id" class="flex items-center justify-between">
               <span class="text-sm text-gray-300 truncate">{{ e.name }}</span>
               <div class="text-right shrink-0 ml-2">
                 <p class="text-sm font-semibold text-amber-400">{{ formatAmount(e.amount) }}</p>
@@ -248,11 +245,11 @@ async function onMonthChange() {
       <!-- Upcoming bills -->
       <div class="bg-gray-800 rounded-xl border border-gray-700 p-4 md:p-5">
         <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Επόμενοι λογαριασμοί</h3>
-        <div v-if="d.upcoming_bills.length === 0" class="text-center py-6 text-gray-400 text-sm">
+        <div v-if="(d.upcoming_bills ?? []).length === 0" class="text-center py-6 text-gray-400 text-sm">
           Δεν υπάρχουν εκκρεμείς λογαριασμοί
         </div>
         <div v-else class="space-y-1">
-          <div v-for="bill in d.upcoming_bills" :key="bill.id"
+          <div v-for="bill in (d.upcoming_bills ?? [])" :key="bill.id"
             class="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0 gap-2">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"

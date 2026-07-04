@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
+import { ref, computed, onMounted, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { categoryLabel } from '@/utils/format'
@@ -8,7 +7,6 @@ import { categoryLabel } from '@/utils/format'
 const { confirm } = useConfirm()
 
 const store = useBillsStore()
-const { providers, userProviders, providerTemplates } = storeToRefs(store)
 const showModal = ref(false)
 const modalMode = ref<'list' | 'template'>('list')
 const error = ref('')
@@ -44,9 +42,9 @@ const builtinCategories = [
 ]
 
 // All categories (seeded order + any extra from user templates)
-const safeProviders = computed(() => Array.isArray(providers.value) ? providers.value : [])
-const safeUserProviders = computed(() => Array.isArray(userProviders.value) ? userProviders.value : [])
-const safeTemplates = computed(() => Array.isArray(providerTemplates.value) ? providerTemplates.value : [])
+const safeProviders = computed(() => { const v = unref(store.providers); return Array.isArray(v) ? v : [] })
+const safeUserProviders = computed(() => { const v = unref(store.userProviders); return Array.isArray(v) ? v : [] })
+const safeTemplates = computed(() => { const v = unref(store.providerTemplates); return Array.isArray(v) ? v : [] })
 
 const allCategories = computed(() => {
   const templateCats = new Set(safeTemplates.value.map(t => t.category))
@@ -290,7 +288,7 @@ async function deleteTemplate(id: string) {
               class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="" disabled>Επίλεξε</option>
-              <option v-for="p in store.providers" :key="p.id" :value="p.id" :disabled="isAdded(p.id)">
+              <option v-for="p in safeProviders" :key="p.id" :value="p.id" :disabled="isAdded(p.id)">
                 {{ p.name }}{{ isAdded(p.id) ? ' (ήδη ενεργός)' : '' }}
               </option>
             </select>
