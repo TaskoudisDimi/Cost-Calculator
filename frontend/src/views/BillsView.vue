@@ -235,7 +235,7 @@ async function onFileSelected(event: Event) {
           class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
           :style="{ backgroundColor: bill.user_provider?.provider?.color }"
         >
-          {{ (bill.user_provider?.nickname || bill.user_provider?.provider?.name).charAt(0).toUpperCase() }}
+          {{ (bill.user_provider?.nickname || bill.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
         </div>
 
         <div class="flex-1 min-w-0">
