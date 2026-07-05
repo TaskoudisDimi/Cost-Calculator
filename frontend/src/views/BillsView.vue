@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate, formatAmount, statusLabel, statusClass } from '@/utils/format'
@@ -27,7 +27,8 @@ const form = ref({
 })
 
 const filteredBills = computed(() => {
-  const all = store.bills
+  const all = unref(store.bills)
+  if (!Array.isArray(all)) return []
   if (filterStatus.value === 'all') return all
   return all.filter(b => b.status === filterStatus.value)
 })
@@ -74,7 +75,7 @@ function openCreate() {
 }
 
 function openEdit(id: string) {
-  const bill = store.bills.find(b => b.id === id)
+  const bill = unref(store.bills).find(b => b.id === id)
   if (!bill) return
   editingBill.value = id
   form.value = {
@@ -136,7 +137,7 @@ async function onFileSelected(event: Event) {
     // Try to match provider name to a user provider
     if (result.provider_name) {
       const name = result.provider_name.toLowerCase()
-      const match = store.userProviders.find(up =>
+      const match = unref(store.userProviders).find(up =>
         (up.nickname || up.provider?.name || '').toLowerCase().includes(name) ||
         name.includes((up.nickname || up.provider?.name || '').toLowerCase())
       )

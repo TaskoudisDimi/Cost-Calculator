@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
@@ -18,7 +18,10 @@ const selectedIncomes = ref<Set<string>>(new Set())
 const d = computed(() => billsStore.dashboard)
 const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
 const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
-const totalIncome = computed(() => budgetStore.incomes.reduce((s, i) => s + i.amount, 0))
+const totalIncome = computed(() => {
+  const incomes = unref(budgetStore.incomes)
+  return Array.isArray(incomes) ? incomes.reduce((s, i) => s + i.amount, 0) : 0
+})
 
 onMounted(async () => {
   await Promise.all([

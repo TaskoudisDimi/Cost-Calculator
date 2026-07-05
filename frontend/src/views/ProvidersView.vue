@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { categoryLabel } from '@/utils/format'
@@ -42,7 +42,8 @@ const builtinCategories = [
 ]
 
 const allCategories = computed(() => {
-  const templateCats = new Set(store.providerTemplates.map(t => t.category))
+  const templates = unref(store.providerTemplates)
+  const templateCats = new Set(Array.isArray(templates) ? templates.map(t => t.category) : [])
   const extra = [...templateCats].filter(c => !seededCategoryOrder.includes(c))
   return [...seededCategoryOrder, ...extra]
 })
@@ -52,15 +53,18 @@ onMounted(async () => {
 })
 
 function providersByCategory(cat: string) {
-  return store.providers.filter(p => p.category === cat)
+  const providers = unref(store.providers)
+  return Array.isArray(providers) ? providers.filter(p => p.category === cat) : []
 }
 
 function templatesByCategory(cat: string) {
-  return store.providerTemplates.filter(t => t.category === cat)
+  const templates = unref(store.providerTemplates)
+  return Array.isArray(templates) ? templates.filter(t => t.category === cat) : []
 }
 
 function isAdded(providerId: string) {
-  return store.userProviders.some(up => up.provider_id === providerId)
+  const ups = unref(store.userProviders)
+  return Array.isArray(ups) ? ups.some(up => up.provider_id === providerId) : false
 }
 
 function hasAnythingInCategory(cat: string) {
