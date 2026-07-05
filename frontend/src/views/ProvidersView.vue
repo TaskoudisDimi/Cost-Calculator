@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, unref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { categoryLabel } from '@/utils/format'
@@ -41,13 +41,8 @@ const builtinCategories = [
   { value: '__custom__', label: '+ Νέα κατηγορία…' },
 ]
 
-// All categories (seeded order + any extra from user templates)
-const safeProviders = computed(() => { const v = unref(store.providers); return Array.isArray(v) ? v : [] })
-const safeUserProviders = computed(() => { const v = unref(store.userProviders); return Array.isArray(v) ? v : [] })
-const safeTemplates = computed(() => { const v = unref(store.providerTemplates); return Array.isArray(v) ? v : [] })
-
 const allCategories = computed(() => {
-  const templateCats = new Set(safeTemplates.value.map(t => t.category))
+  const templateCats = new Set(store.providerTemplates.map(t => t.category))
   const extra = [...templateCats].filter(c => !seededCategoryOrder.includes(c))
   return [...seededCategoryOrder, ...extra]
 })
@@ -57,15 +52,15 @@ onMounted(async () => {
 })
 
 function providersByCategory(cat: string) {
-  return safeProviders.value.filter(p => p.category === cat)
+  return store.providers.filter(p => p.category === cat)
 }
 
 function templatesByCategory(cat: string) {
-  return safeTemplates.value.filter(t => t.category === cat)
+  return store.providerTemplates.filter(t => t.category === cat)
 }
 
 function isAdded(providerId: string) {
-  return safeUserProviders.value.some(up => up.provider_id === providerId)
+  return store.userProviders.some(up => up.provider_id === providerId)
 }
 
 function hasAnythingInCategory(cat: string) {
@@ -170,11 +165,11 @@ async function deleteTemplate(id: string) {
     </div>
 
     <!-- Active user providers -->
-    <div v-if="safeUserProviders.length > 0" class="mb-8">
+    <div v-if="store.userProviders.length > 0" class="mb-8">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Ενεργοί</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
-          v-for="up in safeUserProviders"
+          v-for="up in store.userProviders"
           :key="up.id"
           class="bg-gray-800 rounded-xl border border-gray-700 p-4 flex items-center justify-between"
         >
@@ -220,7 +215,7 @@ async function deleteTemplate(id: string) {
               class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold"
               :style="{ backgroundColor: p.color }"
             >
-              {{ p.name.charAt(0) }}
+              {{ (p.name || '?').charAt(0) }}
             </div>
             <p class="text-xs font-medium text-gray-300 text-center">{{ p.name }}</p>
             <span v-if="isAdded(p.id)" class="text-xs text-green-400 font-medium">✓ Ενεργός</span>
@@ -246,7 +241,7 @@ async function deleteTemplate(id: string) {
               class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold"
               :style="{ backgroundColor: t.color }"
             >
-              {{ t.name.charAt(0) }}
+              {{ (t.name || '?').charAt(0) }}
             </div>
             <p class="text-xs font-medium text-gray-300 text-center">{{ t.name }}</p>
             <span v-if="isAdded(t.id)" class="text-xs text-green-400 font-medium">✓ Ενεργός</span>
@@ -288,7 +283,7 @@ async function deleteTemplate(id: string) {
               class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="" disabled>Επίλεξε</option>
-              <option v-for="p in safeProviders" :key="p.id" :value="p.id" :disabled="isAdded(p.id)">
+              <option v-for="p in store.providers" :key="p.id" :value="p.id" :disabled="isAdded(p.id)">
                 {{ p.name }}{{ isAdded(p.id) ? ' (ήδη ενεργός)' : '' }}
               </option>
             </select>

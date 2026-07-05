@@ -4,8 +4,15 @@ export function formatAmount(amount: number): string {
   return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' }).format(amount)
 }
 
-export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(date))
+export function formatDate(date: string | null | undefined): string {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
+  try {
+    return new Intl.DateTimeFormat('el-GR', { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
+  } catch {
+    return date.slice(0, 10)
+  }
 }
 
 export function statusLabel(status: BillStatus): string {

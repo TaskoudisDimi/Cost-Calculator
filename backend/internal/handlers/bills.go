@@ -45,6 +45,15 @@ func (h *BillsHandler) ListBills(c *gin.Context) {
 			continue
 		}
 		b.ID = d.Ref.ID
+		// Back-fill embedded provider for old bills that lack it
+		if b.UserProvider.Provider.Name == "" && b.UserProviderID != "" {
+			if upDoc, err := h.fs.Collection("userProviders").Doc(b.UserProviderID).Get(ctx); err == nil {
+				var up models.UserProvider
+				upDoc.DataTo(&up)
+				up.ID = upDoc.Ref.ID
+				b.UserProvider = up
+			}
+		}
 		if b.Status == "pending" && now.After(b.DueDate) {
 			b.Status = "overdue"
 			batch.Update(d.Ref, []firestore.Update{{Path: "status", Value: "overdue"}})

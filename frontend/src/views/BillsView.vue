@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate, formatAmount, statusLabel, statusClass } from '@/utils/format'
@@ -9,7 +8,6 @@ import type { BillStatus } from '@/types'
 const { confirm } = useConfirm()
 
 const store = useBillsStore()
-const { bills, loading, userProviders } = storeToRefs(store)
 
 const showModal = ref(false)
 const editingBill = ref<string | null>(null)
@@ -29,7 +27,7 @@ const form = ref({
 })
 
 const filteredBills = computed(() => {
-  const all = Array.isArray(bills.value) ? bills.value : []
+  const all = store.bills
   if (filterStatus.value === 'all') return all
   return all.filter(b => b.status === filterStatus.value)
 })
@@ -76,7 +74,7 @@ function openCreate() {
 }
 
 function openEdit(id: string) {
-  const bill = bills.value.find(b => b.id === id)
+  const bill = store.bills.find(b => b.id === id)
   if (!bill) return
   editingBill.value = id
   form.value = {
@@ -138,7 +136,7 @@ async function onFileSelected(event: Event) {
     // Try to match provider name to a user provider
     if (result.provider_name) {
       const name = result.provider_name.toLowerCase()
-      const match = (userProviders.value ?? []).find(up =>
+      const match = store.userProviders.find(up =>
         (up.nickname || up.provider?.name || '').toLowerCase().includes(name) ||
         name.includes((up.nickname || up.provider?.name || '').toLowerCase())
       )
@@ -200,7 +198,7 @@ async function onFileSelected(event: Event) {
     </div>
 
     <!-- Bills list -->
-    <div v-if="loading" class="text-center py-16 text-gray-400">Φόρτωση...</div>
+    <div v-if="store.loading" class="text-center py-16 text-gray-400">Φόρτωση...</div>
 
     <div v-else-if="filteredBills.length === 0" class="text-center py-16 text-gray-400 bg-gray-800 rounded-xl border border-gray-700">
       Δεν βρέθηκαν λογαριασμοί
@@ -326,7 +324,7 @@ async function onFileSelected(event: Event) {
               class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="" disabled>Επίλεξε πάροχο</option>
-              <option v-for="up in userProviders" :key="up.id" :value="up.id">
+              <option v-for="up in store.userProviders" :key="up.id" :value="up.id">
                 {{ up.nickname || up.provider?.name }}
               </option>
             </select>

@@ -53,6 +53,22 @@ func (h *ProvidersHandler) ListUserProviders(c *gin.Context) {
 		var up models.UserProvider
 		if err := d.DataTo(&up); err == nil {
 			up.ID = d.Ref.ID
+			// Back-fill embedded provider for old documents that lack it
+			if up.Provider.Name == "" && up.ProviderID != "" {
+				if pDoc, err := h.fs.Collection("providers").Doc(up.ProviderID).Get(ctx); err == nil {
+					pDoc.DataTo(&up.Provider)
+					up.Provider.ID = pDoc.Ref.ID
+					d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
+				} else if tDoc, err2 := h.fs.Collection("userProviderTemplates").Doc(up.ProviderID).Get(ctx); err2 == nil {
+					var tmpl models.UserProviderTemplate
+					tDoc.DataTo(&tmpl)
+					up.Provider = models.Provider{
+						ID: tDoc.Ref.ID, Name: tmpl.Name,
+						Category: tmpl.Category, Color: tmpl.Color, PaymentURL: tmpl.PaymentURL,
+					}
+					d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
+				}
+			}
 			ups = append(ups, up)
 		}
 	}

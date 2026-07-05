@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, unref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
@@ -15,11 +15,10 @@ const showIncomeModal = ref(false)
 const incomeForm = ref({ description: '', amount: '' })
 const selectedIncomes = ref<Set<string>>(new Set())
 
-const d = computed(() => unref(billsStore.dashboard))
-const safeIncomes = computed(() => { const v = unref(budgetStore.incomes); return Array.isArray(v) ? v : [] })
+const d = computed(() => billsStore.dashboard)
 const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
 const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
-const totalIncome = computed(() => safeIncomes.value.reduce((s, i) => s + i.amount, 0))
+const totalIncome = computed(() => budgetStore.incomes.reduce((s, i) => s + i.amount, 0))
 
 onMounted(async () => {
   await Promise.all([
@@ -144,12 +143,12 @@ async function onMonthChange() {
           </div>
         </div>
 
-        <div v-if="safeIncomes.length === 0" class="text-sm text-gray-400 py-2">
+        <div v-if="budgetStore.incomes.length === 0" class="text-sm text-gray-400 py-2">
           Δεν έχεις προσθέσει έσοδα για αυτόν τον μήνα.
         </div>
         <div v-else class="space-y-1">
           <div
-            v-for="inc in safeIncomes"
+            v-for="inc in budgetStore.incomes"
             :key="inc.id"
             class="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors cursor-pointer"
             :class="selectedIncomes.has(inc.id) ? 'bg-blue-900/20' : 'hover:bg-gray-700/60'"
