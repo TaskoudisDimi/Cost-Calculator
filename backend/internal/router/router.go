@@ -61,6 +61,7 @@ func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gi
 		protected.DELETE("/bills/:id", billsH.DeleteBill)
 		protected.DELETE("/bills", billsH.BulkDeleteBills)
 		protected.PATCH("/bills/:id/pay", billsH.MarkPaid)
+		protected.PATCH("/bills/:id/unpay", billsH.MarkUnpaid)
 		protected.POST("/bills/scan", scanH.ScanBill)
 
 		protected.GET("/expenses", expensesH.List)

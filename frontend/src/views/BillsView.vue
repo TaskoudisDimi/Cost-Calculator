@@ -110,6 +110,10 @@ async function markPaid(id: string) {
   await store.markPaid(id)
 }
 
+async function markUnpaid(id: string) {
+  await store.markUnpaid(id)
+}
+
 async function deleteBill(id: string) {
   if (!await confirm({ message: 'Ο λογαριασμός θα διαγραφεί οριστικά.' })) return
   await store.deleteBill(id)
@@ -258,6 +262,13 @@ async function onFileSelected(event: Event) {
             class="text-xs bg-gray-700 hover:bg-green-900/30 text-gray-300 hover:text-green-400 font-medium px-2 py-1.5 rounded-lg border border-gray-600 hover:border-green-700 transition-colors hidden sm:block"
           >
             ✓ Πλήρωσα
+          </button>
+          <button
+            v-else
+            @click="markUnpaid(bill.id)"
+            class="text-xs bg-gray-700 hover:bg-amber-900/30 text-gray-400 hover:text-amber-400 font-medium px-2 py-1.5 rounded-lg border border-gray-600 hover:border-amber-700 transition-colors hidden sm:block"
+          >
+            ↩ Αναίρεση
           </button>
           <a
             v-if="bill.user_provider?.provider?.payment_url"

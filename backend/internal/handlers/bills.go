@@ -270,6 +270,41 @@ func (h *BillsHandler) MarkPaid(c *gin.Context) {
 	c.JSON(http.StatusOK, bill)
 }
 
+func (h *BillsHandler) MarkUnpaid(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	id := c.Param("id")
+	ctx := context.Background()
+
+	doc, err := h.bills(ctx).Doc(id).Get(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var bill models.Bill
+	doc.DataTo(&bill)
+	if bill.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	now := time.Now()
+	newStatus := "pending"
+	if now.After(bill.DueDate) {
+		newStatus = "overdue"
+	}
+	bill.Status = newStatus
+	bill.PaidAt = nil
+	bill.UpdatedAt = now
+	bill.ID = id
+
+	h.bills(ctx).Doc(id).Update(ctx, []firestore.Update{
+		{Path: "status", Value: newStatus},
+		{Path: "paid_at", Value: nil},
+		{Path: "updated_at", Value: now},
+	})
+	c.JSON(http.StatusOK, bill)
+}
+
 func (h *BillsHandler) Dashboard(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	ctx := context.Background()

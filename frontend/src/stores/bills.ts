@@ -65,6 +65,15 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
+  async function markUnpaid(id: string) {
+    const { data } = await api.patch<Bill>(`/bills/${id}/unpay`)
+    const arr = safeArr<Bill>(bills)
+    const idx = arr.findIndex(b => b.id === id)
+    bills.value = idx !== -1 ? arr.map((b, i) => i === idx ? data : b) : arr
+    await fetchDashboard()
+    return data
+  }
+
   async function deleteBill(id: string) {
     await api.delete(`/bills/${id}`)
     bills.value = safeArr<Bill>(bills).filter(b => b.id !== id)
@@ -170,7 +179,7 @@ export const useBillsStore = defineStore('bills', () => {
 
   return {
     bills, userProviders, providers, providerTemplates, dashboard, loading,
-    fetchDashboard, fetchBills, createBill, updateBill, markPaid, deleteBill, bulkDeleteBills,
+    fetchDashboard, fetchBills, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
     scanBill, startRealtimeSync, stopRealtimeSync,
