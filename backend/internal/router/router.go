@@ -1,9 +1,6 @@
 package router
 
 import (
-	"os"
-	"strings"
-
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/v4/auth"
 	"github.com/dimitris-taskou/cost-calculator/internal/handlers"
@@ -11,18 +8,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
-
-func allowedOrigins() []string {
-	base := []string{"http://localhost:5173", "http://localhost:3000"}
-	if extra := os.Getenv("ALLOWED_ORIGINS"); extra != "" {
-		for _, o := range strings.Split(extra, ",") {
-			if o = strings.TrimSpace(o); o != "" {
-				base = append(base, o)
-			}
-		}
-	}
-	return base
-}
 
 func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gin.Engine {
 	r := gin.Default()

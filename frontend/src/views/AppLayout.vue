@@ -140,7 +140,11 @@ const navItems = [
       class="flex-1 pt-14 md:pt-0 pb-20 md:pb-0 p-4 md:p-8 min-w-0 transition-[margin] duration-200"
       :class="sidebarOpen ? 'md:ml-56' : 'md:ml-14'"
     >
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <KeepAlive :max="5">
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </main>
 
     <!-- Floating calculator -->
@@ -160,7 +164,7 @@ const navItems = [
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             stroke-width="1.75" stroke="currentColor" class="w-5 h-5"
             v-html="item.icon" />
-          <span class="text-[9px] font-medium leading-tight">
+          <span class="text-[10px] font-medium leading-tight">
             {{ item.name === 'dashboard' ? 'Αρχική' :
                item.name === 'credentials' ? 'Κωδικοί' :
                item.label.split(' ')[0] }}

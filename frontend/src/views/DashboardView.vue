@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, unref } from 'vue'
+import { ref, onMounted, onActivated, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
@@ -29,6 +29,10 @@ onMounted(async () => {
     budgetStore.fetchIncomes(month.value),
     budgetStore.fetchExpenses(month.value),
   ])
+})
+
+onActivated(() => {
+  billsStore.fetchDashboard(month.value)
 })
 
 async function addIncome() {

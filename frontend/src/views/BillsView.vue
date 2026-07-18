@@ -17,6 +17,8 @@ const selected = ref<Set<string>>(new Set())
 const scanning = ref(false)
 const scanError = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
+const dateFrom = ref('')
+const dateTo = ref('')
 
 const form = ref({
   user_provider_id: '',
@@ -27,11 +29,26 @@ const form = ref({
 })
 
 const filteredBills = computed(() => {
-  const all = unref(store.bills)
+  let all = unref(store.bills)
   if (!Array.isArray(all)) return []
-  if (filterStatus.value === 'all') return all
-  return all.filter(b => b.status === filterStatus.value)
+  if (filterStatus.value !== 'all') all = all.filter(b => b.status === filterStatus.value)
+  if (dateFrom.value) {
+    const from = new Date(dateFrom.value)
+    all = all.filter(b => new Date(b.due_date) >= from)
+  }
+  if (dateTo.value) {
+    const to = new Date(dateTo.value)
+    to.setHours(23, 59, 59, 999)
+    all = all.filter(b => new Date(b.due_date) <= to)
+  }
+  return all
 })
+
+function clearDateFilter() {
+  dateFrom.value = ''
+  dateTo.value = ''
+  clearSelection()
+}
 
 const allSelected = computed(() => {
   const list = filteredBills.value
@@ -168,15 +185,39 @@ async function onFileSelected(event: Event) {
     </div>
 
     <!-- Filter tabs -->
-    <div class="flex gap-2 mb-5">
+    <div class="flex gap-2 mb-3 overflow-x-auto">
       <button
         v-for="f in (['all', 'pending', 'overdue', 'paid'] as const)"
         :key="f"
         @click="filterStatus = f; clearSelection()"
-        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        class="whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0"
         :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
       >
         {{ f === 'all' ? 'Όλοι' : statusLabel(f) }}
+      </button>
+    </div>
+
+    <!-- Date range filter -->
+    <div class="flex flex-wrap items-center gap-2 mb-5">
+      <input
+        v-model="dateFrom"
+        type="date"
+        @change="clearSelection()"
+        class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <span class="text-gray-500 text-sm">—</span>
+      <input
+        v-model="dateTo"
+        type="date"
+        @change="clearSelection()"
+        class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button
+        v-if="dateFrom || dateTo"
+        @click="clearDateFilter"
+        class="text-xs text-gray-400 hover:text-gray-300 px-2 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700/60 transition-colors whitespace-nowrap"
+      >
+        ✕ Καθαρισμός
       </button>
     </div>
 
@@ -249,33 +290,46 @@ async function onFileSelected(event: Event) {
           <p class="text-xs text-gray-400 sm:hidden">{{ formatDate(bill.due_date) }}</p>
         </div>
 
-        <span class="px-2 py-1 rounded-full text-xs font-medium shrink-0" :class="statusClass(bill.status)">
+        <!-- Status: dot on mobile, badge on sm+ -->
+        <span
+          class="sm:hidden w-2 h-2 rounded-full shrink-0"
+          :class="{
+            'bg-blue-400': bill.status === 'pending',
+            'bg-red-400': bill.status === 'overdue',
+            'bg-green-400': bill.status === 'paid',
+          }"
+        />
+        <span class="hidden sm:inline px-2 py-1 rounded-full text-xs font-medium shrink-0" :class="statusClass(bill.status)">
           {{ statusLabel(bill.status) }}
         </span>
 
-        <p class="text-base font-bold text-gray-50 w-24 text-right shrink-0">{{ formatAmount(bill.amount) }}</p>
+        <p class="text-sm sm:text-base font-bold text-gray-50 w-16 sm:w-24 text-right shrink-0">{{ formatAmount(bill.amount) }}</p>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
           <button
             v-if="bill.status !== 'paid'"
             @click="markPaid(bill.id)"
-            class="text-xs bg-gray-700 hover:bg-green-900/30 text-gray-300 hover:text-green-400 font-medium px-2 py-1.5 rounded-lg border border-gray-600 hover:border-green-700 transition-colors hidden sm:block"
+            class="text-xs bg-gray-700 hover:bg-green-900/30 text-gray-300 hover:text-green-400 font-medium py-1.5 rounded-lg border border-gray-600 hover:border-green-700 transition-colors px-1.5 sm:px-2"
+            title="Πλήρωσα"
           >
-            ✓ Πλήρωσα
+            <span class="sm:hidden">✓</span>
+            <span class="hidden sm:inline">✓ Πλήρωσα</span>
           </button>
           <button
             v-else
             @click="markUnpaid(bill.id)"
-            class="text-xs bg-gray-700 hover:bg-amber-900/30 text-gray-400 hover:text-amber-400 font-medium px-2 py-1.5 rounded-lg border border-gray-600 hover:border-amber-700 transition-colors hidden sm:block"
+            class="text-xs bg-gray-700 hover:bg-amber-900/30 text-gray-400 hover:text-amber-400 font-medium py-1.5 rounded-lg border border-gray-600 hover:border-amber-700 transition-colors px-1.5 sm:px-2"
+            title="Αναίρεση"
           >
-            ↩ Αναίρεση
+            <span class="sm:hidden">↩</span>
+            <span class="hidden sm:inline">↩ Αναίρεση</span>
           </button>
           <a
             v-if="bill.user_provider?.provider?.payment_url"
             :href="bill.user_provider?.provider?.payment_url"
             target="_blank"
             rel="noopener"
-            class="text-xs bg-gray-700 hover:bg-gray-200 text-gray-300 font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+            class="hidden sm:block text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium px-2.5 py-1.5 rounded-lg transition-colors"
           >
             Πληρωμή →
           </a>
