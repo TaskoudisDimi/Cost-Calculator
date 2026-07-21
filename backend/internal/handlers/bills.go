@@ -74,6 +74,7 @@ type createBillRequest struct {
 	DueDate        time.Time  `json:"due_date" binding:"required"`
 	IssuedDate     *time.Time `json:"issued_date"`
 	Notes          string     `json:"notes"`
+	PaymentCode    string     `json:"payment_code"`
 }
 
 func (h *BillsHandler) CreateBill(c *gin.Context) {
@@ -111,6 +112,7 @@ func (h *BillsHandler) CreateBill(c *gin.Context) {
 		IssuedDate:     req.IssuedDate,
 		Status:         billStatus,
 		Notes:          req.Notes,
+		PaymentCode:    req.PaymentCode,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -142,10 +144,11 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 	}
 
 	var req struct {
-		Amount     *float64   `json:"amount"`
-		DueDate    *time.Time `json:"due_date"`
-		IssuedDate *time.Time `json:"issued_date"`
-		Notes      *string    `json:"notes"`
+		Amount      *float64   `json:"amount"`
+		DueDate     *time.Time `json:"due_date"`
+		IssuedDate  *time.Time `json:"issued_date"`
+		Notes       *string    `json:"notes"`
+		PaymentCode *string    `json:"payment_code"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -168,6 +171,10 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 	if req.Notes != nil {
 		bill.Notes = *req.Notes
 		updates = append(updates, firestore.Update{Path: "notes", Value: *req.Notes})
+	}
+	if req.PaymentCode != nil {
+		bill.PaymentCode = *req.PaymentCode
+		updates = append(updates, firestore.Update{Path: "payment_code", Value: *req.PaymentCode})
 	}
 
 	h.bills(ctx).Doc(id).Update(ctx, updates)

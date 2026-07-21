@@ -27,6 +27,29 @@ type ScanResult struct {
 	DueDate      string   `json:"due_date"`
 	IssuedDate   string   `json:"issued_date"`
 	Notes        string   `json:"notes"`
+	PaymentCode  string   `json:"payment_code"`
+}
+
+func (h *ScanHandler) ParseEmail(c *gin.Context) {
+	if h.apiKey == "" {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "bill scanning is not configured"})
+		return
+	}
+
+	var req struct {
+		Content string `json:"content" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := callClaudeEmailText(h.apiKey, req.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not parse email: " + err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *ScanHandler) ScanBill(c *gin.Context) {
@@ -115,9 +138,77 @@ func callClaudeVision(apiKey, base64Data, mediaType string) (*ScanResult, error)
 					map[string]interface{}{
 						"type": "text",
 						"text": `Extract billing information from this document. Return ONLY this JSON (null for any field you cannot find):
-{"provider_name":"company or issuer name","amount":0.00,"due_date":"YYYY-MM-DD","issued_date":"YYYY-MM-DD","notes":"brief note about the bill"}`,
+{"provider_name":"company or issuer name","amount":0.00,"due_date":"YYYY-MM-DD","issued_date":"YYYY-MM-DD","notes":"brief note","payment_code":"RF code or payment reference number if present, else empty string"}`,
 					},
 				},
+			},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("claude API error %d: %s", resp.StatusCode, string(body))
+	}
+
+	var claudeResp struct {
+		Content []struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&claudeResp); err != nil {
+		return nil, err
+	}
+	if len(claudeResp.Content) == 0 {
+		return nil, fmt.Errorf("empty response from Claude")
+	}
+
+	text := strings.TrimSpace(claudeResp.Content[0].Text)
+	text = strings.TrimPrefix(text, "```json")
+	text = strings.TrimPrefix(text, "```")
+	text = strings.TrimSuffix(text, "```")
+	text = strings.TrimSpace(text)
+
+	var result ScanResult
+	if err := json.Unmarshal([]byte(text), &result); err != nil {
+		return nil, fmt.Errorf("could not parse response: %s", text)
+	}
+
+	return &result, nil
+}
+
+func callClaudeEmailText(apiKey, emailContent string) (*ScanResult, error) {
+	requestBody := map[string]interface{}{
+		"model":      "claude-haiku-4-5-20251001",
+		"max_tokens": 512,
+		"system":     "You extract billing information from email text. Return ONLY valid JSON, no markdown, no explanation.",
+		"messages": []map[string]interface{}{
+			{
+				"role": "user",
+				"content": `Extract billing information from this email. Return ONLY this JSON (null for any field you cannot find):
+{"provider_name":"company or issuer name","amount":0.00,"due_date":"YYYY-MM-DD","issued_date":"YYYY-MM-DD","notes":"brief note","payment_code":"RF code or payment reference number if present, else empty string"}
+
+Email content:
+` + emailContent,
 			},
 		},
 	}

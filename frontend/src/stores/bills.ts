@@ -41,6 +41,7 @@ export const useBillsStore = defineStore('bills', () => {
     due_date: string
     issued_date?: string
     notes?: string
+    payment_code?: string
   }) {
     const { data } = await api.post<Bill>('/bills', payload)
     const arr = safeArr<Bill>(bills)
@@ -48,7 +49,7 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
-  async function updateBill(id: string, payload: Partial<Pick<Bill, 'amount' | 'due_date' | 'issued_date' | 'notes'>>) {
+  async function updateBill(id: string, payload: Partial<Pick<Bill, 'amount' | 'due_date' | 'issued_date' | 'notes' | 'payment_code'>>) {
     const { data } = await api.put<Bill>(`/bills/${id}`, payload)
     const arr = safeArr<Bill>(bills)
     const idx = arr.findIndex(b => b.id === id)
@@ -143,6 +144,15 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
+  async function parseEmail(content: string): Promise<ScanResult> {
+    const { data } = await api.post<ScanResult>('/bills/parse-email', { content })
+    return data
+  }
+
+  async function registerNotificationToken(token: string): Promise<void> {
+    await api.post('/notify/register', { token })
+  }
+
   // ── Real-time sync via Firestore onSnapshot ─────────────────────────────────
   let billsUnsub: Unsubscribe | null = null
   let providersUnsub: Unsubscribe | null = null
@@ -182,6 +192,6 @@ export const useBillsStore = defineStore('bills', () => {
     fetchDashboard, fetchBills, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
-    scanBill, startRealtimeSync, stopRealtimeSync,
+    scanBill, parseEmail, registerNotificationToken, startRealtimeSync, stopRealtimeSync,
   }
 })

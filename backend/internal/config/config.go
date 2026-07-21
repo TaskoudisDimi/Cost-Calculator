@@ -7,6 +7,7 @@ type Config struct {
 	FirebaseProject  string
 	CredentialsFile  string
 	AnthropicAPIKey  string
+	SchedulerSecret  string
 }
 
 func Load() *Config {
@@ -15,6 +16,7 @@ func Load() *Config {
 		FirebaseProject: getEnv("FIREBASE_PROJECT_ID", "billcalculator-fb2dd"),
 		CredentialsFile: getEnv("GOOGLE_APPLICATION_CREDENTIALS", ""),
 		AnthropicAPIKey: getEnv("ANTHROPIC_API_KEY", ""),
+		SchedulerSecret: getEnv("SCHEDULER_SECRET", ""),
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 type Client struct {
 	Auth      *auth.Client
 	Firestore *firestore.Client
+	App       *firebasesdk.App
 }
 
 func New(ctx context.Context, credentialsFile, projectID string) (*Client, error) {
@@ -35,5 +36,5 @@ func New(ctx context.Context, credentialsFile, projectID string) (*Client, error
 		return nil, err
 	}
 
-	return &Client{Auth: authClient, Firestore: fsClient}, nil
+	return &Client{Auth: authClient, Firestore: fsClient, App: app}, nil
 }

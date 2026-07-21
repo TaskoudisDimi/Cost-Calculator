@@ -3,7 +3,9 @@ import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate, formatAmount, statusLabel, statusClass } from '@/utils/format'
-import type { BillStatus } from '@/types'
+import { requestNotificationToken } from '@/firebase'
+import type { Bill, BillStatus } from '@/types'
+import QRCode from 'qrcode'
 
 const { confirm } = useConfirm()
 
@@ -19,6 +21,22 @@ const scanError = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const dateFrom = ref('')
 const dateTo = ref('')
+const copiedId = ref<string | null>(null)
+
+// Email parsing
+const showEmailInput = ref(false)
+const emailContent = ref('')
+const parsingEmail = ref(false)
+const emailError = ref('')
+
+// QR code modal
+const qrBill = ref<Bill | null>(null)
+const qrDataUrl = ref('')
+
+// Push notifications
+const notifSupported = ref('Notification' in window)
+const notifDismissed = ref(localStorage.getItem('notif_dismissed') === '1')
+const notifGranted = ref('Notification' in window && Notification.permission === 'granted')
 
 const form = ref({
   user_provider_id: '',
@@ -26,6 +44,7 @@ const form = ref({
   due_date: '',
   issued_date: '',
   notes: '',
+  payment_code: '',
 })
 
 const filteredBills = computed(() => {
@@ -84,9 +103,68 @@ async function bulkDelete() {
   selected.value = new Set()
 }
 
+async function copyPaymentCode(code: string, id: string) {
+  await navigator.clipboard.writeText(code)
+  copiedId.value = id
+  setTimeout(() => { copiedId.value = null }, 2000)
+}
+
+async function showQR(bill: Bill) {
+  qrBill.value = bill
+  const content = bill.payment_code || `${bill.user_provider?.nickname || bill.user_provider?.provider?.name || ''}`
+  try {
+    qrDataUrl.value = await QRCode.toDataURL(content, { width: 256, margin: 2, color: { dark: '#1f2937', light: '#f9fafb' } })
+  } catch {
+    qrDataUrl.value = ''
+  }
+}
+
+async function enableNotifications() {
+  const token = await requestNotificationToken()
+  if (token) {
+    await store.registerNotificationToken(token)
+    notifGranted.value = true
+    notifDismissed.value = true
+    localStorage.setItem('notif_dismissed', '1')
+  }
+}
+
+function dismissNotifBanner() {
+  notifDismissed.value = true
+  localStorage.setItem('notif_dismissed', '1')
+}
+
+async function parseEmail() {
+  if (!emailContent.value.trim()) return
+  parsingEmail.value = true
+  emailError.value = ''
+  try {
+    const result = await store.parseEmail(emailContent.value)
+    if (result.amount != null) form.value.amount = String(result.amount)
+    if (result.due_date) form.value.due_date = result.due_date
+    if (result.issued_date) form.value.issued_date = result.issued_date
+    if (result.notes) form.value.notes = result.notes
+    if (result.payment_code) form.value.payment_code = result.payment_code
+    if (result.provider_name) {
+      const name = result.provider_name.toLowerCase()
+      const match = unref(store.userProviders).find(up =>
+        (up.nickname || up.provider?.name || '').toLowerCase().includes(name) ||
+        name.includes((up.nickname || up.provider?.name || '').toLowerCase())
+      )
+      if (match) form.value.user_provider_id = match.id
+    }
+    showEmailInput.value = false
+    emailContent.value = ''
+  } catch (e: any) {
+    emailError.value = e.response?.data?.error || 'Αποτυχία ανάλυσης email.'
+  } finally {
+    parsingEmail.value = false
+  }
+}
+
 function openCreate() {
   editingBill.value = null
-  form.value = { user_provider_id: '', amount: '', due_date: '', issued_date: '', notes: '' }
+  form.value = { user_provider_id: '', amount: '', due_date: '', issued_date: '', notes: '', payment_code: '' }
   scanError.value = ''
   showModal.value = true
 }
@@ -101,6 +179,7 @@ function openEdit(id: string) {
     due_date: bill.due_date.split('T')[0] ?? '',
     issued_date: bill.issued_date ? bill.issued_date.split('T')[0] ?? '' : '',
     notes: bill.notes,
+    payment_code: bill.payment_code || '',
   }
   scanError.value = ''
   showModal.value = true
@@ -113,6 +192,7 @@ async function submitForm() {
     due_date: new Date(form.value.due_date).toISOString(),
     issued_date: form.value.issued_date ? new Date(form.value.issued_date).toISOString() : undefined,
     notes: form.value.notes,
+    payment_code: form.value.payment_code || undefined,
   }
   if (editingBill.value) {
     await store.updateBill(editingBill.value, payload)
@@ -155,6 +235,7 @@ async function onFileSelected(event: Event) {
     if (result.due_date) form.value.due_date = result.due_date
     if (result.issued_date) form.value.issued_date = result.issued_date
     if (result.notes) form.value.notes = result.notes
+    if (result.payment_code) form.value.payment_code = result.payment_code
     // Try to match provider name to a user provider
     if (result.provider_name) {
       const name = result.provider_name.toLowerCase()
@@ -174,6 +255,20 @@ async function onFileSelected(event: Event) {
 
 <template>
   <div>
+    <!-- Notification permission banner -->
+    <div
+      v-if="notifSupported && !notifDismissed && !notifGranted"
+      class="flex items-center justify-between gap-3 bg-blue-900/30 border border-blue-700/50 rounded-xl px-4 py-3 mb-4 text-sm"
+    >
+      <span class="text-blue-300">🔔 Ενεργοποίησε υπενθυμίσεις πληρωμών</span>
+      <div class="flex gap-2 shrink-0">
+        <button @click="enableNotifications" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors">
+          Ενεργοποίηση
+        </button>
+        <button @click="dismissNotifBanner" class="text-gray-400 hover:text-gray-300 px-2 py-1 text-xs">✕</button>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between mb-5">
       <h2 class="text-xl md:text-2xl font-bold text-gray-50">Λογαριασμοί</h2>
       <button
@@ -288,6 +383,17 @@ async function onFileSelected(event: Event) {
           </p>
           <p class="text-xs text-gray-400 hidden sm:block">Λήξη: {{ formatDate(bill.due_date) }}</p>
           <p class="text-xs text-gray-400 sm:hidden">{{ formatDate(bill.due_date) }}</p>
+          <button
+            v-if="bill.payment_code"
+            @click.stop="copyPaymentCode(bill.payment_code, bill.id)"
+            class="flex items-center gap-1 mt-0.5 max-w-full group"
+            :title="'Αντιγραφή: ' + bill.payment_code"
+          >
+            <span class="text-[11px] font-mono text-blue-400/80 truncate group-hover:text-blue-300 transition-colors">{{ bill.payment_code }}</span>
+            <span class="text-[10px] shrink-0 transition-colors" :class="copiedId === bill.id ? 'text-green-400' : 'text-gray-500 group-hover:text-gray-300'">
+              {{ copiedId === bill.id ? '✓' : '⎘' }}
+            </span>
+          </button>
         </div>
 
         <!-- Status: dot on mobile, badge on sm+ -->
@@ -324,6 +430,15 @@ async function onFileSelected(event: Event) {
             <span class="sm:hidden">↩</span>
             <span class="hidden sm:inline">↩ Αναίρεση</span>
           </button>
+          <button
+            v-if="bill.payment_code"
+            @click="showQR(bill)"
+            class="text-xs bg-gray-700 hover:bg-indigo-900/40 text-gray-300 hover:text-indigo-300 font-medium px-1.5 py-1.5 rounded-lg border border-gray-600 hover:border-indigo-700 transition-colors"
+            title="QR / IRIS"
+          >
+            <span class="hidden sm:inline">📱 QR</span>
+            <span class="sm:hidden">📱</span>
+          </button>
           <a
             v-if="bill.user_provider?.provider?.payment_url"
             :href="bill.user_provider?.provider?.payment_url"
@@ -349,6 +464,37 @@ async function onFileSelected(event: Event) {
       </div>
     </div>
 
+    <!-- QR / IRIS modal -->
+    <div v-if="qrBill" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4" @click.self="qrBill = null">
+      <div class="bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-xs text-center">
+        <h3 class="text-base font-semibold text-gray-50 mb-1">
+          {{ qrBill.user_provider?.nickname || qrBill.user_provider?.provider?.name }}
+        </h3>
+        <p class="text-xs text-gray-400 mb-4">Σάρωσε με την εφαρμογή τράπεζάς σου (IRIS)</p>
+        <div class="flex justify-center mb-4">
+          <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code" class="rounded-xl w-52 h-52" />
+          <div v-else class="w-52 h-52 flex items-center justify-center text-gray-500 text-sm">Δεν υπάρχει κωδικός</div>
+        </div>
+        <p class="text-xs font-mono text-blue-400 bg-gray-900/60 rounded-lg px-3 py-2 mb-4 break-all select-all">
+          {{ qrBill.payment_code }}
+        </p>
+        <div class="flex gap-2">
+          <button
+            @click="copyPaymentCode(qrBill!.payment_code, qrBill!.id)"
+            class="flex-1 py-2 rounded-lg border border-gray-600 text-xs font-medium text-gray-300 hover:bg-gray-700 transition-colors"
+          >
+            {{ copiedId === qrBill.id ? '✓ Αντιγράφηκε' : '⎘ Αντιγραφή' }}
+          </button>
+          <button
+            @click="qrBill = null"
+            class="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-xs font-medium text-gray-300 transition-colors"
+          >
+            Κλείσιμο
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Hidden file input for scanning -->
     <input
       ref="fileInput"
@@ -365,21 +511,55 @@ async function onFileSelected(event: Event) {
           <h3 class="text-lg font-semibold text-gray-50">
             {{ editingBill ? 'Επεξεργασία' : 'Νέος λογαριασμός' }}
           </h3>
-          <!-- Scan button (only for new bills) -->
-          <button
-            v-if="!editingBill"
-            type="button"
-            @click="triggerScan"
-            :disabled="scanning"
-            class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-600 hover:bg-gray-700/60 text-gray-400 transition-colors disabled:opacity-60"
-          >
-            <span v-if="scanning" class="animate-spin">⏳</span>
-            <span v-else>📷</span>
-            {{ scanning ? 'Ανάλυση…' : 'Σάρωση λογαριασμού' }}
-          </button>
+          <!-- Scan + Email buttons (only for new bills) -->
+          <div v-if="!editingBill" class="flex gap-1.5">
+            <button
+              type="button"
+              @click="triggerScan"
+              :disabled="scanning || parsingEmail"
+              class="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-600 hover:bg-gray-700/60 text-gray-400 transition-colors disabled:opacity-60"
+              title="Σάρωση λογαριασμού"
+            >
+              <span v-if="scanning" class="animate-spin">⏳</span>
+              <span v-else>📷</span>
+              <span class="hidden sm:inline">{{ scanning ? 'Ανάλυση…' : 'Σάρωση' }}</span>
+            </button>
+            <button
+              type="button"
+              @click="showEmailInput = !showEmailInput; emailError = ''"
+              :disabled="scanning || parsingEmail"
+              class="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-600 hover:bg-gray-700/60 text-gray-400 transition-colors disabled:opacity-60"
+              :class="showEmailInput ? 'border-blue-600 text-blue-400' : ''"
+              title="Ανάλυση από email"
+            >
+              <span v-if="parsingEmail" class="animate-spin">⏳</span>
+              <span v-else>📧</span>
+              <span class="hidden sm:inline">{{ parsingEmail ? 'Ανάλυση…' : 'Email' }}</span>
+            </button>
+          </div>
         </div>
 
         <p v-if="scanError" class="text-red-400 text-xs mb-3 bg-red-900/20 px-3 py-2 rounded-lg">{{ scanError }}</p>
+
+        <!-- Email paste area -->
+        <div v-if="showEmailInput && !editingBill" class="mb-4 bg-gray-900/60 rounded-xl p-3 border border-blue-700/40">
+          <label class="block text-xs font-medium text-blue-300 mb-1.5">Επικόλλησε το περιεχόμενο του email</label>
+          <textarea
+            v-model="emailContent"
+            rows="5"
+            placeholder="Αντέγραψε και επικόλλησε εδώ το κείμενο του email με τον λογαριασμό…"
+            class="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-xs text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+          <p v-if="emailError" class="text-red-400 text-xs mt-1">{{ emailError }}</p>
+          <button
+            type="button"
+            @click="parseEmail"
+            :disabled="parsingEmail || !emailContent.trim()"
+            class="mt-2 w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+          >
+            {{ parsingEmail ? 'Ανάλυση…' : 'Εξαγωγή στοιχείων' }}
+          </button>
+        </div>
 
         <form @submit.prevent="submitForm" class="space-y-4">
           <div v-if="!editingBill">
@@ -437,6 +617,17 @@ async function onFileSelected(event: Event) {
               class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Προαιρετικό"
             />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Κωδικός πληρωμής</label>
+            <input
+              v-model="form.payment_code"
+              type="text"
+              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="π.χ. RF47 1234 5678 9012"
+            />
+            <p class="text-xs text-gray-500 mt-1">Αποθήκευσε τον RF ή άλλο κωδικό για εύκολη αντιγραφή</p>
           </div>
 
           <div class="flex gap-3 pt-2">

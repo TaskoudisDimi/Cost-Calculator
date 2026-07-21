@@ -2,6 +2,7 @@ package router
 
 import (
 	"cloud.google.com/go/firestore"
+	firebasesdk "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"github.com/dimitris-taskou/cost-calculator/internal/handlers"
 	"github.com/dimitris-taskou/cost-calculator/internal/middleware"
@@ -9,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gin.Engine {
+func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret string) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
 		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization", "X-Scheduler-Secret"},
 	}))
 
 	providersH := handlers.NewProvidersHandler(fs)
@@ -24,10 +25,15 @@ func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gi
 	expensesH := handlers.NewExpensesHandler(fs)
 	incomeH := handlers.NewIncomeHandler(fs)
 	scanH := handlers.NewScanHandler(anthropicKey)
+	notifyH := handlers.NewNotifyHandler(fs, app, schedulerSecret)
 
 	authMW := middleware.Auth(authClient)
 
 	api := r.Group("/api")
+
+	// Scheduler-called endpoint (authenticated via X-Scheduler-Secret header)
+	api.POST("/notify/send-reminders", notifyH.SendReminders)
+
 	protected := api.Group("/")
 	protected.Use(authMW)
 	{
@@ -48,6 +54,7 @@ func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gi
 		protected.PATCH("/bills/:id/pay", billsH.MarkPaid)
 		protected.PATCH("/bills/:id/unpay", billsH.MarkUnpaid)
 		protected.POST("/bills/scan", scanH.ScanBill)
+		protected.POST("/bills/parse-email", scanH.ParseEmail)
 
 		protected.GET("/expenses", expensesH.List)
 		protected.POST("/expenses", expensesH.Create)
@@ -60,6 +67,8 @@ func New(fs *firestore.Client, authClient *auth.Client, anthropicKey string) *gi
 		protected.DELETE("/income", incomeH.BulkDelete)
 
 		protected.GET("/dashboard", billsH.Dashboard)
+
+		protected.POST("/notify/register", notifyH.RegisterToken)
 	}
 
 	return r

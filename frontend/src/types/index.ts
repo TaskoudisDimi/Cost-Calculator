@@ -36,6 +36,7 @@ export interface Bill {
   status: BillStatus
   paid_at: string | null
   notes: string
+  payment_code: string
   created_at: string
   updated_at: string
 }
@@ -99,6 +100,7 @@ export interface ScanResult {
   due_date: string | null
   issued_date: string | null
   notes: string | null
+  payment_code: string | null
 }
 
 export interface UserCredential {
