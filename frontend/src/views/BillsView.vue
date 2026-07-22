@@ -2,10 +2,12 @@
 import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
+import { useToast } from '@/composables/useToast'
 import { formatDate, formatAmount, statusLabel, statusClass } from '@/utils/format'
-import { requestNotificationToken } from '@/firebase'
 import type { Bill, BillStatus } from '@/types'
 import QRCode from 'qrcode'
+
+const { toast } = useToast()
 
 const { confirm } = useConfirm()
 
@@ -120,12 +122,27 @@ async function showQR(bill: Bill) {
 }
 
 async function enableNotifications() {
-  const token = await requestNotificationToken()
-  if (token) {
-    await store.registerNotificationToken(token)
-    notifGranted.value = true
-    notifDismissed.value = true
-    localStorage.setItem('notif_dismissed', '1')
+  if (!notifSupported.value) return
+  try {
+    const permission = await Notification.requestPermission()
+    if (permission === 'granted') {
+      notifGranted.value = true
+      notifDismissed.value = true
+      localStorage.setItem('notif_dismissed', '1')
+      toast('Υπενθυμίσεις ενεργοποιήθηκαν', 'success')
+      // Try FCM registration in background (needs VAPID key in .env)
+      try {
+        const { requestNotificationToken } = await import('@/firebase')
+        const token = await requestNotificationToken()
+        if (token) await store.registerNotificationToken(token)
+      } catch { /* silent — works once VAPID key is configured */ }
+    } else {
+      toast('Απορρίφθηκε η άδεια ειδοποιήσεων', 'warning')
+      notifDismissed.value = true
+      localStorage.setItem('notif_dismissed', '1')
+    }
+  } catch {
+    toast('Οι ειδοποιήσεις δεν υποστηρίζονται', 'error')
   }
 }
 
@@ -192,12 +209,14 @@ async function submitForm() {
     due_date: new Date(form.value.due_date).toISOString(),
     issued_date: form.value.issued_date ? new Date(form.value.issued_date).toISOString() : undefined,
     notes: form.value.notes,
-    payment_code: form.value.payment_code || undefined,
+    payment_code: form.value.payment_code, // send empty string to clear existing code
   }
   if (editingBill.value) {
     await store.updateBill(editingBill.value, payload)
+    toast('Αποθηκεύτηκε', 'success')
   } else {
     await store.createBill(payload)
+    toast('Λογαριασμός προστέθηκε', 'success')
   }
   showModal.value = false
   await store.fetchBills()
@@ -205,16 +224,19 @@ async function submitForm() {
 
 async function markPaid(id: string) {
   await store.markPaid(id)
+  toast('Πληρώθηκε ✓', 'success')
 }
 
 async function markUnpaid(id: string) {
   await store.markUnpaid(id)
+  toast('Αναιρέθηκε', 'info')
 }
 
 async function deleteBill(id: string) {
   if (!await confirm({ message: 'Ο λογαριασμός θα διαγραφεί οριστικά.' })) return
   await store.deleteBill(id)
   selected.value.delete(id)
+  toast('Διαγράφηκε', 'warning')
 }
 
 function triggerScan() {

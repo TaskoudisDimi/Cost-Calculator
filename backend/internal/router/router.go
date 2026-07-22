@@ -26,6 +26,7 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 	incomeH := handlers.NewIncomeHandler(fs)
 	scanH := handlers.NewScanHandler(anthropicKey)
 	notifyH := handlers.NewNotifyHandler(fs, app, schedulerSecret)
+	settingsH := handlers.NewSettingsHandler(fs)
 
 	authMW := middleware.Auth(authClient)
 
@@ -69,6 +70,10 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.GET("/dashboard", billsH.Dashboard)
 
 		protected.POST("/notify/register", notifyH.RegisterToken)
+
+		protected.GET("/settings", settingsH.GetSettings)
+		protected.PUT("/settings", settingsH.UpdateSettings)
+		protected.DELETE("/account", settingsH.DeleteAccount)
 	}
 
 	return r
