@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -75,6 +78,7 @@ type createBillRequest struct {
 	IssuedDate     *time.Time `json:"issued_date"`
 	Notes          string     `json:"notes"`
 	PaymentCode    string     `json:"payment_code"`
+	Recurring      bool       `json:"recurring"`
 }
 
 func (h *BillsHandler) CreateBill(c *gin.Context) {
@@ -113,6 +117,7 @@ func (h *BillsHandler) CreateBill(c *gin.Context) {
 		Status:         billStatus,
 		Notes:          req.Notes,
 		PaymentCode:    req.PaymentCode,
+		Recurring:      req.Recurring,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -274,7 +279,43 @@ func (h *BillsHandler) MarkPaid(c *gin.Context) {
 		{Path: "paid_at", Value: now},
 		{Path: "updated_at", Value: now},
 	})
+
+	// Auto-create next month's bill for recurring bills
+	if bill.Recurring {
+		nextDue := nextMonthDay(bill.DueDate)
+		nextStatus := "pending"
+		if now.After(nextDue) {
+			nextStatus = "overdue"
+		}
+		next := models.Bill{
+			UserID:         bill.UserID,
+			UserProviderID: bill.UserProviderID,
+			UserProvider:   bill.UserProvider,
+			Amount:         bill.Amount,
+			DueDate:        nextDue,
+			Status:         nextStatus,
+			Notes:          bill.Notes,
+			PaymentCode:    bill.PaymentCode,
+			Recurring:      true,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		h.bills(ctx).Add(ctx, next)
+	}
+
 	c.JSON(http.StatusOK, bill)
+}
+
+// nextMonthDay returns the same calendar day in the following month,
+// clamped to the last day of that month (e.g. Jan 31 → Feb 28/29).
+func nextMonthDay(t time.Time) time.Time {
+	y, m, d := t.Date()
+	firstOfNext := time.Date(y, m+1, 1, 0, 0, 0, 0, t.Location())
+	lastOfNext := firstOfNext.AddDate(0, 1, -1).Day()
+	if d > lastOfNext {
+		d = lastOfNext
+	}
+	return time.Date(y, m+1, d, 0, 0, 0, 0, t.Location())
 }
 
 func (h *BillsHandler) MarkUnpaid(c *gin.Context) {
@@ -310,6 +351,113 @@ func (h *BillsHandler) MarkUnpaid(c *gin.Context) {
 		{Path: "updated_at", Value: now},
 	})
 	c.JSON(http.StatusOK, bill)
+}
+
+type MonthStat struct {
+	Month    string  `json:"month"`
+	Bills    float64 `json:"bills"`
+	Expenses float64 `json:"expenses"`
+	Income   float64 `json:"income"`
+}
+
+func (h *BillsHandler) Analytics(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	ctx := context.Background()
+
+	yearStr := c.Query("year")
+	if yearStr == "" {
+		yearStr = strconv.Itoa(time.Now().Year())
+	}
+	yearInt, err := strconv.Atoi(yearStr)
+	if err != nil || yearInt < 2000 || yearInt > 2100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid year"})
+		return
+	}
+
+	yearStart := time.Date(yearInt, 1, 1, 0, 0, 0, 0, time.UTC)
+	yearEnd := time.Date(yearInt+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// Pre-populate 12 months
+	monthly := make(map[string]*MonthStat, 12)
+	for m := 1; m <= 12; m++ {
+		key := fmt.Sprintf("%04d-%02d", yearInt, m)
+		monthly[key] = &MonthStat{Month: key}
+	}
+
+	byCategory := make(map[string]float64)
+
+	// Bills for the year
+	billDocs, _ := h.bills(ctx).
+		Where("user_id", "==", userID).
+		Where("due_date", ">=", yearStart).
+		Where("due_date", "<", yearEnd).
+		Documents(ctx).GetAll()
+
+	for _, d := range billDocs {
+		var b models.Bill
+		d.DataTo(&b)
+		key := b.DueDate.Format("2006-01")
+		if ms, ok := monthly[key]; ok {
+			ms.Bills += b.Amount
+		}
+		cat := b.UserProvider.Provider.Category
+		if cat == "" {
+			cat = "other"
+		}
+		byCategory[cat] += b.Amount
+	}
+
+	// Income for the year
+	incomeDocs, _ := h.fs.Collection("income").
+		Where("user_id", "==", userID).
+		Documents(ctx).GetAll()
+	for _, d := range incomeDocs {
+		var inc models.Income
+		d.DataTo(&inc)
+		if !strings.HasPrefix(inc.Month, yearStr) {
+			continue
+		}
+		if ms, ok := monthly[inc.Month]; ok {
+			ms.Income += inc.Amount
+		}
+	}
+
+	// Expenses for the year
+	expDocs, _ := h.fs.Collection("expenses").
+		Where("user_id", "==", userID).
+		Documents(ctx).GetAll()
+	for _, d := range expDocs {
+		var e models.Expense
+		d.DataTo(&e)
+		if !strings.HasPrefix(e.Month, yearStr) {
+			continue
+		}
+		if ms, ok := monthly[e.Month]; ok {
+			ms.Expenses += e.Amount
+		}
+	}
+
+	// Build ordered slice
+	sorted := make([]MonthStat, 12)
+	var totalIncome, totalBills, totalExpenses float64
+	for i := 1; i <= 12; i++ {
+		key := fmt.Sprintf("%04d-%02d", yearInt, i)
+		ms := monthly[key]
+		sorted[i-1] = *ms
+		totalIncome += ms.Income
+		totalBills += ms.Bills
+		totalExpenses += ms.Expenses
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"year":           yearStr,
+		"monthly":        sorted,
+		"by_category":    byCategory,
+		"total_income":   totalIncome,
+		"total_bills":    totalBills,
+		"total_expenses": totalExpenses,
+		"total_saved":    totalIncome - totalBills - totalExpenses,
+	})
 }
 
 func (h *BillsHandler) Dashboard(c *gin.Context) {

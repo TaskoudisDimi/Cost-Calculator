@@ -26,6 +26,7 @@ const router = createRouter({
         { path: 'providers', name: 'providers', component: () => import('@/views/ProvidersView.vue') },
         { path: 'credentials', name: 'credentials', component: () => import('@/views/CredentialsView.vue') },
         { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+        { path: 'analytics', name: 'analytics', component: () => import('@/views/AnalyticsView.vue') },
       ],
     },
   ],

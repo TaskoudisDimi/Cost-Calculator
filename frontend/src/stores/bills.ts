@@ -8,7 +8,7 @@ function safeArr<T>(ref: any): T[] {
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db, auth } from '@/firebase'
 import api from '@/api/client'
-import type { Bill, UserProvider, Provider, DashboardSummary, UserProviderTemplate, ScanResult } from '@/types'
+import type { Bill, UserProvider, Provider, DashboardSummary, UserProviderTemplate, ScanResult, AnalyticsSummary } from '@/types'
 
 
 export const useBillsStore = defineStore('bills', () => {
@@ -35,6 +35,11 @@ export const useBillsStore = defineStore('bills', () => {
     }
   }
 
+  async function fetchAnalytics(year: string): Promise<AnalyticsSummary> {
+    const { data } = await api.get<AnalyticsSummary>(`/analytics?year=${year}`)
+    return data
+  }
+
   async function createBill(payload: {
     user_provider_id: string
     amount: number
@@ -42,6 +47,7 @@ export const useBillsStore = defineStore('bills', () => {
     issued_date?: string
     notes?: string
     payment_code?: string
+    recurring?: boolean
   }) {
     const { data } = await api.post<Bill>('/bills', payload)
     const arr = safeArr<Bill>(bills)
@@ -189,7 +195,7 @@ export const useBillsStore = defineStore('bills', () => {
 
   return {
     bills, userProviders, providers, providerTemplates, dashboard, loading,
-    fetchDashboard, fetchBills, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills,
+    fetchDashboard, fetchBills, fetchAnalytics, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
     scanBill, parseEmail, registerNotificationToken, startRealtimeSync, stopRealtimeSync,

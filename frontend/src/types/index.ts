@@ -37,8 +37,26 @@ export interface Bill {
   paid_at: string | null
   notes: string
   payment_code: string
+  recurring: boolean
   created_at: string
   updated_at: string
+}
+
+export interface MonthStat {
+  month: string
+  bills: number
+  expenses: number
+  income: number
+}
+
+export interface AnalyticsSummary {
+  year: string
+  monthly: MonthStat[]
+  by_category: Record<string, number>
+  total_income: number
+  total_bills: number
+  total_expenses: number
+  total_saved: number
 }
 
 export type ExpenseStatus = 'planned' | 'bought'

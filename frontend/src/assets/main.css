@@ -1,32 +1,38 @@
 @import "tailwindcss";
 
-/* ── Global dark theme overrides ── */
+/* ── Global dark theme ── */
 html, body {
-  background-color: #111827; /* gray-900 */
-  color: #f9fafb; /* gray-50 */
+  background-color: #0d1117;
+  color: #f9fafb;
 }
 
-/* Inputs, textareas, selects */
+/* Inputs, textareas, selects — darker than card bg for visual depth */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 textarea,
 select {
-  background-color: #1f2937 !important; /* gray-800 */
-  color: #f3f4f6 !important; /* gray-100 */
-  border-color: #4b5563 !important; /* gray-600 */
+  background-color: #0d1117 !important;
+  color: #e5e7eb !important;
+  border-color: #374151 !important; /* gray-700 */
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280 !important; /* gray-500 */
+  color: #6b7280 !important;
 }
 
-/* Autofill dark override */
+/* Autofill */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #1f2937 inset !important;
-  -webkit-text-fill-color: #f3f4f6 !important;
-  border-color: #4b5563 !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1117 inset !important;
+  -webkit-text-fill-color: #e5e7eb !important;
+  border-color: #374151 !important;
+}
+
+/* month/date input color fix on WebKit */
+input[type="month"],
+input[type="date"] {
+  color-scheme: dark;
 }
 
 /* Scrollbar */

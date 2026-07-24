@@ -6,6 +6,8 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User as FirebaseUser,
 } from 'firebase/auth'
 import { auth } from '@/firebase'
@@ -46,10 +48,19 @@ export const useAuthStore = defineStore('auth', () => {
     firebaseUser.value = fbUser
   }
 
+  async function loginWithGoogle() {
+    const provider = new GoogleAuthProvider()
+    await signInWithPopup(auth, provider)
+  }
+
+  const isGoogleUser = computed(() =>
+    firebaseUser.value?.providerData?.some(p => p.providerId === 'google.com') ?? false
+  )
+
   async function logout() {
     await signOut(auth)
     firebaseUser.value = null
   }
 
-  return { user, firebaseUser, loading, isAuthenticated, getToken, login, register, logout }
+  return { user, firebaseUser, loading, isAuthenticated, isGoogleUser, getToken, login, register, loginWithGoogle, logout }
 })

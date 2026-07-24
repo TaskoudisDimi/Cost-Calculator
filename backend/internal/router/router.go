@@ -68,6 +68,7 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.DELETE("/income", incomeH.BulkDelete)
 
 		protected.GET("/dashboard", billsH.Dashboard)
+		protected.GET("/analytics", billsH.Analytics)
 
 		protected.POST("/notify/register", notifyH.RegisterToken)
 

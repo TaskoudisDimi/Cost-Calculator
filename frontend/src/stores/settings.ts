@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/client'
+import { activeCurrency } from '@/utils/format'
 
 export interface UserSettings {
   notif_enabled: boolean
@@ -21,6 +22,7 @@ export const useSettingsStore = defineStore('settings', () => {
       notifEnabled.value = data.notif_enabled
       notifDays.value = data.notif_days
       currency.value = data.currency || 'EUR'
+      activeCurrency.value = data.currency || 'EUR'
     } finally {
       loading.value = false
     }
@@ -32,6 +34,7 @@ export const useSettingsStore = defineStore('settings', () => {
       notif_days: notifDays.value,
       currency: currency.value,
     })
+    activeCurrency.value = currency.value
   }
 
   async function deleteAccount() {

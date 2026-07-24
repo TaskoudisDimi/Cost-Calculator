@@ -1,7 +1,14 @@
+import { ref } from 'vue'
+import { locale } from '@/composables/useLocale'
 import type { BillStatus, ProviderCategory, ExpenseCategory, ExpenseStatus } from '@/types'
 
+export const activeCurrency = ref('EUR')
+
 export function formatAmount(amount: number): string {
-  return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' }).format(amount)
+  return new Intl.NumberFormat('el-GR', {
+    style: 'currency',
+    currency: activeCurrency.value,
+  }).format(amount)
 }
 
 export function formatDate(date: string | null | undefined): string {
@@ -16,7 +23,9 @@ export function formatDate(date: string | null | undefined): string {
 }
 
 export function statusLabel(status: BillStatus): string {
-  return { pending: 'Εκκρεμής', paid: 'Πληρωμένος', overdue: 'Ληξιπρόθεσμος' }[status]
+  const el = { pending: 'Εκκρεμής', paid: 'Πληρωμένος', overdue: 'Ληξιπρόθεσμος' }
+  const en = { pending: 'Pending', paid: 'Paid', overdue: 'Overdue' }
+  return (locale.value === 'en' ? en : el)[status]
 }
 
 export function statusClass(status: BillStatus): string {
@@ -28,29 +37,29 @@ export function statusClass(status: BillStatus): string {
 }
 
 export function categoryLabel(cat: string): string {
-  const labels: Record<string, string> = {
-    energy: 'Ρεύμα',
-    water: 'Νερό',
-    telecom: 'Τηλεπικοινωνίες',
-    streaming: 'Streaming',
-    subscription: 'Συνδρομές',
-    housing: 'Κατοικία',
-    finance: 'Οικονομικά',
-    car: 'Αυτοκίνητο',
-    other: 'Άλλο',
-  }
-  return labels[cat] ?? cat
+  const el: Record<string, string> = { energy: 'Ρεύμα', water: 'Νερό', telecom: 'Τηλεπικοινωνίες', streaming: 'Streaming', subscription: 'Συνδρομές', housing: 'Κατοικία', finance: 'Οικονομικά', car: 'Αυτοκίνητο', other: 'Άλλο' }
+  const en: Record<string, string> = { energy: 'Energy', water: 'Water', telecom: 'Telecom', streaming: 'Streaming', subscription: 'Subscriptions', housing: 'Housing', finance: 'Finance', car: 'Car', other: 'Other' }
+  const map = locale.value === 'en' ? en : el
+  return map[cat] ?? cat
 }
 
 export function expenseCategoryLabel(cat: ExpenseCategory): string {
+  const el = { shopping: 'Ψώνια', food: 'Φαγητό', transport: 'Μεταφορά', health: 'Υγεία', entertainment: 'Ψυχαγωγία', other: 'Άλλο' }
+  const en = { shopping: 'Shopping', food: 'Food', transport: 'Transport', health: 'Health', entertainment: 'Entertainment', other: 'Other' }
+  return (locale.value === 'en' ? en : el)[cat]
+}
+
+export function expenseCategoryIcon(cat: ExpenseCategory): string {
   return {
-    shopping: 'Ψώνια', food: 'Φαγητό', transport: 'Μεταφορά',
-    health: 'Υγεία', entertainment: 'Ψυχαγωγία', other: 'Άλλο',
+    shopping: '🛍️', food: '🍽️', transport: '🚗',
+    health: '💊', entertainment: '🎬', other: '📦',
   }[cat]
 }
 
 export function expenseStatusLabel(s: ExpenseStatus): string {
-  return { planned: 'Προγραμματισμένο', bought: 'Αγοράστηκε' }[s]
+  const el = { planned: 'Προγραμματισμένο', bought: 'Αγοράστηκε' }
+  const en = { planned: 'Planned', bought: 'Purchased' }
+  return (locale.value === 'en' ? en : el)[s]
 }
 
 export function expenseStatusClass(s: ExpenseStatus): string {
@@ -63,6 +72,7 @@ export function currentMonth(): string {
 
 export function monthLabel(month: string): string {
   const [year, m] = month.split('-')
-  return new Intl.DateTimeFormat('el-GR', { month: 'long', year: 'numeric' })
+  const loc = locale.value === 'en' ? 'en-GB' : 'el-GR'
+  return new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' })
     .format(new Date(Number(year), Number(m) - 1))
 }
