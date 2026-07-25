@@ -7,6 +7,7 @@ const display = ref('0')
 const expression = ref('')
 const justEvaluated = ref(false)
 const hasError = ref(false)
+const digitEntered = ref(false) // true when user has typed at least one digit since last operator
 
 function open() { isOpen.value = true }
 function close() { isOpen.value = false }
@@ -16,15 +17,20 @@ function reset() {
   expression.value = ''
   justEvaluated.value = false
   hasError.value = false
+  digitEntered.value = false
 }
 
 function pressDigit(d: string) {
   if (hasError.value) reset()
   if (justEvaluated.value) {
-    display.value = d
+    // Start a new calculation from scratch after =
+    expression.value = ''
+    display.value = d === '.' ? '0.' : d
     justEvaluated.value = false
+    digitEntered.value = true
     return
   }
+  digitEntered.value = true
   if (display.value === '0' && d !== '.') {
     display.value = d
   } else if (d === '.' && display.value.includes('.')) {
@@ -38,14 +44,18 @@ function pressDigit(d: string) {
 function pressOp(op: string) {
   if (hasError.value) reset()
   justEvaluated.value = false
+
   const last = expression.value.slice(-1)
   const isLastOp = ['+', '-', '×', '÷'].includes(last)
 
-  if (isLastOp) {
+  // If last char is an op AND the user hasn't typed a new digit → just replace the operator
+  if (isLastOp && !digitEntered.value) {
     expression.value = expression.value.slice(0, -1) + op
   } else {
+    // Commit the current display to expression, then wait for next operand
     expression.value += display.value + op
     display.value = '0'
+    digitEntered.value = false
   }
 }
 
@@ -53,6 +63,7 @@ function pressPercent() {
   const val = parseFloat(display.value)
   if (isNaN(val)) return
   display.value = String(val / 100)
+  digitEntered.value = true
 }
 
 function backspace() {
@@ -60,6 +71,7 @@ function backspace() {
   if (justEvaluated.value) { reset(); return }
   if (display.value.length <= 1 || display.value === '-0') {
     display.value = '0'
+    digitEntered.value = false
   } else {
     display.value = display.value.slice(0, -1)
   }
@@ -67,15 +79,16 @@ function backspace() {
 
 function evaluate() {
   if (hasError.value) { reset(); return }
+  // If no expression built up yet, nothing to evaluate
+  if (!expression.value && !digitEntered.value) return
+
   const full = expression.value + display.value
-  if (!expression.value) return
 
   try {
     const normalized = full
       .replace(/×/g, '*')
       .replace(/÷/g, '/')
 
-    // Safe eval: only allow digits, operators, dots, parentheses
     if (!/^[\d\s+\-*/().]+$/.test(normalized)) throw new Error('invalid')
 
     // eslint-disable-next-line no-new-func
@@ -86,10 +99,12 @@ function evaluate() {
     display.value = String(rounded)
     expression.value = ''
     justEvaluated.value = true
+    digitEntered.value = false
   } catch {
     display.value = 'Σφάλμα'
     expression.value = ''
     hasError.value = true
+    digitEntered.value = false
   }
 }
 

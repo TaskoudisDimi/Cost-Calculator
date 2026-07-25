@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, unref } from 'vue'
+import { ref, computed, onMounted, unref, onUnmounted } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLocale } from '@/composables/useLocale'
@@ -9,6 +9,7 @@ const { confirm } = useConfirm()
 const { t, locale } = useLocale()
 
 const store = useBillsStore()
+const loading = ref(true)
 const showModal = ref(false)
 const modalMode = ref<'list' | 'template'>('list')
 const error = ref('')
@@ -51,7 +52,11 @@ const allCategories = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([store.fetchProviders(), store.fetchUserProviders(), store.fetchProviderTemplates()])
+  try {
+    await Promise.all([store.fetchProviders(), store.fetchUserProviders(), store.fetchProviderTemplates()])
+  } finally {
+    loading.value = false
+  }
 })
 
 function providersByCategory(cat: string) {
@@ -172,8 +177,18 @@ async function deleteTemplate(id: string) {
       </div>
     </div>
 
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div v-for="i in 2" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 h-20 animate-pulse" />
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div v-for="i in 8" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 h-24 animate-pulse" />
+      </div>
+    </div>
+
     <!-- Active user providers -->
-    <div v-if="store.userProviders.length > 0" class="mb-8">
+    <div v-if="!loading && store.userProviders.length > 0" class="mb-8">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">{{ t('providers.active') }}</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
@@ -205,7 +220,7 @@ async function deleteTemplate(id: string) {
     </div>
 
     <!-- Providers grid by category -->
-    <div v-for="cat in allCategories" :key="cat">
+    <div v-if="!loading" v-for="cat in allCategories" :key="cat">
       <div v-if="hasAnythingInCategory(cat)" class="mb-6">
         <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
           {{ categoryLabel(cat) }}

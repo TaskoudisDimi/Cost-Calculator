@@ -11,11 +11,13 @@ import type { UserCredential } from '@/types'
 
 export const useCredentialsStore = defineStore('credentials', () => {
   const credentials = ref<UserCredential[]>([])
+  const loading = ref(false)
   let unsub: Unsubscribe | null = null
 
   function startSync() {
     const uid = auth.currentUser?.uid
     if (!uid || unsub) return
+    loading.value = true
 
     const q = query(
       collection(db, 'userCredentials'),
@@ -39,6 +41,7 @@ export const useCredentialsStore = defineStore('credentials', () => {
             updated_at: data.updated_at?.toDate?.()?.toISOString?.() ?? '',
           } as UserCredential
         })
+        loading.value = false
       },
       err => console.error('[credentials] sync error:', err),
     )
@@ -48,6 +51,7 @@ export const useCredentialsStore = defineStore('credentials', () => {
     unsub?.()
     unsub = null
     credentials.value = []
+    loading.value = false
   }
 
   async function create(payload: {
@@ -88,5 +92,5 @@ export const useCredentialsStore = defineStore('credentials', () => {
     await deleteDoc(doc(db, 'userCredentials', id))
   }
 
-  return { credentials, startSync, stopSync, create, update, remove }
+  return { credentials, loading, startSync, stopSync, create, update, remove }
 })

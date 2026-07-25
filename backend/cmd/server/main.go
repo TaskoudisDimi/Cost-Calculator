@@ -25,7 +25,7 @@ func main() {
 	}
 	seed.MigrateExpenseMonths(ctx, client.Firestore)
 
-	r := router.New(client.Firestore, client.Auth, client.App, cfg.AnthropicAPIKey, cfg.SchedulerSecret)
+	r := router.New(client.Firestore, client.Auth, client.App, cfg.AnthropicAPIKey, cfg.SchedulerSecret, cfg.NordigenSecretID, cfg.NordigenSecretKey, cfg.NordigenRedirectURL)
 
 	log.Printf("server starting on :%s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {

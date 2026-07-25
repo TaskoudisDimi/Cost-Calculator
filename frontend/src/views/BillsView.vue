@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
+import { useMembersStore } from '@/stores/members'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
@@ -13,6 +14,7 @@ const { confirm } = useConfirm()
 const { t, locale } = useLocale()
 
 const store = useBillsStore()
+const membersStore = useMembersStore()
 
 const showModal = ref(false)
 const editingBill = ref<string | null>(null)
@@ -42,6 +44,7 @@ const notifGranted = ref('Notification' in window && Notification.permission ===
 
 const form = ref({
   user_provider_id: '',
+  member_id: '',
   amount: '',
   due_date: '',
   issued_date: '',
@@ -90,7 +93,7 @@ const allSelected = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([store.fetchBills(), store.fetchUserProviders()])
+  await Promise.all([store.fetchBills(), store.fetchUserProviders(), membersStore.fetchMembers()])
 })
 
 function toggleSelect(id: string) {
@@ -210,7 +213,7 @@ async function parseEmail() {
 
 function openCreate() {
   editingBill.value = null
-  form.value = { user_provider_id: '', amount: '', due_date: '', issued_date: '', notes: '', payment_code: '', recurring: false }
+  form.value = { user_provider_id: '', member_id: '', amount: '', due_date: '', issued_date: '', notes: '', payment_code: '', recurring: false }
   scanError.value = ''
   showModal.value = true
 }
@@ -221,6 +224,7 @@ function openEdit(id: string) {
   editingBill.value = id
   form.value = {
     user_provider_id: bill.user_provider_id,
+    member_id: bill.member_id || '',
     amount: String(bill.amount),
     due_date: bill.due_date.split('T')[0] ?? '',
     issued_date: bill.issued_date ? bill.issued_date.split('T')[0] ?? '' : '',
@@ -236,6 +240,7 @@ async function submitForm() {
   saving.value = true
   const payload = {
     user_provider_id: form.value.user_provider_id,
+    member_id: form.value.member_id || undefined,
     amount: parseFloat(form.value.amount),
     due_date: new Date(form.value.due_date).toISOString(),
     issued_date: form.value.issued_date ? new Date(form.value.issued_date).toISOString() : undefined,
@@ -696,6 +701,37 @@ async function onFileSelected(event: Event) {
             </select>
           </div>
 
+          <!-- Member picker (only show when members exist) -->
+          <div v-if="membersStore.members.length > 0">
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">{{ t('bills.member') }}</label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                @click="form.member_id = ''"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                :class="!form.member_id
+                  ? 'bg-gray-700 border-gray-500 text-gray-200'
+                  : 'border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400'"
+              >
+                {{ t('bills.no_member') }}
+              </button>
+              <button
+                v-for="m in membersStore.members"
+                :key="m.id"
+                type="button"
+                @click="form.member_id = m.id"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                :class="form.member_id === m.id
+                  ? 'border-transparent text-white'
+                  : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'"
+                :style="form.member_id === m.id ? { backgroundColor: m.color, borderColor: m.color } : {}"
+              >
+                <span class="w-4 h-4 rounded-full shrink-0" :style="{ backgroundColor: m.color }" />
+                {{ m.name }}
+              </button>
+            </div>
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('bills.amount') }}</label>
             <input
@@ -751,21 +787,30 @@ async function onFileSelected(event: Event) {
           </div>
 
           <!-- Recurring toggle (create only) -->
-          <div v-if="!editingBill" class="flex items-center justify-between py-1 px-3.5 bg-gray-800/40 rounded-xl border border-gray-700/50">
-            <div>
-              <p class="text-sm font-medium text-gray-200">{{ t('bills.recurring') }}</p>
-              <p class="text-xs text-gray-500">{{ t('bills.recurring_desc') }}</p>
-            </div>
+          <div v-if="!editingBill">
             <button
               type="button"
               @click="form.recurring = !form.recurring"
-              class="relative w-10 h-6 rounded-full transition-colors shrink-0 ml-4"
-              :class="form.recurring ? 'bg-blue-600' : 'bg-gray-700'"
+              class="w-full flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border transition-colors"
+              :class="form.recurring
+                ? 'bg-blue-950/40 border-blue-700/60'
+                : 'bg-gray-800/40 border-gray-700/50 hover:border-gray-600'"
             >
-              <span
-                class="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform"
-                :class="form.recurring ? 'translate-x-5' : 'translate-x-1'"
-              />
+              <div class="text-left">
+                <p class="text-sm font-medium" :class="form.recurring ? 'text-blue-200' : 'text-gray-200'">
+                  {{ t('bills.recurring') }}
+                </p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ t('bills.recurring_desc') }}</p>
+              </div>
+              <div
+                class="relative w-11 h-6 rounded-full transition-colors shrink-0"
+                :class="form.recurring ? 'bg-blue-600' : 'bg-gray-600'"
+              >
+                <span
+                  class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200"
+                  :class="form.recurring ? 'translate-x-5' : 'translate-x-0'"
+                />
+              </div>
             </button>
           </div>
 

@@ -73,6 +73,7 @@ func (h *BillsHandler) ListBills(c *gin.Context) {
 
 type createBillRequest struct {
 	UserProviderID string     `json:"user_provider_id" binding:"required"`
+	MemberID       string     `json:"member_id"`
 	Amount         float64    `json:"amount" binding:"required,gt=0"`
 	DueDate        time.Time  `json:"due_date" binding:"required"`
 	IssuedDate     *time.Time `json:"issued_date"`
@@ -109,6 +110,7 @@ func (h *BillsHandler) CreateBill(c *gin.Context) {
 
 	bill := models.Bill{
 		UserID:         userID,
+		MemberID:       req.MemberID,
 		UserProviderID: req.UserProviderID,
 		UserProvider:   up,
 		Amount:         req.Amount,

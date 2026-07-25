@@ -42,6 +42,7 @@ export const useBillsStore = defineStore('bills', () => {
 
   async function createBill(payload: {
     user_provider_id: string
+    member_id?: string
     amount: number
     due_date: string
     issued_date?: string

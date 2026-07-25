@@ -6,11 +6,12 @@ import (
 	"firebase.google.com/go/v4/auth"
 	"github.com/dimitris-taskou/cost-calculator/internal/handlers"
 	"github.com/dimitris-taskou/cost-calculator/internal/middleware"
+	"github.com/dimitris-taskou/cost-calculator/internal/nordigen"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret string) *gin.Engine {
+func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL string) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -18,6 +19,8 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:    []string{"Origin", "Content-Type", "Authorization", "X-Scheduler-Secret"},
 	}))
+
+	nordigenSvc := nordigen.New(nordigenSecretID, nordigenSecretKey)
 
 	providersH := handlers.NewProvidersHandler(fs)
 	templatesH := handlers.NewProviderTemplatesHandler(fs)
@@ -27,6 +30,8 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 	scanH := handlers.NewScanHandler(anthropicKey)
 	notifyH := handlers.NewNotifyHandler(fs, app, schedulerSecret)
 	settingsH := handlers.NewSettingsHandler(fs)
+	bankH := handlers.NewBankHandler(fs, nordigenSvc, nordigenRedirectURL)
+	membersH := handlers.NewMembersHandler(fs)
 
 	authMW := middleware.Auth(authClient)
 
@@ -75,6 +80,17 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.GET("/settings", settingsH.GetSettings)
 		protected.PUT("/settings", settingsH.UpdateSettings)
 		protected.DELETE("/account", settingsH.DeleteAccount)
+
+		protected.GET("/bank/institutions", bankH.ListInstitutions)
+		protected.POST("/bank/connect", bankH.Connect)
+		protected.GET("/bank/status", bankH.Status)
+		protected.POST("/bank/sync", bankH.Sync)
+		protected.DELETE("/bank/disconnect", bankH.Disconnect)
+
+		protected.GET("/members", membersH.List)
+		protected.POST("/members", membersH.Create)
+		protected.PUT("/members/:id", membersH.Update)
+		protected.DELETE("/members/:id", membersH.Delete)
 	}
 
 	return r

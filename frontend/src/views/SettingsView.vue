@@ -6,6 +6,7 @@ import { auth } from '@/firebase'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { useBillsStore } from '@/stores/bills'
+import { useMembersStore } from '@/stores/members'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
 
@@ -13,8 +14,62 @@ const router = useRouter()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const billsStore = useBillsStore()
+const membersStore = useMembersStore()
 const { toast } = useToast()
 const { t, locale, setLocale } = useLocale()
+
+// Members
+const memberColors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6']
+const newMemberName = ref('')
+const newMemberColor = ref('#6366f1')
+const addingMember = ref(false)
+const editingMemberID = ref<string | null>(null)
+const editingMemberName = ref('')
+const editingMemberColor = ref('')
+
+async function addMember() {
+  if (!newMemberName.value.trim()) return
+  addingMember.value = true
+  try {
+    await membersStore.createMember(newMemberName.value.trim(), newMemberColor.value)
+    newMemberName.value = ''
+    newMemberColor.value = '#6366f1'
+    toast(locale.value === 'en' ? 'Member added' : 'Το μέλος προστέθηκε', 'success')
+  } catch {
+    toast(locale.value === 'en' ? 'Failed to add member' : 'Αποτυχία προσθήκης μέλους', 'error')
+  } finally {
+    addingMember.value = false
+  }
+}
+
+function startEditMember(id: string, name: string, color: string) {
+  editingMemberID.value = id
+  editingMemberName.value = name
+  editingMemberColor.value = color
+}
+
+async function saveEditMember() {
+  if (!editingMemberID.value || !editingMemberName.value.trim()) return
+  try {
+    await membersStore.updateMember(editingMemberID.value, {
+      name: editingMemberName.value.trim(),
+      color: editingMemberColor.value,
+    })
+    editingMemberID.value = null
+    toast(locale.value === 'en' ? 'Member updated' : 'Το μέλος ενημερώθηκε', 'success')
+  } catch {
+    toast(locale.value === 'en' ? 'Update failed' : 'Αποτυχία ενημέρωσης', 'error')
+  }
+}
+
+async function deleteMember(id: string) {
+  try {
+    await membersStore.deleteMember(id)
+    toast(locale.value === 'en' ? 'Member removed' : 'Το μέλος διαγράφηκε', 'success')
+  } catch {
+    toast(locale.value === 'en' ? 'Delete failed' : 'Αποτυχία διαγραφής', 'error')
+  }
+}
 
 // Profile
 const displayName = ref('')
@@ -47,6 +102,7 @@ onMounted(async () => {
   await Promise.all([
     settingsStore.fetchSettings(),
     billsStore.fetchBills(),
+    membersStore.fetchMembers(),
   ])
 })
 
@@ -112,6 +168,139 @@ function exportBillsCSV() {
   a.click()
   URL.revokeObjectURL(url)
   toast(`${locale.value === 'en' ? 'Exported' : 'Εξήχθησαν'} ${bills.length} ${locale.value === 'en' ? 'bills' : 'λογαριασμοί'}`, 'success')
+}
+
+// ─── CSV Import ───────────────────────────────────────────────────────────────
+
+type ImportRow = {
+  providerName: string
+  amount: number
+  status: string
+  dueDate: string
+  issuedDate: string
+  paymentCode: string
+  notes: string
+  matchedProviderID: string | null
+  matchedProviderLabel: string
+}
+
+const csvFileInput = ref<HTMLInputElement | null>(null)
+const importRows = ref<ImportRow[]>([])
+const showImportModal = ref(false)
+const importing = ref(false)
+
+function triggerImport() {
+  csvFileInput.value?.click()
+}
+
+function parseCSV(text: string): string[][] {
+  // Remove BOM if present
+  const clean = text.replace(/^﻿/, '')
+  return clean.split('\n').filter(l => l.trim()).map(line => {
+    const cols: string[] = []
+    let cur = ''
+    let inQ = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++ }
+        else inQ = !inQ
+      } else if (ch === ',' && !inQ) {
+        cols.push(cur); cur = ''
+      } else {
+        cur += ch
+      }
+    }
+    cols.push(cur)
+    return cols
+  })
+}
+
+function onFileSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    try {
+      const text = ev.target?.result as string
+      const rows = parseCSV(text)
+      // Skip header row (first row)
+      const dataRows = rows.slice(1).filter(r => r.length >= 4)
+      if (dataRows.length === 0) {
+        toast(t('settings.import_empty'), 'warning')
+        return
+      }
+
+      const providers = Array.isArray(billsStore.userProviders) ? billsStore.userProviders : []
+
+      importRows.value = dataRows.map(cols => {
+        const providerName = cols[0]?.trim() ?? ''
+        const amountStr = cols[1]?.trim().replace(',', '.') ?? ''
+        const status = cols[2]?.trim() ?? 'pending'
+        const dueDate = cols[3]?.trim() ?? ''
+        const issuedDate = cols[4]?.trim() ?? ''
+        const paymentCode = cols[5]?.trim() ?? ''
+        const notes = cols[6]?.trim() ?? ''
+
+        const amount = parseFloat(amountStr)
+
+        // Match provider: try nickname first, then provider name (case-insensitive)
+        const needle = providerName.toLowerCase()
+        const match = providers.find(p =>
+          (p.nickname || '').toLowerCase() === needle ||
+          (p.provider?.name || '').toLowerCase() === needle
+        )
+
+        return {
+          providerName,
+          amount: isNaN(amount) ? 0 : amount,
+          status,
+          dueDate,
+          issuedDate,
+          paymentCode,
+          notes,
+          matchedProviderID: match?.id ?? null,
+          matchedProviderLabel: match ? (match.nickname || match.provider?.name || '') : '',
+        }
+      })
+
+      showImportModal.value = true
+    } catch {
+      toast(t('settings.import_error'), 'error')
+    } finally {
+      // Reset file input so the same file can be re-selected
+      if (csvFileInput.value) csvFileInput.value.value = ''
+    }
+  }
+  reader.readAsText(file, 'utf-8')
+}
+
+const matchedRows = computed(() => importRows.value.filter(r => r.matchedProviderID && r.amount > 0 && r.dueDate))
+const skippedRows = computed(() => importRows.value.filter(r => !r.matchedProviderID || r.amount <= 0 || !r.dueDate))
+
+async function confirmImport() {
+  if (matchedRows.value.length === 0) return
+  importing.value = true
+  let created = 0
+  for (const row of matchedRows.value) {
+    try {
+      await billsStore.createBill({
+        user_provider_id: row.matchedProviderID!,
+        amount: row.amount,
+        due_date: new Date(row.dueDate).toISOString(),
+        issued_date: row.issuedDate ? new Date(row.issuedDate).toISOString() : undefined,
+        notes: row.notes || undefined,
+        payment_code: row.paymentCode || undefined,
+      })
+      created++
+    } catch { /* skip individual failures */ }
+  }
+  importing.value = false
+  showImportModal.value = false
+  importRows.value = []
+  await billsStore.fetchBills()
+  const msg = t('settings.import_done').replace('{n}', String(created))
+  toast(msg, 'success')
 }
 
 async function confirmDeleteAccount() {
@@ -314,20 +503,214 @@ async function confirmDeleteAccount() {
       </div>
     </section>
 
-    <!-- Data export -->
+    <!-- Members section -->
+    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">{{ t('settings.members') }}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ t('settings.members_desc') }}</p>
+        </div>
+      </div>
+
+      <!-- Existing members list -->
+      <div v-if="membersStore.members.length > 0" class="space-y-2 mb-4">
+        <div
+          v-for="m in membersStore.members"
+          :key="m.id"
+          class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-700/50 bg-gray-800/30"
+        >
+          <template v-if="editingMemberID === m.id">
+            <!-- Color swatches in edit mode -->
+            <div class="flex gap-1 shrink-0">
+              <button
+                v-for="c in memberColors"
+                :key="c"
+                @click="editingMemberColor = c"
+                class="w-5 h-5 rounded-full border-2 transition-all"
+                :style="{ backgroundColor: c }"
+                :class="editingMemberColor === c ? 'border-white scale-110' : 'border-transparent'"
+              />
+            </div>
+            <input
+              v-model="editingMemberName"
+              type="text"
+              class="flex-1 bg-gray-700 rounded-lg px-2.5 py-1 text-sm text-gray-100 border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              @keyup.enter="saveEditMember"
+            />
+            <button @click="saveEditMember" class="text-xs text-blue-400 hover:text-blue-300 font-medium px-2">{{ t('common.save') }}</button>
+            <button @click="editingMemberID = null" class="text-xs text-gray-500 hover:text-gray-300 px-1">{{ t('common.cancel') }}</button>
+          </template>
+          <template v-else>
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" :style="{ backgroundColor: m.color }">
+              {{ m.name[0]?.toUpperCase() }}
+            </div>
+            <span class="flex-1 text-sm font-medium text-gray-200">{{ m.name }}</span>
+            <button @click="startEditMember(m.id, m.name, m.color)" class="text-gray-500 hover:text-gray-300 transition-colors p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+              </svg>
+            </button>
+            <button @click="deleteMember(m.id)" class="text-gray-500 hover:text-red-400 transition-colors p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <p v-else class="text-sm text-gray-500 mb-4 text-center py-3">{{ t('settings.no_members') }}</p>
+
+      <!-- Add new member -->
+      <div class="border-t border-gray-700/50 pt-4">
+        <div class="flex gap-1 mb-2.5">
+          <button
+            v-for="c in memberColors"
+            :key="c"
+            @click="newMemberColor = c"
+            class="w-6 h-6 rounded-full border-2 transition-all"
+            :style="{ backgroundColor: c }"
+            :class="newMemberColor === c ? 'border-white scale-110' : 'border-transparent'"
+          />
+        </div>
+        <div class="flex gap-2">
+          <input
+            v-model="newMemberName"
+            type="text"
+            :placeholder="t('settings.member_name_placeholder')"
+            class="flex-1 px-3 py-2 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-500"
+            @keyup.enter="addMember"
+          />
+          <button
+            @click="addMember"
+            :disabled="addingMember || !newMemberName.trim()"
+            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+          >
+            {{ addingMember ? '…' : t('settings.add_member') }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data export / import -->
     <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.export') }}</h3>
       <p class="text-sm text-gray-400 mb-4">{{ t('settings.export_desc') }}</p>
-      <button
-        @click="exportBillsCSV"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-        </svg>
-        {{ t('settings.export_csv') }}
-      </button>
+      <div class="flex flex-wrap gap-3">
+        <button
+          @click="exportBillsCSV"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          {{ t('settings.export_csv') }}
+        </button>
+        <button
+          @click="triggerImport"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-emerald-600/60 hover:bg-emerald-600/10 text-sm font-medium text-gray-300 hover:text-emerald-300 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0-4.5 4.5M12 7.5V3" />
+          </svg>
+          {{ t('settings.import_csv') }}
+        </button>
+      </div>
+      <!-- Hidden file input -->
+      <input ref="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFileSelected" />
     </section>
+
+    <!-- Import preview modal -->
+    <div v-if="showImportModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="showImportModal = false">
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-800 shrink-0">
+          <h3 class="text-base font-semibold text-gray-50">{{ t('settings.import_preview_title') }}</h3>
+          <button @click="showImportModal = false" class="text-gray-500 hover:text-gray-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Summary badges -->
+        <div class="flex gap-3 px-5 py-3 border-b border-gray-800 shrink-0">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-900/30 text-emerald-400 border border-emerald-700/40">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            {{ t('settings.import_matched') }}: {{ matchedRows.length }}
+          </span>
+          <span v-if="skippedRows.length > 0" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-900/20 text-red-400 border border-red-700/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-400" />
+            {{ t('settings.import_skipped') }}: {{ skippedRows.length }}
+          </span>
+        </div>
+
+        <!-- Rows table -->
+        <div class="overflow-y-auto flex-1 px-5 py-3">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-gray-500 border-b border-gray-800">
+                <th class="pb-2 pr-3 font-medium">{{ t('settings.import_col_provider') }}</th>
+                <th class="pb-2 pr-3 font-medium text-right">{{ t('settings.import_col_amount') }}</th>
+                <th class="pb-2 pr-3 font-medium">{{ t('settings.import_col_due') }}</th>
+                <th class="pb-2 font-medium">{{ t('settings.import_col_status') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, i) in importRows"
+                :key="i"
+                class="border-b border-gray-800/50 last:border-b-0"
+                :class="row.matchedProviderID && row.amount > 0 && row.dueDate ? 'opacity-100' : 'opacity-40'"
+              >
+                <td class="py-2.5 pr-3">
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="w-1.5 h-1.5 rounded-full shrink-0"
+                      :class="row.matchedProviderID ? 'bg-emerald-400' : 'bg-red-400'"
+                    />
+                    <span class="text-gray-200 truncate max-w-[120px]" :title="row.providerName">
+                      {{ row.matchedProviderLabel || row.providerName }}
+                    </span>
+                  </div>
+                  <p v-if="!row.matchedProviderID" class="text-[11px] text-red-400 ml-3 mt-0.5">{{ t('settings.import_no_match') }}</p>
+                </td>
+                <td class="py-2.5 pr-3 text-right font-medium text-gray-200 whitespace-nowrap">
+                  {{ row.amount > 0 ? row.amount.toFixed(2) + ' €' : '—' }}
+                </td>
+                <td class="py-2.5 pr-3 text-gray-400 text-xs whitespace-nowrap">{{ row.dueDate || '—' }}</td>
+                <td class="py-2.5 text-xs">
+                  <span
+                    class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                    :class="row.status === 'paid' ? 'bg-emerald-900/30 text-emerald-400' : row.status === 'overdue' ? 'bg-red-900/30 text-red-400' : 'bg-gray-700 text-gray-400'"
+                  >
+                    {{ row.status }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
+          <button
+            @click="showImportModal = false"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+          >
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            @click="confirmImport"
+            :disabled="importing || matchedRows.length === 0"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {{ importing ? t('settings.import_importing') : `${t('settings.import_confirm')} (${matchedRows.length})` }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Danger zone -->
     <section class="bg-gray-900 rounded-2xl border border-red-950 p-5">

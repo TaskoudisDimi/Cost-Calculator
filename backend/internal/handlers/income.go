@@ -54,6 +54,7 @@ func (h *IncomeHandler) Create(c *gin.Context) {
 		Description string  `json:"description" binding:"required,min=1"`
 		Amount      float64 `json:"amount" binding:"required,gt=0"`
 		Month       string  `json:"month" binding:"required"`
+		MemberID    string  `json:"member_id"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -63,6 +64,7 @@ func (h *IncomeHandler) Create(c *gin.Context) {
 	now := time.Now()
 	income := models.Income{
 		UserID:      userID,
+		MemberID:    req.MemberID,
 		Description: req.Description,
 		Amount:      req.Amount,
 		Month:       req.Month,

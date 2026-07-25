@@ -91,8 +91,13 @@ async function copyText(text: string, key: string) {
       </button>
     </div>
 
+    <!-- Loading skeleton -->
+    <div v-if="store.loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div v-for="i in 3" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 p-4 h-36 animate-pulse" />
+    </div>
+
     <!-- Empty state -->
-    <div v-if="store.credentials.length === 0"
+    <div v-else-if="store.credentials.length === 0"
       class="text-center py-20 bg-gray-800 rounded-xl border border-gray-700">
       <div class="text-5xl mb-3">🔑</div>
       <p class="text-gray-400 font-medium">{{ t('credentials.no_creds') }}</p>
@@ -104,7 +109,7 @@ async function copyText(text: string, key: string) {
     </div>
 
     <!-- Cards grid -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div v-else-if="!store.loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       <div
         v-for="cred in store.credentials"
         :key="cred.id"

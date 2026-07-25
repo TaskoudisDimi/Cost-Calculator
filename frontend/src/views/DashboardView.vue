@@ -2,6 +2,7 @@
 import { ref, onMounted, onActivated, computed, unref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useBudgetStore } from '@/stores/budget'
+import { useMembersStore } from '@/stores/members'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
@@ -13,10 +14,11 @@ const { t, locale } = useLocale()
 
 const billsStore = useBillsStore()
 const budgetStore = useBudgetStore()
+const membersStore = useMembersStore()
 
 const month = ref(currentMonth())
 const showIncomeModal = ref(false)
-const incomeForm = ref({ description: '', amount: '' })
+const incomeForm = ref({ description: '', amount: '', member_id: '' })
 const savingIncome = ref(false)
 
 const d = computed(() => billsStore.dashboard)
@@ -32,11 +34,27 @@ const spentPercent = computed(() => {
   return Math.min(((d.value.amount_bills + d.value.amount_expenses_planned) / d.value.total_income) * 100, 100)
 })
 
+const memberIncomeBreakdown = computed(() => {
+  if (membersStore.members.length === 0) return []
+  const memberMap = new Map(membersStore.members.map(m => [m.id, { ...m, total: 0 }]))
+  let unassigned = 0
+  for (const inc of incomes.value) {
+    if (inc.member_id && memberMap.has(inc.member_id)) {
+      memberMap.get(inc.member_id)!.total += inc.amount
+    } else {
+      unassigned += inc.amount
+    }
+  }
+  const result = [...memberMap.values()].filter(m => m.total > 0)
+  return result
+})
+
 onMounted(async () => {
   await Promise.all([
     billsStore.fetchDashboard(month.value),
     budgetStore.fetchIncomes(month.value),
     budgetStore.fetchExpenses(month.value),
+    membersStore.fetchMembers(),
   ])
 })
 
@@ -51,8 +69,9 @@ async function addIncome() {
       description: incomeForm.value.description,
       amount: parseFloat(incomeForm.value.amount),
       month: month.value,
+      member_id: incomeForm.value.member_id || undefined,
     })
-    incomeForm.value = { description: '', amount: '' }
+    incomeForm.value = { description: '', amount: '', member_id: '' }
     showIncomeModal.value = false
     await billsStore.fetchDashboard(month.value)
     toast(locale.value === 'en' ? 'Income added' : 'Έσοδο προστέθηκε', 'success')
@@ -203,7 +222,13 @@ async function onMonthChange() {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span class="text-sm text-gray-200 flex-1 truncate">{{ inc.description }}</span>
+            <div class="flex-1 min-w-0">
+              <span class="text-sm text-gray-200 truncate block">{{ inc.description }}</span>
+              <span v-if="inc.member_id && membersStore.members.find(m => m.id === inc.member_id)" class="inline-flex items-center gap-1 mt-0.5">
+                <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: membersStore.members.find(m => m.id === inc.member_id)!.color }" />
+                <span class="text-[11px] text-gray-500">{{ membersStore.members.find(m => m.id === inc.member_id)!.name }}</span>
+              </span>
+            </div>
             <span class="text-sm font-bold text-emerald-400 shrink-0">+{{ formatAmount(inc.amount) }}</span>
             <button
               @click="removeIncome(inc.id)"
@@ -218,6 +243,20 @@ async function onMonthChange() {
           <div class="flex justify-between px-4 py-3 bg-gray-800/30">
             <span class="text-xs text-gray-500">{{ t('dashboard.income_total') }}</span>
             <span class="text-sm font-bold text-emerald-400">{{ formatAmount(totalIncome) }}</span>
+          </div>
+          <!-- Per-member income breakdown -->
+          <div v-if="memberIncomeBreakdown.length > 0" class="border-t border-gray-800 px-4 py-3 flex flex-wrap gap-3">
+            <div
+              v-for="m in memberIncomeBreakdown"
+              :key="m.id"
+              class="flex items-center gap-2"
+            >
+              <div class="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" :style="{ backgroundColor: m.color }">
+                {{ m.name[0]?.toUpperCase() }}
+              </div>
+              <span class="text-xs text-gray-400">{{ m.name }}</span>
+              <span class="text-xs font-semibold text-emerald-400">{{ formatAmount(m.total) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -357,6 +396,36 @@ async function onMonthChange() {
             <input v-model="incomeForm.amount" type="number" step="0.01" min="0.01" required
               class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="0.00" />
+          </div>
+          <!-- Member picker (only show when members exist) -->
+          <div v-if="membersStore.members.length > 0">
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ t('dashboard.member') }}</label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                @click="incomeForm.member_id = ''"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                :class="!incomeForm.member_id
+                  ? 'bg-gray-700 border-gray-500 text-gray-200'
+                  : 'border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400'"
+              >
+                {{ t('dashboard.no_member') }}
+              </button>
+              <button
+                v-for="m in membersStore.members"
+                :key="m.id"
+                type="button"
+                @click="incomeForm.member_id = m.id"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                :class="incomeForm.member_id === m.id
+                  ? 'border-transparent text-white'
+                  : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'"
+                :style="incomeForm.member_id === m.id ? { backgroundColor: m.color, borderColor: m.color } : {}"
+              >
+                <span class="w-4 h-4 rounded-full shrink-0" :style="{ backgroundColor: m.color }" />
+                {{ m.name }}
+              </button>
+            </div>
           </div>
           <div class="flex gap-3 pt-1">
             <button type="button" @click="showIncomeModal = false"

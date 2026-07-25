@@ -22,10 +22,21 @@ type UserProvider struct {
 	AccountNum string   `json:"account_num" firestore:"account_num"`
 }
 
+// Member is stored in the "members" collection — a named person within one account
+type Member struct {
+	ID        string    `json:"id" firestore:"-"`
+	UserID    string    `json:"user_id" firestore:"user_id"`
+	Name      string    `json:"name" firestore:"name"`
+	Color     string    `json:"color" firestore:"color"` // hex color for avatar
+	CreatedAt time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" firestore:"updated_at"`
+}
+
 // Bill is stored in the "bills" collection
 type Bill struct {
 	ID             string       `json:"id" firestore:"-"`
 	UserID         string       `json:"user_id" firestore:"user_id"`
+	MemberID       string       `json:"member_id" firestore:"member_id"`
 	UserProviderID string       `json:"user_provider_id" firestore:"user_provider_id"`
 	UserProvider   UserProvider `json:"user_provider" firestore:"user_provider"`
 	Amount         float64      `json:"amount" firestore:"amount"`
@@ -67,10 +78,25 @@ type UserProviderTemplate struct {
 	PaymentURL string `json:"payment_url" firestore:"payment_url"`
 }
 
+// BankConnection stores the Nordigen/GoCardless bank link for a user
+type BankConnection struct {
+	ID              string    `json:"id" firestore:"-"`
+	UserID          string    `json:"user_id" firestore:"user_id"`
+	RequisitionID   string    `json:"requisition_id" firestore:"requisition_id"`
+	InstitutionID   string    `json:"institution_id" firestore:"institution_id"`
+	InstitutionName string    `json:"institution_name" firestore:"institution_name"`
+	Status          string    `json:"status" firestore:"status"` // CR, LN, RJ, ER, SU, EX
+	AccountIDs      []string  `json:"account_ids" firestore:"account_ids"`
+	LastSyncedAt    *time.Time `json:"last_synced_at" firestore:"last_synced_at"`
+	CreatedAt       time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" firestore:"updated_at"`
+}
+
 // Income is stored in the "income" collection
 type Income struct {
 	ID          string    `json:"id" firestore:"-"`
 	UserID      string    `json:"user_id" firestore:"user_id"`
+	MemberID    string    `json:"member_id" firestore:"member_id"`
 	Description string    `json:"description" firestore:"description"`
 	Amount      float64   `json:"amount" firestore:"amount"`
 	Month       string    `json:"month" firestore:"month"` // YYYY-MM

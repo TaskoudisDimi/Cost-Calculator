@@ -26,8 +26,18 @@ export interface UserProvider {
   account_num: string
 }
 
+export interface Member {
+  id: string
+  user_id: string
+  name: string
+  color: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Bill {
   id: string
+  member_id: string
   user_provider_id: string
   user_provider: UserProvider
   amount: number
@@ -81,6 +91,7 @@ export interface Expense {
 export interface Income {
   id: string
   user_id: string
+  member_id: string
   description: string
   amount: number
   month: string

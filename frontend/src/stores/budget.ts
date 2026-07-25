@@ -60,7 +60,7 @@ export const useBudgetStore = defineStore('budget', () => {
     incomes.value = data
   }
 
-  async function createIncome(payload: { description: string; amount: number; month: string }) {
+  async function createIncome(payload: { description: string; amount: number; month: string; member_id?: string }) {
     const { data } = await api.post<Income>('/income', payload)
     incomes.value = [data, ...safeArr<Income>(incomes)]
     return data

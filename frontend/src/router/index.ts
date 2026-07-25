@@ -27,6 +27,8 @@ const router = createRouter({
         { path: 'credentials', name: 'credentials', component: () => import('@/views/CredentialsView.vue') },
         { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
         { path: 'analytics', name: 'analytics', component: () => import('@/views/AnalyticsView.vue') },
+        { path: 'bank', name: 'bank', component: () => import('@/views/BankView.vue') },
+        { path: 'bank/callback', name: 'bank-callback', component: () => import('@/views/BankView.vue') },
       ],
     },
   ],
