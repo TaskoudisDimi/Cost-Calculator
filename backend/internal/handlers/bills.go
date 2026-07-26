@@ -156,6 +156,7 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 		IssuedDate  *time.Time `json:"issued_date"`
 		Notes       *string    `json:"notes"`
 		PaymentCode *string    `json:"payment_code"`
+		MemberID    *string    `json:"member_id"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -182,6 +183,10 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 	if req.PaymentCode != nil {
 		bill.PaymentCode = *req.PaymentCode
 		updates = append(updates, firestore.Update{Path: "payment_code", Value: *req.PaymentCode})
+	}
+	if req.MemberID != nil {
+		bill.MemberID = *req.MemberID
+		updates = append(updates, firestore.Update{Path: "member_id", Value: *req.MemberID})
 	}
 
 	h.bills(ctx).Doc(id).Update(ctx, updates)

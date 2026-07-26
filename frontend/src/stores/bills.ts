@@ -56,7 +56,7 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
-  async function updateBill(id: string, payload: Partial<Pick<Bill, 'amount' | 'due_date' | 'issued_date' | 'notes' | 'payment_code'>>) {
+  async function updateBill(id: string, payload: Partial<Pick<Bill, 'amount' | 'due_date' | 'issued_date' | 'notes' | 'payment_code' | 'member_id'>>) {
     const { data } = await api.put<Bill>(`/bills/${id}`, payload)
     const arr = safeArr<Bill>(bills)
     const idx = arr.findIndex(b => b.id === id)
