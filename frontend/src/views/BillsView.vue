@@ -19,6 +19,7 @@ const membersStore = useMembersStore()
 const showModal = ref(false)
 const editingBill = ref<string | null>(null)
 const filterStatus = ref<BillStatus | 'all'>('all')
+const filterMember = ref<string>('all')
 const selected = ref<Set<string>>(new Set())
 const saving = ref(false)
 const viewMode = ref<'list' | 'history'>('list')
@@ -69,6 +70,13 @@ const filteredBills = computed(() => {
   let all = unref(store.bills)
   if (!Array.isArray(all)) return []
   if (filterStatus.value !== 'all') all = all.filter(b => b.status === filterStatus.value)
+  if (filterMember.value !== 'all') {
+    if (filterMember.value === 'none') {
+      all = all.filter(b => !b.member_id)
+    } else {
+      all = all.filter(b => b.member_id === filterMember.value)
+    }
+  }
   if (dateFrom.value) {
     const from = new Date(dateFrom.value)
     all = all.filter(b => new Date(b.due_date) >= from)
@@ -84,6 +92,7 @@ const filteredBills = computed(() => {
 function clearDateFilter() {
   dateFrom.value = ''
   dateTo.value = ''
+  filterMember.value = 'all'
   clearSelection()
 }
 
@@ -380,6 +389,13 @@ async function onFileSelected(event: Event) {
           <span class="text-sm text-gray-200 flex-1 truncate">
             {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
           </span>
+          <span
+            v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white shrink-0"
+            :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
+          >
+            {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+          </span>
           <span class="text-xs" :class="b.recurring ? 'text-blue-400' : 'text-transparent'">↻</span>
           <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="statusClass(b.status)">{{ statusLabel(b.status) }}</span>
           <span class="text-sm font-bold text-gray-200 shrink-0">{{ formatAmount(b.amount) }}</span>
@@ -397,6 +413,30 @@ async function onFileSelected(event: Event) {
         :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
       >
         {{ f === 'all' ? t('bills.all_filter') : statusLabel(f) }}
+      </button>
+    </div>
+
+    <!-- Member filter chips (only in list mode, only when members exist) -->
+    <div v-if="viewMode === 'list' && membersStore.members.length > 0" class="flex gap-2 mb-3 overflow-x-auto">
+      <button
+        @click="filterMember = 'all'; clearSelection()"
+        class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0"
+        :class="filterMember === 'all' ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
+      >
+        {{ t('bills.all_filter') }}
+      </button>
+      <button
+        v-for="m in membersStore.members"
+        :key="m.id"
+        @click="filterMember = m.id; clearSelection()"
+        class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 border"
+        :class="filterMember === m.id
+          ? 'text-white border-transparent'
+          : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700/60'"
+        :style="filterMember === m.id ? { backgroundColor: m.color, borderColor: m.color } : {}"
+      >
+        <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: filterMember === m.id ? 'rgba(255,255,255,0.7)' : m.color }" />
+        {{ m.name }}
       </button>
     </div>
 
@@ -496,9 +536,18 @@ async function onFileSelected(event: Event) {
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-gray-50">
-            {{ bill.user_provider?.nickname || bill.user_provider?.provider?.name }}
-          </p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="text-sm font-semibold text-gray-50">
+              {{ bill.user_provider?.nickname || bill.user_provider?.provider?.name }}
+            </p>
+            <span
+              v-if="bill.member_id && membersStore.members.find(m => m.id === bill.member_id)"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium text-white"
+              :style="{ backgroundColor: membersStore.members.find(m => m.id === bill.member_id)!.color + 'cc' }"
+            >
+              {{ membersStore.members.find(m => m.id === bill.member_id)!.name }}
+            </span>
+          </div>
           <p class="text-xs text-gray-400 hidden sm:block">{{ t('bills.due_date') }}: {{ formatDate(bill.due_date) }}</p>
           <p class="text-xs text-gray-400 sm:hidden">{{ formatDate(bill.due_date) }}</p>
           <button

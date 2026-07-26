@@ -313,9 +313,18 @@ async function onMonthChange() {
                   {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-100 truncate">
-                    {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
-                  </p>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-medium text-gray-100 truncate">
+                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
+                    </p>
+                    <span
+                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
+                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
+                    >
+                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+                    </span>
+                  </div>
                   <p class="text-xs text-gray-500">{{ formatDate(b.due_date) }}</p>
                 </div>
               </div>
@@ -345,9 +354,18 @@ async function onMonthChange() {
                   {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-gray-100 truncate">
-                    {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
-                  </p>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-medium text-gray-100 truncate">
+                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
+                    </p>
+                    <span
+                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
+                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
+                    >
+                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+                    </span>
+                  </div>
                   <p class="text-xs text-red-400">{{ formatDate(b.due_date) }}</p>
                 </div>
               </div>
