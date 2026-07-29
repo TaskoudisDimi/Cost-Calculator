@@ -185,11 +185,11 @@ function exportCalendarICS() {
 
   const events = bills.map(b => {
     const providerName = b.user_provider?.nickname || b.user_provider?.provider?.name || 'Λογαριασμός'
-    const dueDate = b.due_date.split('T')[0].replace(/-/g, '')
+    const dueDate = (b.due_date.split('T')[0] ?? '').replace(/-/g, '')
     // DTEND = day after for all-day events
     const dueDateObj = new Date(b.due_date)
     dueDateObj.setDate(dueDateObj.getDate() + 1)
-    const dueDateNext = dueDateObj.toISOString().split('T')[0].replace(/-/g, '')
+    const dueDateNext = (dueDateObj.toISOString().split('T')[0] ?? '').replace(/-/g, '')
 
     const desc = [
       `Ποσό: ${b.amount.toFixed(2)}€`,
@@ -390,7 +390,7 @@ const gmailDays = ref(30)
 
 function loadGIS(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if ((window as Record<string, unknown>).google) { resolve(); return }
+    if ((window as unknown as Record<string, unknown>).google) { resolve(); return }
     const script = document.createElement('script')
     script.src = 'https://accounts.google.com/gsi/client'
     script.onload = () => resolve()
@@ -483,7 +483,7 @@ async function connectGmail() {
   gmailError.value = null
   try {
     await loadGIS()
-    const g = (window as Record<string, unknown>).google as {
+    const g = (window as unknown as Record<string, unknown>).google as {
       accounts: { oauth2: { initTokenClient: (cfg: unknown) => { requestAccessToken: () => void } } }
     }
     const tokenClient = g.accounts.oauth2.initTokenClient({

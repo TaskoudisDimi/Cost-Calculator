@@ -82,8 +82,8 @@ const priceAlerts = computed(() => {
   for (const [, bills] of byProvider) {
     const sorted = [...bills].sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
     if (sorted.length < 2) continue
-    const latest = sorted[0]
-    const prev = sorted[1]
+    const latest = sorted[0]!
+    const prev = sorted[1]!
     if (latest.amount > prev.amount * 1.1) { // >10% increase
       alerts.set(latest.id, prev.amount)
     }
