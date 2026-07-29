@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/firestore"
 	firebasesdk "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
+	"github.com/dimitris-taskou/cost-calculator/internal/email"
 	"github.com/dimitris-taskou/cost-calculator/internal/handlers"
 	"github.com/dimitris-taskou/cost-calculator/internal/middleware"
 	"github.com/dimitris-taskou/cost-calculator/internal/nordigen"
@@ -11,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL string) *gin.Engine {
+func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL, resendAPIKey, resendFromEmail string) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -28,7 +29,11 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 	expensesH := handlers.NewExpensesHandler(fs)
 	incomeH := handlers.NewIncomeHandler(fs)
 	scanH := handlers.NewScanHandler(anthropicKey)
-	notifyH := handlers.NewNotifyHandler(fs, app, schedulerSecret)
+	var emailClient *email.Client
+	if resendAPIKey != "" {
+		emailClient = email.NewClient(resendAPIKey, resendFromEmail)
+	}
+	notifyH := handlers.NewNotifyHandler(fs, app, schedulerSecret, emailClient)
 	settingsH := handlers.NewSettingsHandler(fs)
 	bankH := handlers.NewBankHandler(fs, nordigenSvc, nordigenRedirectURL)
 	membersH := handlers.NewMembersHandler(fs)

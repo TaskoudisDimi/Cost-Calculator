@@ -170,6 +170,74 @@ function exportBillsCSV() {
   toast(`${locale.value === 'en' ? 'Exported' : 'Εξήχθησαν'} ${bills.length} ${locale.value === 'en' ? 'bills' : 'λογαριασμοί'}`, 'success')
 }
 
+// ─── Calendar (.ics) Export ───────────────────────────────────────────────────
+
+function exportCalendarICS() {
+  const bills = (Array.isArray(billsStore.bills) ? billsStore.bills : [])
+    .filter(b => b.status !== 'paid')
+  if (bills.length === 0) {
+    toast(locale.value === 'en' ? 'No upcoming bills to export' : 'Δεν υπάρχουν εκκρεμείς λογαριασμοί', 'warning')
+    return
+  }
+
+  const stamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z'
+  const escape = (s: string) => s.replace(/[\\,;]/g, c => '\\' + c).replace(/\n/g, '\\n')
+
+  const events = bills.map(b => {
+    const providerName = b.user_provider?.nickname || b.user_provider?.provider?.name || 'Λογαριασμός'
+    const dueDate = b.due_date.split('T')[0].replace(/-/g, '')
+    // DTEND = day after for all-day events
+    const dueDateObj = new Date(b.due_date)
+    dueDateObj.setDate(dueDateObj.getDate() + 1)
+    const dueDateNext = dueDateObj.toISOString().split('T')[0].replace(/-/g, '')
+
+    const desc = [
+      `Ποσό: ${b.amount.toFixed(2)}€`,
+      b.payment_code ? `Κωδικός: ${b.payment_code}` : '',
+      b.notes ? `Σημειώσεις: ${b.notes}` : '',
+      b.status === 'overdue' ? '⚠️ ΛΗΞΙΠΡΟΘΕΣΜΟΣ' : '',
+    ].filter(Boolean).join('\\n')
+
+    return [
+      'BEGIN:VEVENT',
+      `UID:${b.id}@billtracker`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${dueDate}`,
+      `DTEND;VALUE=DATE:${dueDateNext}`,
+      `SUMMARY:${escape(providerName)} — ${b.amount.toFixed(2)}€`,
+      `DESCRIPTION:${escape(desc)}`,
+      b.status === 'overdue' ? 'PRIORITY:1' : 'PRIORITY:5',
+      'BEGIN:VALARM',
+      'TRIGGER:-P1D',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${escape('Αύριο λήγει: ' + providerName)}`,
+      'END:VALARM',
+      'END:VEVENT',
+    ].join('\r\n')
+  }).join('\r\n')
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//BillTracker//BillTracker//EL',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:BillTracker — Λογαριασμοί`,
+    'X-WR-TIMEZONE:Europe/Athens',
+    events,
+    'END:VCALENDAR',
+  ].join('\r\n')
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `billtracker-${new Date().toISOString().split('T')[0]}.ics`
+  a.click()
+  URL.revokeObjectURL(url)
+  toast(`${locale.value === 'en' ? 'Exported' : 'Εξήχθησαν'} ${bills.length} ${locale.value === 'en' ? 'events' : 'εγγραφές'}`, 'success')
+}
+
 // ─── CSV Import ───────────────────────────────────────────────────────────────
 
 type ImportRow = {
@@ -301,6 +369,160 @@ async function confirmImport() {
   await billsStore.fetchBills()
   const msg = t('settings.import_done').replace('{n}', String(created))
   toast(msg, 'success')
+}
+
+// ─── Gmail auto-import ───────────────────────────────────────────────────────
+
+type GmailBillItem = {
+  result: ReturnType<typeof billsStore.parseEmail> extends Promise<infer T> ? T : never
+  subject: string
+  userProviderID: string | null
+}
+
+const gmailClientID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || ''
+const gmailScanning = ref(false)
+const gmailFoundBills = ref<Array<{ result: { provider_name: string | null; amount: number | null; due_date: string | null; issued_date: string | null; notes: string | null; payment_code: string | null }; subject: string; userProviderID: string | null }>>([])
+const gmailImporting = ref(false)
+const gmailImported = ref<number | null>(null)
+const gmailError = ref<string | null>(null)
+const showGmailModal = ref(false)
+const gmailDays = ref(30)
+
+function loadGIS(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if ((window as Record<string, unknown>).google) { resolve(); return }
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('GIS load failed'))
+    document.head.appendChild(script)
+  })
+}
+
+function extractEmailBody(payload: unknown): string {
+  const p = payload as { mimeType?: string; body?: { data?: string }; parts?: unknown[] }
+  if (!p) return ''
+  if (p.mimeType === 'text/plain' && p.body?.data) {
+    return atob(p.body.data.replace(/-/g, '+').replace(/_/g, '/'))
+  }
+  if (p.parts) {
+    for (const part of p.parts) {
+      const text = extractEmailBody(part)
+      if (text) return text
+    }
+  }
+  return ''
+}
+
+async function scanGmailInbox(token: string) {
+  gmailScanning.value = true
+  gmailFoundBills.value = []
+  gmailImported.value = null
+  gmailError.value = null
+  try {
+    const after = new Date()
+    after.setDate(after.getDate() - gmailDays.value)
+    const afterStr = `${after.getFullYear()}/${String(after.getMonth() + 1).padStart(2, '0')}/${String(after.getDate()).padStart(2, '0')}`
+    const q = `subject:(λογαριασμός OR invoice OR bill OR payment OR τιμολόγιο) after:${afterStr}`
+
+    const listResp = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=20`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    )
+    if (!listResp.ok) { gmailError.value = t('settings.gmail_error'); return }
+    const listData = await listResp.json()
+    const messages: { id: string }[] = listData.messages || []
+
+    const providers = Array.isArray(billsStore.userProviders) ? billsStore.userProviders : []
+    const results: typeof gmailFoundBills.value = []
+
+    for (const msg of messages.slice(0, 10)) {
+      const msgResp = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      )
+      if (!msgResp.ok) continue
+      const msgData = await msgResp.json()
+
+      const headers: { name: string; value: string }[] = msgData.payload?.headers || []
+      const subject = headers.find(h => h.name === 'Subject')?.value || ''
+      const body = extractEmailBody(msgData.payload)
+      if (!body || body.length < 30) continue
+
+      try {
+        const parsed = await billsStore.parseEmail(body)
+        if (!parsed.amount || !parsed.due_date) continue
+
+        const needle = (parsed.provider_name || '').toLowerCase()
+        const match = needle ? providers.find(p =>
+          (p.nickname || '').toLowerCase().includes(needle) ||
+          needle.includes((p.nickname || '').toLowerCase()) ||
+          (p.provider?.name || '').toLowerCase().includes(needle) ||
+          needle.includes((p.provider?.name || '').toLowerCase())
+        ) : null
+
+        results.push({ result: parsed, subject, userProviderID: match?.id ?? null })
+      } catch { /* skip unparseable */ }
+    }
+
+    gmailFoundBills.value = results
+    if (results.length > 0) {
+      showGmailModal.value = true
+    } else {
+      gmailError.value = t('settings.gmail_none')
+    }
+  } catch {
+    gmailError.value = t('settings.gmail_error')
+  } finally {
+    gmailScanning.value = false
+  }
+}
+
+async function connectGmail() {
+  if (!gmailClientID) { gmailError.value = t('settings.gmail_setup'); return }
+  gmailError.value = null
+  try {
+    await loadGIS()
+    const g = (window as Record<string, unknown>).google as {
+      accounts: { oauth2: { initTokenClient: (cfg: unknown) => { requestAccessToken: () => void } } }
+    }
+    const tokenClient = g.accounts.oauth2.initTokenClient({
+      client_id: gmailClientID,
+      scope: 'https://www.googleapis.com/auth/gmail.readonly',
+      callback: (resp: { access_token?: string; error?: string }) => {
+        if (resp.error || !resp.access_token) { gmailError.value = t('settings.gmail_error'); return }
+        scanGmailInbox(resp.access_token)
+      },
+    })
+    tokenClient.requestAccessToken()
+  } catch {
+    gmailError.value = t('settings.gmail_error')
+  }
+}
+
+async function importGmailBills() {
+  const toImport = gmailFoundBills.value.filter(b => b.userProviderID && b.result.amount && b.result.due_date)
+  if (toImport.length === 0) return
+  gmailImporting.value = true
+  let count = 0
+  for (const item of toImport) {
+    try {
+      await billsStore.createBill({
+        user_provider_id: item.userProviderID!,
+        amount: item.result.amount!,
+        due_date: item.result.due_date!,
+        issued_date: item.result.issued_date || undefined,
+        notes: item.result.notes || undefined,
+        payment_code: item.result.payment_code || undefined,
+      })
+      count++
+    } catch { /* skip */ }
+  }
+  gmailImporting.value = false
+  showGmailModal.value = false
+  gmailFoundBills.value = []
+  gmailImported.value = count
+  await billsStore.fetchBills()
 }
 
 async function confirmDeleteAccount() {
@@ -615,6 +837,15 @@ async function confirmDeleteAccount() {
           </svg>
           {{ t('settings.import_csv') }}
         </button>
+        <button
+          @click="exportCalendarICS"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-purple-600/60 hover:bg-purple-600/10 text-sm font-medium text-gray-300 hover:text-purple-300 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+          </svg>
+          {{ t('settings.export_ics') }}
+        </button>
       </div>
       <!-- Hidden file input -->
       <input ref="csvFileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFileSelected" />
@@ -711,6 +942,116 @@ async function confirmDeleteAccount() {
         </div>
       </div>
     </div>
+
+    <!-- Gmail auto-import -->
+    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+      <div class="flex items-start gap-3 mb-4">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 mt-0.5 shrink-0" fill="none">
+          <path d="M3 5.5h18v13H3v-13Z" stroke="#4285F4" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="m3 5.5 9 8 9-8" stroke="#EA4335" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300">{{ t('settings.gmail_title') }}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ t('settings.gmail_desc') }}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          @click="connectGmail"
+          :disabled="gmailScanning"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all disabled:opacity-50"
+        >
+          <svg v-if="gmailScanning" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+          </svg>
+          {{ gmailScanning ? t('settings.gmail_scanning') : t('settings.gmail_connect') }}
+        </button>
+
+        <div class="flex items-center gap-1.5 text-xs text-gray-500">
+          <span>{{ t('settings.gmail_days').replace('{n}', String(gmailDays)) }}</span>
+          <button v-for="d in [7, 30, 60]" :key="d" @click="gmailDays = d"
+            class="px-2 py-0.5 rounded-md border text-xs transition-colors"
+            :class="gmailDays === d ? 'border-blue-600 text-blue-400 bg-blue-600/10' : 'border-gray-700 text-gray-500 hover:border-gray-600'">
+            {{ d }}d
+          </button>
+        </div>
+      </div>
+
+      <div v-if="gmailImported !== null" class="mt-3 text-sm text-emerald-400 flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+        {{ t('settings.gmail_imported').replace('{n}', String(gmailImported)) }}
+      </div>
+      <p v-if="gmailError" class="mt-3 text-xs text-amber-400">{{ gmailError }}</p>
+    </section>
+
+    <!-- Gmail preview modal -->
+    <div v-if="showGmailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="showGmailModal = false">
+      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-800 shrink-0">
+          <div>
+            <h3 class="text-base font-semibold text-gray-50">Gmail — {{ t('settings.gmail_found').replace('{n}', String(gmailFoundBills.length)) }}</h3>
+            <p class="text-xs text-gray-500 mt-0.5">{{ gmailFoundBills.filter(b => b.userProviderID).length }} {{ locale === 'el' ? 'αντιστοιχίστηκαν' : 'matched to a provider' }}</p>
+          </div>
+          <button @click="showGmailModal = false" class="text-gray-500 hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="overflow-y-auto flex-1 px-5 py-3 space-y-2">
+          <div v-for="(item, i) in gmailFoundBills" :key="i"
+            class="p-3 rounded-xl border border-gray-700/50"
+            :class="item.userProviderID ? 'bg-gray-800/40' : 'bg-gray-800/20 opacity-50'"
+          >
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="text-xs text-gray-500 truncate">{{ item.subject }}</span>
+              <span v-if="!item.userProviderID" class="text-[10px] text-red-400 shrink-0">{{ locale === 'el' ? 'χωρίς αντιστοίχιση' : 'no match' }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-semibold text-gray-100">{{ item.result.provider_name || '—' }}</span>
+              <span class="text-sm font-semibold text-emerald-400">{{ item.result.amount?.toFixed(2) }}€</span>
+              <span class="text-xs text-gray-500">{{ item.result.due_date?.split('T')[0] }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
+          <button @click="showGmailModal = false" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            @click="importGmailBills"
+            :disabled="gmailImporting || gmailFoundBills.filter(b => b.userProviderID).length === 0"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {{ gmailImporting ? t('settings.gmail_importing') : `${t('settings.gmail_import_all')} (${gmailFoundBills.filter(b => b.userProviderID).length})` }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email notifications info -->
+    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-indigo-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-semibold text-gray-300">{{ t('settings.email_notif_title') }}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ t('settings.email_notif_desc') }}</p>
+          <div class="mt-2 flex items-center gap-2 text-xs text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5 text-indigo-400 shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+            </svg>
+            <span class="truncate">{{ authStore.user?.email }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Danger zone -->
     <section class="bg-gray-900 rounded-2xl border border-red-950 p-5">

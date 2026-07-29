@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -26,7 +27,6 @@ func (h *MembersHandler) List(c *gin.Context) {
 
 	docs, err := h.fs.Collection("members").
 		Where("user_id", "==", userID).
-		OrderBy("created_at", firestore.Asc).
 		Documents(ctx).GetAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -41,6 +41,9 @@ func (h *MembersHandler) List(c *gin.Context) {
 			members = append(members, m)
 		}
 	}
+	sort.Slice(members, func(i, j int) bool {
+		return members[i].CreatedAt.Before(members[j].CreatedAt)
+	})
 	c.JSON(http.StatusOK, members)
 }
 

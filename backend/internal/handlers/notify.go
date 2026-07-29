@@ -9,6 +9,7 @@ import (
 	"cloud.google.com/go/firestore"
 	firebasesdk "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
+	"github.com/dimitris-taskou/cost-calculator/internal/email"
 	"github.com/dimitris-taskou/cost-calculator/internal/models"
 	"github.com/gin-gonic/gin"
 )
@@ -17,10 +18,11 @@ type NotifyHandler struct {
 	fs              *firestore.Client
 	app             *firebasesdk.App
 	schedulerSecret string
+	emailClient     *email.Client
 }
 
-func NewNotifyHandler(fs *firestore.Client, app *firebasesdk.App, schedulerSecret string) *NotifyHandler {
-	return &NotifyHandler{fs: fs, app: app, schedulerSecret: schedulerSecret}
+func NewNotifyHandler(fs *firestore.Client, app *firebasesdk.App, schedulerSecret string, emailClient *email.Client) *NotifyHandler {
+	return &NotifyHandler{fs: fs, app: app, schedulerSecret: schedulerSecret, emailClient: emailClient}
 }
 
 // POST /api/notify/register — save FCM token for current user
@@ -147,5 +149,49 @@ func (h *NotifyHandler) SendReminders(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"sent": sent, "errors": errors})
+	// Email reminders via Resend
+	emailSent := 0
+	if h.emailClient != nil {
+		authClient, authErr := h.app.Auth(ctx)
+		if authErr == nil {
+			// group upcoming bills by user_id
+			allBillDocs, err := h.fs.Collection("bills").Documents(ctx).GetAll()
+			if err == nil {
+				byUser := map[string][]email.BillItem{}
+				for _, billDoc := range allBillDocs {
+					var bill models.Bill
+					if err := billDoc.DataTo(&bill); err != nil || bill.Status == "paid" {
+						continue
+					}
+					if bill.DueDate.Before(now) || bill.DueDate.After(threeDaysLater) {
+						continue
+					}
+					name := bill.UserProvider.Nickname
+					if name == "" {
+						name = bill.UserProvider.Provider.Name
+					}
+					if name == "" {
+						name = "Λογαριασμός"
+					}
+					byUser[bill.UserID] = append(byUser[bill.UserID], email.BillItem{
+						Name:    name,
+						Amount:  bill.Amount,
+						DueDate: bill.DueDate.Format("02/01/2006"),
+					})
+				}
+				for uid, items := range byUser {
+					userRecord, err := authClient.GetUser(ctx, uid)
+					if err != nil || userRecord.Email == "" {
+						continue
+					}
+					html := email.ReminderHTML(items)
+					if err := h.emailClient.Send(userRecord.Email, "Υπενθύμιση πληρωμής λογαριασμών", html); err == nil {
+						emailSent++
+					}
+				}
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"sent": sent, "errors": errors, "email_sent": emailSent})
 }

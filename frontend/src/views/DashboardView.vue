@@ -34,6 +34,16 @@ const spentPercent = computed(() => {
   return Math.min(((d.value.amount_bills + d.value.amount_expenses_planned) / d.value.total_income) * 100, 100)
 })
 
+// Forecast: sum of all recurring bills as next month estimate
+const forecast = computed(() => {
+  const allBills = unref(billsStore.bills)
+  if (!Array.isArray(allBills)) return null
+  const recurring = allBills.filter(b => b.recurring)
+  if (recurring.length === 0) return null
+  const total = recurring.reduce((s, b) => s + b.amount, 0)
+  return { total, count: recurring.length }
+})
+
 const memberIncomeBreakdown = computed(() => {
   if (membersStore.members.length === 0) return []
   const memberMap = new Map(membersStore.members.map(m => [m.id, { ...m, total: 0 }]))
@@ -52,6 +62,7 @@ const memberIncomeBreakdown = computed(() => {
 onMounted(async () => {
   await Promise.all([
     billsStore.fetchDashboard(month.value),
+    billsStore.fetchBills(),
     budgetStore.fetchIncomes(month.value),
     budgetStore.fetchExpenses(month.value),
     membersStore.fetchMembers(),
@@ -290,6 +301,25 @@ async function onMonthChange() {
           <span class="flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />{{ d.total_paid }} {{ t('dashboard.paid_label') }}
           </span>
+        </div>
+      </div>
+
+      <!-- ─── Forecast widget ───────────────────── -->
+      <div v-if="forecast" class="bg-gray-900 border border-indigo-900/40 rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-900/30 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-indigo-400">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wide">{{ t('dashboard.forecast_title') }}</p>
+            <p class="text-[11px] text-gray-500 mt-0.5">{{ t('dashboard.forecast_recurring') }}: {{ forecast.count }}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-lg font-bold text-indigo-300">~{{ formatAmount(forecast.total) }}</p>
+          <p class="text-[11px] text-gray-500">{{ t('dashboard.forecast_desc') }}</p>
         </div>
       </div>
 

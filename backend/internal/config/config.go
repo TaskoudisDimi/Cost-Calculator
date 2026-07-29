@@ -11,6 +11,8 @@ type Config struct {
 	NordigenSecretID    string
 	NordigenSecretKey   string
 	NordigenRedirectURL string
+	ResendAPIKey        string
+	ResendFromEmail     string
 }
 
 func Load() *Config {
@@ -23,6 +25,8 @@ func Load() *Config {
 		NordigenSecretID:    getEnv("NORDIGEN_SECRET_ID", ""),
 		NordigenSecretKey:   getEnv("NORDIGEN_SECRET_KEY", ""),
 		NordigenRedirectURL: getEnv("NORDIGEN_REDIRECT_URL", "https://billcalculator-fb2dd.web.app/bank/callback"),
+		ResendAPIKey:        getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail:     getEnv("RESEND_FROM_EMAIL", "reminders@billtracker.app"),
 	}
 }
 
