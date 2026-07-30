@@ -30,9 +30,9 @@ export function statusLabel(status: BillStatus): string {
 
 export function statusClass(status: BillStatus): string {
   return {
-    pending: 'bg-blue-900/30 text-blue-400',
-    paid: 'bg-green-900/30 text-green-400',
-    overdue: 'bg-red-900/30 text-red-400',
+    pending: 'bg-amber-400/10 text-amber-300 border border-amber-400/20',
+    paid: 'bg-emerald-400/10 text-emerald-300 border border-emerald-400/20',
+    overdue: 'bg-red-400/10 text-red-300 border border-red-400/20',
   }[status]
 }
 

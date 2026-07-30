@@ -102,124 +102,125 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0d1117] flex">
+  <div class="min-h-screen bg-[#0b0b10] flex">
 
     <!-- ─── Desktop sidebar ──────────────────────────── -->
     <aside
-      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-gray-950 border-r border-gray-800/70 transition-[width] duration-200 overflow-hidden"
+      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-[#0e0e16] border-r border-white/[0.05] transition-[width] duration-200 overflow-hidden"
       :class="sidebarOpen ? 'w-56' : 'w-[52px]'"
     >
-      <!-- Wordmark header -->
+      <!-- Logo / wordmark -->
       <div
-        class="flex items-center gap-2.5 border-b border-gray-800/70 min-h-[56px]"
-        :class="sidebarOpen ? 'px-3.5' : 'px-0 justify-center'"
+        class="flex items-center gap-2.5 border-b border-white/[0.05] min-h-[60px]"
+        :class="sidebarOpen ? 'px-4' : 'px-0 justify-center'"
       >
         <button
           @click="toggleSidebar"
-          class="p-1.5 rounded-lg text-gray-600 hover:text-gray-300 hover:bg-gray-800/60 transition-colors shrink-0"
+          class="flex items-center justify-center w-8 h-8 rounded-xl text-gray-600 hover:text-gray-300 hover:bg-white/[0.06] transition-all shrink-0"
           :title="sidebarOpen ? t('nav.collapse') : t('nav.expand')"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4.5 h-4.5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
           </svg>
         </button>
-        <span v-show="sidebarOpen" class="text-sm font-semibold tracking-tight whitespace-nowrap">
-          <span class="text-blue-400">Bill</span><span class="text-gray-200">Tracker</span>
+        <span v-show="sidebarOpen" class="font-bold tracking-tight whitespace-nowrap text-[15px]">
+          <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
         </span>
       </div>
 
       <!-- Nav -->
       <nav class="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-        <!-- Primary -->
         <RouterLink
           v-for="item in mainNav"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-colors"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
           :class="[
-            sidebarOpen ? 'px-2.5 py-2' : 'px-0 py-2 justify-center',
+            sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-gray-800 text-white'
-              : 'text-gray-400 hover:text-gray-100 hover:bg-gray-900'
+              ? 'bg-blue-600/10 text-blue-100'
+              : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
-            stroke="currentColor" class="w-[18px] h-[18px] shrink-0"
+            stroke="currentColor"
+            class="w-[18px] h-[18px] shrink-0 transition-colors"
+            :class="route.name === item.name ? 'text-blue-400' : ''"
             v-html="item.icon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap flex-1">{{ item.label }}</span>
           <span
             v-if="sidebarOpen && item.badge && overdueCount > 0"
-            class="text-[10px] font-bold bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center leading-none shrink-0"
+            class="text-[10px] font-bold bg-red-500/90 text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none shrink-0"
           >{{ overdueCount > 9 ? '9+' : overdueCount }}</span>
         </RouterLink>
 
-        <!-- Divider -->
-        <div class="my-2 mx-1 h-px bg-gray-800/60" />
+        <div class="my-3 mx-1 h-px bg-white/[0.05]" />
 
-        <!-- Utility -->
         <RouterLink
           v-for="item in utilityNav"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-colors"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
           :class="[
-            sidebarOpen ? 'px-2.5 py-2' : 'px-0 py-2 justify-center',
+            sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-gray-800 text-white'
-              : 'text-gray-500 hover:text-gray-200 hover:bg-gray-900'
+              ? 'bg-blue-600/10 text-blue-100'
+              : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
-            stroke="currentColor" class="w-[18px] h-[18px] shrink-0"
+            stroke="currentColor"
+            class="w-[18px] h-[18px] shrink-0"
+            :class="route.name === item.name ? 'text-blue-400' : ''"
             v-html="item.icon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap">{{ item.label }}</span>
         </RouterLink>
       </nav>
 
       <!-- Bottom: settings + user + logout -->
-      <div class="border-t border-gray-800/70 px-2 py-2.5 space-y-0.5">
-
-        <!-- Settings -->
+      <div class="border-t border-white/[0.05] px-2 py-3 space-y-0.5">
         <RouterLink
           :to="{ name: 'settings' }"
-          class="flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-colors"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
           :class="[
-            sidebarOpen ? 'px-2.5 py-2' : 'px-0 py-2 justify-center',
+            sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === 'settings'
-              ? 'bg-gray-800 text-white'
-              : 'text-gray-500 hover:text-gray-200 hover:bg-gray-900'
+              ? 'bg-blue-600/10 text-blue-100'
+              : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? t('nav.settings') : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === 'settings' ? '2' : '1.75'"
-            stroke="currentColor" class="w-[18px] h-[18px] shrink-0"
+            stroke="currentColor"
+            class="w-[18px] h-[18px] shrink-0"
+            :class="route.name === 'settings' ? 'text-blue-400' : ''"
             v-html="settingsIcon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap">{{ t('nav.settings') }}</span>
         </RouterLink>
 
         <!-- User row -->
-        <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg" :class="!sidebarOpen && 'justify-center px-0'">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-[11px] font-bold shrink-0 select-none">
+        <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl" :class="!sidebarOpen && 'justify-center px-0'">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 select-none shadow-sm">
             {{ userInitials }}
           </div>
           <div v-show="sidebarOpen" class="min-w-0 flex-1">
-            <p class="text-xs font-medium text-gray-300 truncate leading-tight">
-              {{ auth.user?.name && auth.user.name !== auth.user.email ? auth.user.name : '' }}
+            <p class="text-xs font-semibold text-gray-300 truncate leading-tight">
+              {{ auth.user?.name && auth.user.name !== auth.user.email ? auth.user.name : (auth.user?.email?.split('@')[0] ?? '') }}
             </p>
-            <p class="text-[10px] text-gray-600 truncate leading-tight">{{ auth.user?.email }}</p>
+            <p class="text-[10px] text-gray-600 truncate leading-tight mt-0.5">{{ auth.user?.email }}</p>
           </div>
         </div>
 
         <!-- Logout -->
         <button
           @click="logout"
-          class="flex items-center gap-2.5 w-full rounded-lg text-[13px] font-medium text-gray-600 hover:text-red-400 hover:bg-red-900/10 transition-colors"
-          :class="sidebarOpen ? 'px-2.5 py-2' : 'px-0 py-2 justify-center'"
+          class="flex items-center gap-3 w-full rounded-xl text-[13px] font-medium text-gray-600 hover:text-red-400 hover:bg-red-500/[0.07] transition-all"
+          :class="sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center'"
           :title="!sidebarOpen ? t('nav.logout') : undefined"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-[18px] h-[18px] shrink-0">
@@ -227,26 +228,23 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           </svg>
           <span v-show="sidebarOpen" class="whitespace-nowrap">{{ t('nav.logout') }}</span>
         </button>
-
       </div>
     </aside>
 
     <!-- ─── Mobile top header ────────────────────────── -->
-    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-gray-950 border-b border-gray-800/70 flex items-center justify-between px-4 h-14">
-      <div class="flex items-center gap-2">
-        <span class="text-sm font-semibold">
-          <span class="text-blue-400">Bill</span><span class="text-gray-200">Tracker</span>
-        </span>
-      </div>
+    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-[#0e0e16]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-4 h-14">
+      <span class="font-bold tracking-tight text-[15px]">
+        <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
+      </span>
       <div class="flex items-center gap-1">
         <RouterLink
           :to="{ name: 'settings' }"
-          class="p-2 rounded-lg transition-colors"
-          :class="route.name === 'settings' ? 'text-white bg-gray-800' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/60'"
+          class="p-2 rounded-xl transition-all"
+          :class="route.name === 'settings' ? 'text-blue-400 bg-blue-600/10' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.06]'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5" v-html="settingsIcon" />
         </RouterLink>
-        <button @click="logout" class="p-2 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-gray-800/60">
+        <button @click="logout" class="p-2 text-gray-600 hover:text-red-400 transition-all rounded-xl hover:bg-red-500/[0.07]">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/>
           </svg>
@@ -256,7 +254,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- ─── Main content ─────────────────────────────── -->
     <main
-      class="flex-1 pt-14 md:pt-0 pb-20 md:pb-0 p-4 md:p-8 min-w-0 transition-[margin] duration-200 max-w-full"
+      class="flex-1 pt-14 md:pt-0 pb-24 md:pb-0 p-4 md:p-8 min-w-0 transition-[margin] duration-200 max-w-full"
       :class="sidebarOpen ? 'md:ml-56' : 'md:ml-[52px]'"
     >
       <RouterView v-slot="{ Component }">
@@ -271,26 +269,26 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- ─── Mobile bottom tab bar ────────────────────── -->
     <nav
-      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-950 border-t border-gray-800/70"
+      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0e0e16]/95 backdrop-blur-md border-t border-white/[0.06]"
       style="padding-bottom: env(safe-area-inset-bottom)"
     >
-      <div class="flex">
+      <div class="flex px-2 py-1">
         <RouterLink
           v-for="item in allNavForMobile"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-all relative"
-          :class="route.name === item.name ? 'text-white' : 'text-gray-600'"
+          class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all"
+          :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600 hover:text-gray-400'"
         >
-          <span
-            v-if="route.name === item.name"
-            class="absolute top-0 inset-x-2 h-[2px] rounded-full bg-blue-500"
-          />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            :stroke-width="route.name === item.name ? '2' : '1.75'"
-            stroke="currentColor" class="w-5 h-5"
+            :stroke-width="route.name === item.name ? '2.25' : '1.75'"
+            stroke="currentColor" class="w-5 h-5 transition-transform"
+            :class="route.name === item.name ? 'scale-110' : ''"
             v-html="item.icon" />
-          <span class="text-[9px] font-medium leading-tight tracking-wide uppercase">{{ item.label.split(' ')[0] }}</span>
+          <span
+            class="text-[10px] font-semibold leading-none tracking-wide transition-colors"
+            :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600'"
+          >{{ item.label.split(' ')[0] }}</span>
         </RouterLink>
       </div>
     </nav>
