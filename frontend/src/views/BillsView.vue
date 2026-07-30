@@ -23,6 +23,8 @@ const filterMember = ref<string>('all')
 const selected = ref<Set<string>>(new Set())
 const saving = ref(false)
 const viewMode = ref<'list' | 'history'>('list')
+const filterOpen = ref(false)
+const selectionMode = ref(false)
 
 const scanning = ref(false)
 const scanError = ref('')
@@ -118,7 +120,13 @@ function clearDateFilter() {
   dateFrom.value = ''
   dateTo.value = ''
   filterMember.value = 'all'
+  filterOpen.value = false
   clearSelection()
+}
+
+function exitSelectionMode() {
+  selectionMode.value = false
+  selected.value = new Set()
 }
 
 const allSelected = computed(() => {
@@ -358,24 +366,25 @@ async function onFileSelected(event: Event) {
     >
       <span class="text-blue-300">{{ t('bills.notif_banner') }}</span>
       <div class="flex gap-2 shrink-0">
-        <button @click="enableNotifications" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors">
+        <button @click="enableNotifications" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
           {{ t('bills.enable_notif') }}
         </button>
-        <button @click="dismissNotifBanner" class="text-gray-400 hover:text-gray-300 px-2 py-1 text-xs">✕</button>
+        <button @click="dismissNotifBanner" class="text-gray-400 hover:text-gray-300 px-2 py-1 text-sm">✕</button>
       </div>
     </div>
 
+    <!-- ── Header ─────────────────────────────────────────────── -->
     <div class="flex items-center justify-between mb-5 gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <h2 class="text-xl md:text-2xl font-bold text-gray-50 shrink-0">{{ t('bills.title') }}</h2>
-        <div class="flex rounded-xl border border-gray-700 overflow-hidden shrink-0">
+        <h2 class="text-xl font-bold text-gray-50 shrink-0">{{ t('bills.title') }}</h2>
+        <div class="flex rounded-xl border border-gray-700/80 overflow-hidden shrink-0">
           <button
-            @click="viewMode = 'list'"
+            @click="viewMode = 'list'; exitSelectionMode()"
             class="text-xs font-semibold px-3.5 py-2 transition-colors"
             :class="viewMode === 'list' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'"
           >{{ t('bills.list_tab') }}</button>
           <button
-            @click="viewMode = 'history'"
+            @click="viewMode = 'history'; exitSelectionMode()"
             class="text-xs font-semibold px-3.5 py-2 transition-colors"
             :class="viewMode === 'history' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-gray-300'"
           >{{ t('bills.history_tab') }}</button>
@@ -383,18 +392,17 @@ async function onFileSelected(event: Event) {
       </div>
       <button
         @click="openCreate"
-        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shrink-0 shadow-sm"
+        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shrink-0"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
-        <span class="hidden sm:inline">{{ t('bills.new_bill') }}</span>
-        <span class="sm:hidden">{{ locale === 'el' ? 'Νέος' : 'New' }}</span>
+        {{ locale === 'el' ? 'Νέος' : 'New' }}
       </button>
     </div>
 
-    <!-- History view -->
-    <div v-if="viewMode === 'history'" class="space-y-4">
+    <!-- ── History view ──────────────────────────────────────── -->
+    <div v-if="viewMode === 'history'" class="space-y-3">
       <div v-if="store.loading" class="space-y-2">
         <div v-for="i in 3" :key="i" class="bg-gray-900 rounded-2xl border border-gray-800 h-24 animate-pulse" />
       </div>
@@ -403,303 +411,269 @@ async function onFileSelected(event: Event) {
       </div>
       <div v-else v-for="([month, bills]) in billsByMonth" :key="month" class="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-800/40">
-          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            {{ monthLabel(month) }}
-          </p>
-          <p class="text-xs font-bold text-gray-300">
-            {{ formatAmount(bills.reduce((s, b) => s + b.amount, 0)) }}
-          </p>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ monthLabel(month) }}</p>
+          <p class="text-sm font-bold text-gray-200">{{ formatAmount(bills.reduce((s, b) => s + b.amount, 0)) }}</p>
         </div>
-        <div v-for="b in bills" :key="b.id" class="flex items-center gap-3 px-4 py-3 border-b border-gray-800/60 last:border-0">
-          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+        <div v-for="b in bills" :key="b.id" class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-800/50 last:border-0">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
             :style="{ backgroundColor: b.user_provider?.provider?.color || '#6B7280' }">
             {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0) }}
           </div>
-          <span class="text-sm text-gray-200 flex-1 truncate">
-            {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
-          </span>
-          <span
-            v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
-            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white shrink-0"
-            :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
-          >
-            {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
-          </span>
-          <span class="text-xs" :class="b.recurring ? 'text-blue-400' : 'text-transparent'">↻</span>
-          <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="statusClass(b.status)">{{ statusLabel(b.status) }}</span>
-          <span class="text-sm font-bold text-gray-200 shrink-0">{{ formatAmount(b.amount) }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-200 truncate font-medium">{{ b.user_provider?.nickname || b.user_provider?.provider?.name }}</p>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-xs" :class="statusClass(b.status)">{{ statusLabel(b.status) }}</span>
+              <span v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+                class="text-[11px] font-medium px-1.5 py-0.5 rounded-full text-white"
+                :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }">
+                {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+              </span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-gray-100 shrink-0">{{ formatAmount(b.amount) }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Filter tabs (only in list mode) -->
-    <div v-if="viewMode === 'list'" class="flex gap-2 mb-3 overflow-x-auto pb-0.5 scrollbar-none">
-      <button
-        v-for="f in (['all', 'pending', 'overdue', 'paid'] as const)"
-        :key="f"
-        @click="filterStatus = f; clearSelection()"
-        class="whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0"
-        :class="filterStatus === f ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
-      >
-        {{ f === 'all' ? t('bills.all_filter') : statusLabel(f) }}
-      </button>
-    </div>
+    <!-- ── List view filters ─────────────────────────────────── -->
+    <template v-if="viewMode === 'list'">
 
-    <!-- Member filter chips (only in list mode, only when members exist) -->
-    <div v-if="viewMode === 'list' && membersStore.members.length > 0" class="flex gap-2 mb-3 overflow-x-auto pb-0.5 scrollbar-none">
-      <button
-        @click="filterMember = 'all'; clearSelection()"
-        class="whitespace-nowrap flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0"
-        :class="filterMember === 'all' ? 'bg-gray-600 text-white shadow-sm' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
-      >
-        {{ t('bills.all_filter') }}
-      </button>
-      <button
-        v-for="m in membersStore.members"
-        :key="m.id"
-        @click="filterMember = m.id; clearSelection()"
-        class="whitespace-nowrap flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 border"
-        :class="filterMember === m.id ? 'text-white border-transparent shadow-sm' : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700/60'"
-        :style="filterMember === m.id ? { backgroundColor: m.color, borderColor: m.color } : {}"
-      >
-        <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: filterMember === m.id ? 'rgba(255,255,255,0.8)' : m.color }" />
-        {{ m.name }}
-      </button>
-    </div>
-
-    <!-- Date range filter -->
-    <div v-if="viewMode === 'list'" class="flex flex-wrap items-center gap-2 mb-5">
-      <input
-        v-model="dateFrom"
-        type="date"
-        @change="clearSelection()"
-        class="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <span class="text-gray-500">—</span>
-      <input
-        v-model="dateTo"
-        type="date"
-        @change="clearSelection()"
-        class="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <button
-        v-if="dateFrom || dateTo"
-        @click="clearDateFilter"
-        class="text-sm text-gray-400 hover:text-gray-300 px-3 py-2.5 rounded-xl border border-gray-700 hover:bg-gray-700/60 transition-colors whitespace-nowrap"
-      >
-        {{ t('bills.clear_filter') }}
-      </button>
-    </div>
-
-    <!-- Bulk action bar -->
-    <div
-      v-if="viewMode === 'list' && selected.size > 0"
-      class="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-2xl px-4 py-3 mb-4"
-    >
-      <span class="text-sm font-medium text-gray-300">
-        <span class="text-white font-semibold">{{ selected.size }}</span> {{ t('bills.selected') }}
-      </span>
-      <div class="flex gap-2">
-        <button
-          @click="clearSelection"
-          class="text-sm text-gray-400 hover:text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors"
-        >
-          {{ t('common.cancel') }}
-        </button>
-        <button
-          @click="bulkDelete"
-          class="text-sm font-medium text-white bg-red-700 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {{ t('common.delete') }} {{ selected.size }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Bills list (list mode only) -->
-    <div v-if="viewMode === 'list' && store.loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="bg-gray-900 rounded-2xl border border-gray-800 h-16 animate-pulse" />
-    </div>
-
-    <div v-else-if="viewMode === 'list' && filteredBills.length === 0" class="text-center py-16 bg-gray-900 rounded-2xl border border-gray-800">
-      <p class="text-gray-500 text-sm font-medium">{{ t('bills.no_bills') }}</p>
-      <button @click="openCreate" class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors">
-        {{ t('bills.add_first') }}
-      </button>
-    </div>
-
-    <!-- Select all header -->
-    <div v-else-if="viewMode === 'list'" class="space-y-2.5">
-      <div class="flex items-center gap-3 px-1 pb-1">
-        <input
-          type="checkbox"
-          :checked="allSelected"
-          @change="toggleSelectAll"
-          class="w-5 h-5 rounded border-gray-600 accent-blue-600 cursor-pointer"
-        />
-        <span class="text-xs text-gray-500">{{ t('bills.select_all') }} ({{ filteredBills.length }})</span>
-      </div>
-
-      <div
-        v-for="bill in filteredBills"
-        :key="bill.id"
-        class="bg-gray-900 rounded-2xl border overflow-hidden transition-colors"
-        :class="selected.has(bill.id) ? 'border-blue-700/50 bg-blue-900/5' : 'border-gray-800 hover:border-gray-700'"
-      >
-        <!-- Top row: checkbox + icon + name/date + amount -->
-        <div class="flex items-start gap-3 p-4 relative">
-          <!-- Left color stripe -->
-          <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-            :style="{ backgroundColor: bill.user_provider?.provider?.color || '#6B7280' }" />
-
-          <input
-            type="checkbox"
-            :checked="selected.has(bill.id)"
-            @change="toggleSelect(bill.id)"
-            class="w-5 h-5 mt-0.5 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0 ml-2"
-          />
-
-          <div
-            class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0"
-            :style="{ backgroundColor: bill.user_provider?.provider?.color || '#6B7280' }"
+      <!-- Status chips + filter toggle + select button -->
+      <div class="flex items-center gap-2 mb-3">
+        <div class="flex gap-1.5 overflow-x-auto flex-1 pb-0.5 scrollbar-none">
+          <button
+            v-for="f in (['all', 'pending', 'overdue', 'paid'] as const)"
+            :key="f"
+            @click="filterStatus = f; clearSelection()"
+            class="whitespace-nowrap px-3.5 py-2 rounded-xl text-sm font-semibold transition-all shrink-0"
+            :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-gray-800/80 text-gray-400 border border-gray-700/60 hover:border-gray-600'"
           >
-            {{ (bill.user_provider?.nickname || bill.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
-          </div>
+            {{ f === 'all' ? t('bills.all_filter') : statusLabel(f) }}
+          </button>
+        </div>
 
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-50 leading-snug">
-              {{ bill.user_provider?.nickname || bill.user_provider?.provider?.name }}
-            </p>
-            <div class="flex items-center gap-2 mt-1 flex-wrap">
-              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0" :class="statusClass(bill.status)">
-                {{ statusLabel(bill.status) }}
-              </span>
-              <span class="text-xs text-gray-400">{{ formatDate(bill.due_date) }}</span>
-              <span
-                v-if="bill.member_id && membersStore.members.find(m => m.id === bill.member_id)"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium text-white shrink-0"
-                :style="{ backgroundColor: membersStore.members.find(m => m.id === bill.member_id)!.color + 'dd' }"
-              >
-                {{ membersStore.members.find(m => m.id === bill.member_id)!.name }}
-              </span>
-              <span v-if="bill.recurring" class="text-[11px] text-blue-400 font-medium shrink-0">↻</span>
+        <!-- Filter panel toggle -->
+        <button
+          @click="filterOpen = !filterOpen"
+          class="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border transition-all relative"
+          :class="filterOpen || dateFrom || dateTo || filterMember !== 'all'
+            ? 'border-blue-600/60 bg-blue-600/15 text-blue-400'
+            : 'border-gray-700/60 bg-gray-800/80 text-gray-500 hover:text-gray-300 hover:border-gray-600'"
+          :title="locale === 'el' ? 'Φίλτρα' : 'Filters'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+          </svg>
+          <!-- Active dot -->
+          <span v-if="dateFrom || dateTo || filterMember !== 'all'" class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border border-gray-950" />
+        </button>
+
+        <!-- Selection mode toggle -->
+        <button
+          @click="selectionMode ? exitSelectionMode() : (selectionMode = true)"
+          class="shrink-0 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
+          :class="selectionMode
+            ? 'border-blue-600/60 bg-blue-600/15 text-blue-400'
+            : 'border-gray-700/60 bg-gray-800/80 text-gray-500 hover:text-gray-300 hover:border-gray-600'"
+        >
+          {{ locale === 'el' ? 'Επιλογή' : 'Select' }}
+        </button>
+      </div>
+
+      <!-- Expandable filter panel -->
+      <div v-if="filterOpen" class="mb-3 space-y-3 p-3.5 bg-gray-900 rounded-2xl border border-gray-800">
+        <!-- Member chips -->
+        <div v-if="membersStore.members.length > 0" class="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+          <button
+            @click="filterMember = 'all'"
+            class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all shrink-0"
+            :class="filterMember === 'all' ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-600'"
+          >{{ t('bills.all_filter') }}</button>
+          <button
+            v-for="m in membersStore.members"
+            :key="m.id"
+            @click="filterMember = m.id"
+            class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all shrink-0 border"
+            :class="filterMember === m.id ? 'text-white border-transparent' : 'bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600'"
+            :style="filterMember === m.id ? { backgroundColor: m.color } : {}"
+          >
+            <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: filterMember === m.id ? 'rgba(255,255,255,0.7)' : m.color }" />
+            {{ m.name }}
+          </button>
+        </div>
+
+        <!-- Date range -->
+        <div class="flex items-center gap-2">
+          <input v-model="dateFrom" type="date" @change="clearSelection()"
+            class="flex-1 px-3 py-2 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span class="text-gray-600 text-sm shrink-0">—</span>
+          <input v-model="dateTo" type="date" @change="clearSelection()"
+            class="flex-1 px-3 py-2 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button v-if="dateFrom || dateTo || filterMember !== 'all'" @click="clearDateFilter"
+          class="w-full py-2 rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors">
+          {{ t('bills.clear_filter') }}
+        </button>
+      </div>
+
+      <!-- ── Loading / empty ──────────────────────────────── -->
+      <div v-if="store.loading" class="space-y-3">
+        <div v-for="i in 4" :key="i" class="bg-gray-900 rounded-2xl border border-gray-800 h-28 animate-pulse" />
+      </div>
+
+      <div v-else-if="filteredBills.length === 0" class="text-center py-16 bg-gray-900 rounded-2xl border border-gray-800">
+        <p class="text-gray-500 text-sm font-medium">{{ t('bills.no_bills') }}</p>
+        <button @click="openCreate" class="mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+          {{ t('bills.add_first') }}
+        </button>
+      </div>
+
+      <!-- ── Bill cards ────────────────────────────────────── -->
+      <div v-else class="space-y-3">
+        <div
+          v-for="bill in filteredBills"
+          :key="bill.id"
+          class="bg-gray-900 rounded-2xl border overflow-hidden transition-all"
+          :class="selected.has(bill.id) ? 'border-blue-600/40' : 'border-gray-800'"
+        >
+          <!-- Card top: icon + info + amount -->
+          <div class="flex items-center gap-3 px-4 pt-4 pb-3 relative">
+            <!-- Color stripe -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl opacity-80"
+              :style="{ backgroundColor: bill.user_provider?.provider?.color || '#6B7280' }" />
+
+            <!-- Selection checkbox (only in selection mode) -->
+            <input
+              v-if="selectionMode"
+              type="checkbox"
+              :checked="selected.has(bill.id)"
+              @change="toggleSelect(bill.id)"
+              class="w-5 h-5 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0 ml-2"
+            />
+
+            <!-- Provider icon -->
+            <div
+              class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0"
+              :class="!selectionMode && 'ml-2'"
+              :style="{ backgroundColor: bill.user_provider?.provider?.color || '#6B7280' }"
+            >
+              {{ (bill.user_provider?.nickname || bill.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
+            </div>
+
+            <!-- Name + meta -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-gray-50 truncate">
+                {{ bill.user_provider?.nickname || bill.user_provider?.provider?.name }}
+              </p>
+              <div class="flex items-center gap-2 mt-1 flex-wrap">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0" :class="statusClass(bill.status)">
+                  {{ statusLabel(bill.status) }}
+                </span>
+                <span class="text-xs text-gray-400 shrink-0">{{ formatDate(bill.due_date) }}</span>
+                <span
+                  v-if="bill.member_id && membersStore.members.find(m => m.id === bill.member_id)"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-white shrink-0"
+                  :style="{ backgroundColor: membersStore.members.find(m => m.id === bill.member_id)!.color }"
+                >
+                  {{ membersStore.members.find(m => m.id === bill.member_id)!.name }}
+                </span>
+                <span v-if="bill.recurring" class="text-[11px] text-blue-400 font-semibold shrink-0">↻</span>
+              </div>
+            </div>
+
+            <!-- Amount -->
+            <div class="text-right shrink-0">
+              <p class="text-lg font-bold text-gray-50 tabular-nums leading-tight">{{ formatAmount(bill.amount) }}</p>
+              <p v-if="priceAlerts.has(bill.id)"
+                class="text-[11px] text-amber-400 font-bold mt-0.5"
+                :title="`${locale === 'el' ? 'Προηγ.' : 'Prev'}: ${formatAmount(priceAlerts.get(bill.id)!)}`"
+              >↑ {{ (((bill.amount - priceAlerts.get(bill.id)!) / priceAlerts.get(bill.id)!) * 100).toFixed(0) }}%</p>
             </div>
           </div>
 
-          <div class="text-right shrink-0 ml-1">
-            <p class="text-base font-bold text-gray-50 tabular-nums">{{ formatAmount(bill.amount) }}</p>
-            <p v-if="priceAlerts.has(bill.id)"
-              class="text-[11px] text-amber-400 font-semibold mt-0.5"
-              :title="`${locale === 'el' ? 'Προηγούμενος' : 'Previous'}: ${formatAmount(priceAlerts.get(bill.id)!)}`"
+          <!-- RF / Payment code — prominent copy area -->
+          <div v-if="bill.payment_code" class="px-4 pb-3">
+            <button
+              @click.stop="copyPaymentCode(bill.payment_code, bill.id)"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all"
+              :class="copiedId === bill.id
+                ? 'border-green-700/50 bg-green-900/15 text-green-300'
+                : 'border-gray-700/60 bg-gray-800/50 text-blue-300 hover:border-blue-600/50 hover:bg-blue-900/10'"
             >
-              ↑ {{ (((bill.amount - priceAlerts.get(bill.id)!) / priceAlerts.get(bill.id)!) * 100).toFixed(0) }}%
-            </p>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+              </svg>
+              <span class="font-mono text-sm flex-1 text-left truncate">{{ bill.payment_code }}</span>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 transition-colors"
+                :class="copiedId === bill.id ? 'bg-green-900/40 text-green-300' : 'bg-gray-700 text-gray-400'">
+                {{ copiedId === bill.id ? t('bills.copied') : t('bills.copy') }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Actions: primary + icon buttons -->
+          <div class="flex gap-2 px-4 pb-4">
+            <!-- Mark paid / undo — takes most of the width -->
+            <button
+              v-if="bill.status !== 'paid'"
+              @click="markPaid(bill.id)"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all"
+              :class="bill.status === 'overdue'
+                ? 'bg-red-500/15 border border-red-500/40 text-red-300 hover:bg-red-500/25'
+                : 'bg-green-500/15 border border-green-500/40 text-green-300 hover:bg-green-500/25'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+              {{ t('bills.mark_paid') }}
+            </button>
+            <button
+              v-else
+              @click="markUnpaid(bill.id)"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-700 bg-gray-800/30 text-gray-400 hover:text-amber-300 hover:border-amber-700/50 font-semibold text-sm transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+              </svg>
+              {{ t('bills.undo') }}
+            </button>
+
+            <!-- IRIS (only if payment code) -->
+            <button
+              v-if="bill.payment_code"
+              @click="payWithIRIS(bill)"
+              class="w-12 h-12 flex items-center justify-center rounded-xl border border-indigo-800/40 bg-indigo-900/20 text-indigo-400 hover:bg-indigo-900/40 transition-all shrink-0"
+              :title="t('bills.pay_iris')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3" />
+              </svg>
+            </button>
+
+            <!-- Edit -->
+            <button
+              @click="openEdit(bill.id)"
+              class="w-12 h-12 flex items-center justify-center rounded-xl border border-gray-700 bg-gray-800/30 text-gray-400 hover:text-gray-100 hover:border-gray-500 transition-all shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+              </svg>
+            </button>
+
+            <!-- Delete -->
+            <button
+              @click="deleteBill(bill.id)"
+              class="w-12 h-12 flex items-center justify-center rounded-xl border border-gray-700 bg-gray-800/30 text-gray-400 hover:text-red-400 hover:border-red-800/50 hover:bg-red-900/10 transition-all shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
           </div>
         </div>
-
-        <!-- RF / Payment code — big tap target -->
-        <div v-if="bill.payment_code" class="px-4 pb-3">
-          <button
-            @click.stop="copyPaymentCode(bill.payment_code, bill.id)"
-            class="w-full flex items-center gap-3 px-3.5 py-3 bg-gray-800/70 rounded-xl border transition-all group"
-            :class="copiedId === bill.id
-              ? 'border-green-700/60 bg-green-900/10'
-              : 'border-gray-700/60 hover:border-blue-600/50 hover:bg-blue-900/10'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"
-              class="w-4 h-4 shrink-0 transition-colors"
-              :class="copiedId === bill.id ? 'text-green-400' : 'text-blue-400'">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
-            </svg>
-            <span class="font-mono text-sm flex-1 text-left truncate transition-colors"
-              :class="copiedId === bill.id ? 'text-green-300' : 'text-blue-300 group-hover:text-blue-200'">
-              {{ bill.payment_code }}
-            </span>
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 transition-all"
-              :class="copiedId === bill.id
-                ? 'bg-green-900/40 text-green-400'
-                : 'bg-gray-700 text-gray-400 group-hover:bg-blue-900/30 group-hover:text-blue-300'">
-              {{ copiedId === bill.id ? t('bills.copied') : t('bills.copy') }}
-            </span>
-          </button>
-        </div>
-
-        <!-- Action buttons row -->
-        <div class="flex gap-2 px-4 pb-4">
-          <!-- Primary: Mark paid / undo -->
-          <button
-            v-if="bill.status !== 'paid'"
-            @click="markPaid(bill.id)"
-            class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border font-semibold text-sm transition-all"
-            :class="bill.status === 'overdue'
-              ? 'bg-red-900/20 border-red-800/50 text-red-300 hover:bg-red-900/40 hover:border-red-600 hover:text-red-200'
-              : 'bg-green-900/20 border-green-800/50 text-green-300 hover:bg-green-900/40 hover:border-green-600 hover:text-green-200'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 shrink-0">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-            {{ t('bills.mark_paid') }}
-          </button>
-          <button
-            v-else
-            @click="markUnpaid(bill.id)"
-            class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-700 bg-gray-800/40 text-gray-400 hover:text-amber-300 hover:border-amber-700/60 hover:bg-amber-900/10 font-medium text-sm transition-all"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 shrink-0">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-            </svg>
-            {{ t('bills.undo') }}
-          </button>
-
-          <!-- IRIS -->
-          <button
-            v-if="bill.payment_code"
-            @click="payWithIRIS(bill)"
-            class="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-indigo-800/50 bg-indigo-900/20 text-indigo-300 hover:bg-indigo-900/40 hover:text-indigo-200 text-sm transition-all"
-            :title="t('bills.pay_iris')"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3" />
-            </svg>
-          </button>
-
-          <!-- Payment link -->
-          <a
-            v-if="bill.user_provider?.provider?.payment_url"
-            :href="bill.user_provider.provider.payment_url"
-            target="_blank"
-            rel="noopener"
-            class="flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-gray-700 bg-gray-800/40 text-gray-400 hover:text-gray-200 hover:border-gray-600 text-sm transition-all"
-            :title="t('bills.payment_link')"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-          </a>
-
-          <!-- Edit -->
-          <button
-            @click="openEdit(bill.id)"
-            class="flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-gray-700 bg-gray-800/40 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-all"
-            :title="locale === 'el' ? 'Επεξεργασία' : 'Edit'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-            </svg>
-          </button>
-
-          <!-- Delete -->
-          <button
-            @click="deleteBill(bill.id)"
-            class="flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-gray-700 bg-gray-800/40 text-gray-400 hover:text-red-400 hover:border-red-800/60 hover:bg-red-900/10 transition-all"
-            :title="locale === 'el' ? 'Διαγραφή' : 'Delete'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
-        </div>
       </div>
-    </div>
+
+    </template>
 
     <!-- QR / IRIS modal -->
     <div v-if="qrBill" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4" @click.self="qrBill = null">
@@ -735,6 +709,29 @@ async function onFileSelected(event: Event) {
         </div>
       </div>
     </div>
+
+    <!-- Floating bulk action bar -->
+    <Teleport to="body">
+      <Transition name="slide-up">
+        <div
+          v-if="selectionMode && selected.size > 0"
+          class="fixed bottom-20 inset-x-4 z-40 flex items-center gap-3 bg-gray-900 border border-gray-700 rounded-2xl px-4 py-3 shadow-2xl shadow-black/50"
+        >
+          <span class="text-sm text-gray-300 flex-1">
+            <span class="font-bold text-white">{{ selected.size }}</span>
+            {{ locale === 'el' ? ' επιλεγμένα' : ' selected' }}
+          </span>
+          <button
+            @click="exitSelectionMode()"
+            class="px-3 py-2 rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+          >{{ locale === 'el' ? 'Ακύρωση' : 'Cancel' }}</button>
+          <button
+            @click="bulkDelete"
+            class="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-sm font-bold text-white transition-colors"
+          >{{ locale === 'el' ? 'Διαγραφή' : 'Delete' }}</button>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Hidden file input for scanning -->
     <input
@@ -951,3 +948,15 @@ async function onFileSelected(event: Event) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+</style>

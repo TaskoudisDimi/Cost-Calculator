@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
 import { auth } from '@/firebase'
 import { useAuthStore } from '@/stores/auth'
@@ -811,6 +811,30 @@ async function confirmDeleteAccount() {
             {{ addingMember ? '…' : t('settings.add_member') }}
           </button>
         </div>
+      </div>
+    </section>
+
+    <!-- Bank connection -->
+    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-semibold text-gray-200">{{ locale === 'el' ? 'Σύνδεση Τράπεζας' : 'Bank Connection' }}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ locale === 'el' ? 'Σύνδεσε τον τραπεζικό σου λογαριασμό για αυτόματο συγχρονισμό (Nordigen/GoCardless)' : 'Connect your bank for automatic transaction sync (Nordigen/GoCardless)' }}</p>
+        </div>
+        <RouterLink
+          to="/bank"
+          class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-700 bg-gray-800/40 text-sm font-medium text-gray-300 hover:text-white hover:border-blue-600/60 hover:bg-blue-600/10 transition-all"
+        >
+          {{ locale === 'el' ? 'Διαχείριση' : 'Manage' }}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </RouterLink>
       </div>
     </section>
 
