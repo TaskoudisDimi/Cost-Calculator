@@ -171,6 +171,15 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 	if req.DueDate != nil {
 		bill.DueDate = *req.DueDate
 		updates = append(updates, firestore.Update{Path: "due_date", Value: *req.DueDate})
+		// Recalculate status when due_date changes (don't touch paid bills)
+		if bill.Status != "paid" {
+			newStatus := "pending"
+			if req.DueDate.Before(time.Now()) {
+				newStatus = "overdue"
+			}
+			bill.Status = newStatus
+			updates = append(updates, firestore.Update{Path: "status", Value: newStatus})
+		}
 	}
 	if req.IssuedDate != nil {
 		bill.IssuedDate = req.IssuedDate
