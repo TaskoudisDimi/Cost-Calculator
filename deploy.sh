@@ -42,11 +42,14 @@ step "Granting Cloud Build permissions to default service account"
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" --role="roles/cloudbuild.builds.builder" --quiet
+  --member="serviceAccount:$SA" --role="roles/cloudbuild.builds.builder" \
+  --condition=None --quiet
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" --role="roles/storage.objectAdmin" --quiet
+  --member="serviceAccount:$SA" --role="roles/storage.objectAdmin" \
+  --condition=None --quiet
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" --role="roles/secretmanager.secretAccessor" --quiet
+  --member="serviceAccount:$SA" --role="roles/secretmanager.secretAccessor" \
+  --condition=None --quiet
 ok "Permissions granted to $SA"
 
 # ── Secrets ────────────────────────────────────────────────────────────────────
