@@ -20,6 +20,7 @@ const showModal = ref(false)
 const editingBill = ref<string | null>(null)
 const filterStatus = ref<BillStatus | 'all'>('all')
 const filterMember = ref<string>('all')
+const filterMonth = ref<string>('all')
 const selected = ref<Set<string>>(new Set())
 const saving = ref(false)
 const viewMode = ref<'list' | 'history'>('list')
@@ -93,6 +94,14 @@ const priceAlerts = computed(() => {
   return alerts
 })
 
+// Distinct months that have at least one bill, sorted newest first
+const availableMonths = computed(() => {
+  const all = unref(store.bills)
+  if (!Array.isArray(all)) return []
+  const months = [...new Set(all.map(b => b.due_date.slice(0, 7)))]
+  return months.sort((a, b) => b.localeCompare(a))
+})
+
 const filteredBills = computed(() => {
   let all = unref(store.bills)
   if (!Array.isArray(all)) return []
@@ -104,23 +113,36 @@ const filteredBills = computed(() => {
       all = all.filter(b => b.member_id === filterMember.value)
     }
   }
-  if (dateFrom.value) {
-    const from = new Date(dateFrom.value)
-    all = all.filter(b => new Date(b.due_date) >= from)
+  if (filterMonth.value !== 'all') {
+    all = all.filter(b => b.due_date.slice(0, 7) === filterMonth.value)
+  } else {
+    if (dateFrom.value) {
+      const from = new Date(dateFrom.value)
+      all = all.filter(b => new Date(b.due_date) >= from)
+    }
+    if (dateTo.value) {
+      const to = new Date(dateTo.value)
+      to.setHours(23, 59, 59, 999)
+      all = all.filter(b => new Date(b.due_date) <= to)
+    }
   }
-  if (dateTo.value) {
-    const to = new Date(dateTo.value)
-    to.setHours(23, 59, 59, 999)
-    all = all.filter(b => new Date(b.due_date) <= to)
-  }
-  return all
+  return all.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
 })
 
 function clearDateFilter() {
   dateFrom.value = ''
   dateTo.value = ''
+  filterMonth.value = 'all'
   filterMember.value = 'all'
   filterOpen.value = false
+  clearSelection()
+}
+
+function setFilterMonth(month: string) {
+  filterMonth.value = month
+  // clear manual date range when a month chip is selected
+  dateFrom.value = ''
+  dateTo.value = ''
   clearSelection()
 }
 
@@ -135,7 +157,14 @@ const allSelected = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([store.fetchBills(), store.fetchUserProviders(), membersStore.fetchMembers()])
+  // AppLayout pre-fetches bills+providers on boot; skip if already loaded
+  const hasBills = store.bills.length > 0
+  const hasProviders = store.userProviders.length > 0
+  await Promise.all([
+    hasBills ? Promise.resolve() : store.fetchBills(),
+    hasProviders ? Promise.resolve() : store.fetchUserProviders(),
+    membersStore.fetchMembers(),
+  ])
 })
 
 function toggleSelect(id: string) {
@@ -441,8 +470,8 @@ async function onFileSelected(event: Event) {
     <!-- ── List view ─────────────────────────────────────────── -->
     <template v-if="viewMode === 'list'">
 
-      <!-- Filter bar: status chips + filter icon + select -->
-      <div class="flex items-center gap-2 mb-3">
+      <!-- Row 1: Status chips + filter icon + select -->
+      <div class="flex items-center gap-2 mb-2">
         <div class="flex gap-1.5 overflow-x-auto flex-1 pb-0.5 scrollbar-none">
           <button
             v-for="f in (['all', 'pending', 'overdue', 'paid'] as const)"
@@ -451,7 +480,7 @@ async function onFileSelected(event: Event) {
             class="whitespace-nowrap px-3.5 py-2 rounded-xl text-sm font-semibold transition-all shrink-0"
             :class="filterStatus === f
               ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-gray-900 text-gray-400 border border-gray-800 hover:border-gray-700 hover:text-gray-300'"
+              : 'bg-[#111119] text-gray-400 border border-white/[0.06] hover:border-white/[0.12] hover:text-gray-300'"
           >
             {{ f === 'all' ? t('bills.all_filter') : statusLabel(f) }}
           </button>
@@ -462,14 +491,15 @@ async function onFileSelected(event: Event) {
           @click="filterOpen = !filterOpen"
           class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all relative"
           :class="filterOpen || dateFrom || dateTo || filterMember !== 'all'
-            ? 'border-blue-600/60 bg-blue-900/20 text-blue-400'
-            : 'border-gray-800 bg-gray-900 text-gray-500 hover:text-gray-300 hover:border-gray-700'"
+            ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+            : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
+          :title="locale === 'el' ? 'Φίλτρα' : 'Filters'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
           </svg>
           <span v-if="dateFrom || dateTo || filterMember !== 'all'"
-            class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-gray-950" />
+            class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-[#0b0b10]" />
         </button>
 
         <!-- Select mode toggle -->
@@ -477,50 +507,88 @@ async function onFileSelected(event: Event) {
           @click="selectionMode ? exitSelectionMode() : (selectionMode = true)"
           class="shrink-0 px-3 h-10 rounded-xl border text-sm font-semibold transition-all"
           :class="selectionMode
-            ? 'border-blue-600/60 bg-blue-900/20 text-blue-400'
-            : 'border-gray-800 bg-gray-900 text-gray-500 hover:text-gray-300 hover:border-gray-700'"
+            ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+            : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
         >
           {{ locale === 'el' ? 'Επιλογή' : 'Select' }}
         </button>
       </div>
 
-      <!-- Expandable filter panel -->
+      <!-- Row 2: Month chips (scrollable) -->
+      <div v-if="availableMonths.length > 1" class="flex gap-1.5 overflow-x-auto mb-3 pb-0.5 scrollbar-none">
+        <button
+          @click="setFilterMonth('all')"
+          class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0"
+          :class="filterMonth === 'all'
+            ? 'bg-white/10 text-white border border-white/20'
+            : 'text-gray-500 border border-white/[0.05] hover:border-white/[0.1] hover:text-gray-300'"
+        >
+          {{ locale === 'el' ? 'Όλοι' : 'All' }}
+        </button>
+        <button
+          v-for="month in availableMonths"
+          :key="month"
+          @click="setFilterMonth(month)"
+          class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0"
+          :class="filterMonth === month
+            ? 'bg-white/10 text-white border border-white/20'
+            : 'text-gray-500 border border-white/[0.05] hover:border-white/[0.1] hover:text-gray-300'"
+        >
+          {{ monthLabel(month) }}
+        </button>
+      </div>
+
+      <!-- Expandable filter panel (members + date range) -->
       <Transition
         enter-active-class="transition-all duration-200 ease-out"
-        enter-from-class="opacity-0 -translate-y-2"
+        enter-from-class="opacity-0 -translate-y-1"
         enter-to-class="opacity-100 translate-y-0"
         leave-active-class="transition-all duration-150 ease-in"
         leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 -translate-y-2"
+        leave-to-class="opacity-0 -translate-y-1"
       >
-        <div v-if="filterOpen" class="mb-3 space-y-3 p-4 bg-gray-900 rounded-2xl border border-gray-800">
+        <div v-if="filterOpen" class="mb-3 space-y-3 p-4 bg-[#111119] rounded-2xl border border-white/[0.06]">
+          <!-- Member chips -->
           <div v-if="membersStore.members.length > 0" class="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
-              @click="filterMember = 'all'"
+              @click="filterMember = 'all'; clearSelection()"
               class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all shrink-0"
-              :class="filterMember === 'all' ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700/60 hover:border-gray-600'"
-            >{{ t('bills.all_filter') }}</button>
+              :class="filterMember === 'all'
+                ? 'bg-white/10 text-white border border-white/20'
+                : 'text-gray-500 border border-white/[0.06] hover:border-white/[0.12] hover:text-gray-300'"
+            >{{ locale === 'el' ? 'Όλοι' : 'All' }}</button>
             <button
               v-for="m in membersStore.members"
               :key="m.id"
-              @click="filterMember = m.id"
+              @click="filterMember = m.id; clearSelection()"
               class="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all shrink-0 border"
-              :class="filterMember === m.id ? 'text-white border-transparent' : 'bg-gray-800 text-gray-400 border-gray-700/60 hover:border-gray-600'"
+              :class="filterMember === m.id ? 'text-white border-transparent' : 'text-gray-500 border-white/[0.06] hover:border-white/[0.12] hover:text-gray-300'"
               :style="filterMember === m.id ? { backgroundColor: m.color } : {}"
             >
               <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: filterMember === m.id ? 'rgba(255,255,255,0.6)' : m.color }" />
               {{ m.name }}
             </button>
           </div>
-          <div class="flex items-center gap-2">
-            <input v-model="dateFrom" type="date" @change="clearSelection()"
-              class="flex-1 px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
-            <span class="text-gray-600 shrink-0">—</span>
-            <input v-model="dateTo" type="date" @change="clearSelection()"
-              class="flex-1 px-3 py-2.5 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
+
+          <!-- Date range (disabled when a month chip is active) -->
+          <div class="space-y-2">
+            <p v-if="filterMonth !== 'all'" class="text-[11px] text-gray-600">
+              {{ locale === 'el' ? 'Απενεργοποίησε τον μήνα για να χρησιμοποιήσεις εύρος ημερομηνιών' : 'Clear month filter to use date range' }}
+            </p>
+            <div class="flex items-center gap-2" :class="filterMonth !== 'all' ? 'opacity-40 pointer-events-none' : ''">
+              <input v-model="dateFrom" type="date" @change="filterMonth = 'all'; clearSelection()"
+                class="flex-1 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
+              <span class="text-gray-600 shrink-0">—</span>
+              <input v-model="dateTo" type="date" @change="filterMonth = 'all'; clearSelection()"
+                class="flex-1 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
+            </div>
           </div>
-          <button v-if="dateFrom || dateTo || filterMember !== 'all'" @click="clearDateFilter"
-            class="w-full py-2 rounded-xl border border-gray-700 text-sm text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors font-medium">
+
+          <button
+            v-if="dateFrom || dateTo || filterMember !== 'all' || filterMonth !== 'all'"
+            @click="clearDateFilter"
+            class="w-full py-2 rounded-xl border border-white/[0.06] text-sm text-gray-400 hover:text-gray-200 hover:border-white/[0.12] transition-colors font-semibold"
+          >
             {{ t('bills.clear_filter') }}
           </button>
         </div>

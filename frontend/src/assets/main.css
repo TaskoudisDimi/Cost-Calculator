@@ -2,7 +2,7 @@
 
 /* ── Global dark theme ── */
 html, body {
-  background-color: #0d1117;
+  background-color: #0b0b10;
   color: #f9fafb;
 }
 
@@ -10,7 +10,7 @@ html, body {
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 textarea,
 select {
-  background-color: #0d1117 !important;
+  background-color: #0b0b10 !important;
   color: #e5e7eb !important;
   border-color: #374151 !important; /* gray-700 */
 }
@@ -24,7 +24,7 @@ textarea::placeholder {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #0d1117 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #0b0b10 inset !important;
   -webkit-text-fill-color: #e5e7eb !important;
   border-color: #374151 !important;
 }

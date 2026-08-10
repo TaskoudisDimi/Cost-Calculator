@@ -102,7 +102,10 @@ func (h *IncomeHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	h.fs.Collection("income").Doc(id).Delete(ctx)
+	if _, err := h.fs.Collection("income").Doc(id).Delete(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete income"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 

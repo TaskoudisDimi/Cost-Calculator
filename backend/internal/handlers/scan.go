@@ -9,9 +9,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+var claudeHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 type ScanHandler struct {
 	apiKey string
@@ -158,7 +161,7 @@ func callClaudeVision(apiKey, base64Data, mediaType string) (*ScanResult, error)
 	req.Header.Set("x-api-key", apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := claudeHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +229,7 @@ Email content:
 	req.Header.Set("x-api-key", apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := claudeHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

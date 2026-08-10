@@ -93,12 +93,12 @@ async function copyText(text: string, key: string) {
 
     <!-- Loading skeleton -->
     <div v-if="store.loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      <div v-for="i in 3" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 p-4 h-36 animate-pulse" />
+      <div v-for="i in 3" :key="i" class="bg-white/[0.04] rounded-xl border border-white/[0.08] p-4 h-36 animate-pulse" />
     </div>
 
     <!-- Empty state -->
     <div v-else-if="store.credentials.length === 0"
-      class="text-center py-20 bg-gray-800 rounded-xl border border-gray-700">
+      class="text-center py-20 bg-white/[0.04] rounded-xl border border-white/[0.08]">
       <div class="text-5xl mb-3">🔑</div>
       <p class="text-gray-400 font-medium">{{ t('credentials.no_creds') }}</p>
       <p class="text-sm text-gray-400 mt-1">{{ t('credentials.no_creds_desc') }}</p>
@@ -113,7 +113,7 @@ async function copyText(text: string, key: string) {
       <div
         v-for="cred in store.credentials"
         :key="cred.id"
-        class="bg-gray-800 rounded-xl border border-gray-700 p-4 shadow-sm flex flex-col gap-3"
+        class="bg-white/[0.04] rounded-xl border border-white/[0.08] p-4 shadow-sm flex flex-col gap-3"
       >
         <!-- Header -->
         <div class="flex items-start justify-between gap-2">
@@ -138,7 +138,7 @@ async function copyText(text: string, key: string) {
         </div>
 
         <!-- Username row -->
-        <div v-if="cred.username" class="flex items-center gap-2 bg-gray-900/50 rounded-lg px-3 py-2">
+        <div v-if="cred.username" class="flex items-center gap-2 bg-[#111119]/50 rounded-lg px-3 py-2">
           <span class="text-xs text-gray-400 w-16 shrink-0">{{ t('credentials.user_label') }}</span>
           <span class="flex-1 text-sm text-gray-100 font-mono truncate">{{ cred.username }}</span>
           <button
@@ -146,14 +146,14 @@ async function copyText(text: string, key: string) {
             class="shrink-0 text-xs px-2 py-1 rounded-md font-medium transition-colors"
             :class="copiedKey === cred.id + '-u'
               ? 'bg-green-900/30 text-green-400'
-              : 'bg-gray-800 border border-gray-700 text-gray-400 hover:border-blue-300 hover:text-blue-400'"
+              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-blue-300 hover:text-blue-400'"
           >
             {{ copiedKey === cred.id + '-u' ? t('common.copied') : t('common.copy') }}
           </button>
         </div>
 
         <!-- Password row -->
-        <div v-if="cred.password" class="flex items-center gap-2 bg-gray-900/50 rounded-lg px-3 py-2">
+        <div v-if="cred.password" class="flex items-center gap-2 bg-[#111119]/50 rounded-lg px-3 py-2">
           <span class="text-xs text-gray-400 w-16 shrink-0">{{ t('credentials.password_label') }}</span>
           <span class="flex-1 text-sm font-mono text-gray-100 truncate select-none">
             {{ visiblePasswords.has(cred.id) ? cred.password : '••••••••' }}
@@ -176,7 +176,7 @@ async function copyText(text: string, key: string) {
             class="shrink-0 text-xs px-2 py-1 rounded-md font-medium transition-colors"
             :class="copiedKey === cred.id + '-p'
               ? 'bg-green-900/30 text-green-400'
-              : 'bg-gray-800 border border-gray-700 text-gray-400 hover:border-blue-300 hover:text-blue-400'"
+              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-blue-300 hover:text-blue-400'"
           >
             {{ copiedKey === cred.id + '-p' ? t('common.copied') : t('common.copy') }}
           </button>
@@ -195,7 +195,7 @@ async function copyText(text: string, key: string) {
 
     <!-- Add / Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
-      <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="bg-white/[0.04] rounded-2xl shadow-xl w-full max-w-md p-6">
         <h3 class="text-lg font-semibold text-gray-50 mb-5">
           {{ editingId ? t('credentials.modal_edit') : t('credentials.modal_new') }}
         </h3>
@@ -204,41 +204,41 @@ async function copyText(text: string, key: string) {
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.label') }}</label>
             <input v-model="form.label" type="text" required
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               :placeholder="t('credentials.label_placeholder')" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.username') }}</label>
             <input v-model="form.username" type="text" autocomplete="off"
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="username or email" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.password') }}</label>
             <input v-model="form.password" type="text" autocomplete="new-password"
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
               :placeholder="t('credentials.password').toLowerCase()" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.url') }}</label>
             <input v-model="form.url" type="url"
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://..." />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.notes') }}</label>
             <input v-model="form.notes" type="text"
-              class="w-full px-3 py-2.5 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               :placeholder="t('common.optional')" />
           </div>
 
           <div class="flex gap-3 pt-2">
             <button type="button" @click="showModal = false"
-              class="flex-1 px-4 py-2.5 rounded-lg border border-gray-600 text-sm font-medium text-gray-300 hover:bg-gray-700/60 transition-colors">
+              class="flex-1 px-4 py-2.5 rounded-lg border border-white/[0.10] text-sm font-medium text-gray-300 hover:bg-white/[0.06] transition-colors">
               {{ t('common.cancel') }}
             </button>
             <button type="submit"

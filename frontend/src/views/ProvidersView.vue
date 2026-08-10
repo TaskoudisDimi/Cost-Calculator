@@ -164,7 +164,7 @@ async function deleteTemplate(id: string) {
       <div class="flex gap-2">
         <button
           @click="openTemplateModal"
-          class="bg-gray-800 border border-gray-600 hover:border-blue-400 text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="bg-white/[0.04] border border-white/[0.10] hover:border-blue-400 text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           {{ t('providers.new_template') }}
         </button>
@@ -180,10 +180,10 @@ async function deleteTemplate(id: string) {
     <!-- Loading skeleton -->
     <div v-if="loading" class="space-y-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div v-for="i in 2" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 h-20 animate-pulse" />
+        <div v-for="i in 2" :key="i" class="bg-white/[0.04] rounded-xl border border-white/[0.08] h-20 animate-pulse" />
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <div v-for="i in 8" :key="i" class="bg-gray-800 rounded-xl border border-gray-700 h-24 animate-pulse" />
+        <div v-for="i in 8" :key="i" class="bg-white/[0.04] rounded-xl border border-white/[0.08] h-24 animate-pulse" />
       </div>
     </div>
 
@@ -194,7 +194,7 @@ async function deleteTemplate(id: string) {
         <div
           v-for="up in store.userProviders"
           :key="up.id"
-          class="bg-gray-800 rounded-xl border border-gray-700 p-4 flex items-center justify-between"
+          class="bg-white/[0.04] rounded-xl border border-white/[0.08] p-4 flex items-center justify-between"
         >
           <div class="flex items-center gap-3">
             <div
@@ -230,8 +230,8 @@ async function deleteTemplate(id: string) {
           <div
             v-for="p in providersByCategory(cat)"
             :key="p.id"
-            class="bg-gray-800 rounded-xl border p-3 flex flex-col items-center gap-2 transition-all"
-            :class="isAdded(p.id) ? 'border-green-200 opacity-60' : 'border-gray-700 hover:border-blue-300 cursor-pointer'"
+            class="bg-white/[0.04] rounded-xl border p-3 flex flex-col items-center gap-2 transition-all"
+            :class="isAdded(p.id) ? 'border-green-200 opacity-60' : 'border-white/[0.08] hover:border-blue-300 cursor-pointer'"
             @click="!isAdded(p.id) && openListModal(p.id)"
           >
             <div
@@ -248,8 +248,8 @@ async function deleteTemplate(id: string) {
           <div
             v-for="tpl in templatesByCategory(cat)"
             :key="tpl.id"
-            class="bg-gray-800 rounded-xl border p-3 flex flex-col items-center gap-2 transition-all relative"
-            :class="isAdded(tpl.id) ? 'border-green-200 opacity-60' : 'border-dashed border-gray-600 hover:border-blue-300 cursor-pointer'"
+            class="bg-white/[0.04] rounded-xl border p-3 flex flex-col items-center gap-2 transition-all relative"
+            :class="isAdded(tpl.id) ? 'border-green-200 opacity-60' : 'border-dashed border-white/[0.10] hover:border-blue-300 cursor-pointer'"
             @click="activateTemplate(tpl.id)"
           >
             <button
@@ -275,10 +275,10 @@ async function deleteTemplate(id: string) {
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="closeModal">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-sm p-6">
 
         <!-- Mode toggle -->
-        <div class="flex rounded-lg border border-gray-700 p-1 mb-5">
+        <div class="flex rounded-lg border border-white/[0.08] p-1 mb-5">
           <button
             @click="modalMode = 'list'"
             class="flex-1 py-1.5 rounded-md text-sm font-medium transition-colors"
@@ -325,7 +325,7 @@ async function deleteTemplate(id: string) {
           <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
           <div class="flex gap-3 pt-1">
             <button type="button" @click="closeModal"
-              class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">{{ t('common.cancel') }}</button>
+              class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">{{ t('common.cancel') }}</button>
             <button type="submit" :disabled="saving"
               class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
               {{ saving ? t('common.saving') : t('common.add') }}
@@ -378,7 +378,7 @@ async function deleteTemplate(id: string) {
           <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
           <div class="flex gap-3 pt-1">
             <button type="button" @click="closeModal"
-              class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">{{ t('common.cancel') }}</button>
+              class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">{{ t('common.cancel') }}</button>
             <button type="submit" :disabled="saving"
               class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
               {{ saving ? t('common.saving') : t('common.save') }}

@@ -88,7 +88,7 @@ async function remove(id: string) {
         <input
           v-model="month"
           type="month"
-          class="px-3 py-2 rounded-lg border border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="px-3 py-2 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           @change="onMonthChange"
         />
         <button
@@ -107,17 +107,17 @@ async function remove(id: string) {
         :key="f"
         @click="filterStatus = f"
         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700/60'"
+        :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-white/[0.04] text-gray-400 border border-white/[0.08] hover:bg-white/[0.06]'"
       >
         {{ f === 'all' ? t('expenses.all_filter') : expenseStatusLabel(f) }}
       </button>
     </div>
 
     <div v-if="loading" class="space-y-2">
-      <div v-for="i in 4" :key="i" class="bg-gray-900 rounded-2xl border border-gray-800 h-16 animate-pulse" />
+      <div v-for="i in 4" :key="i" class="bg-[#111119] rounded-2xl border border-white/[0.06] h-16 animate-pulse" />
     </div>
 
-    <div v-else-if="filtered.length === 0" class="text-center py-16 bg-gray-900 rounded-2xl border border-gray-800">
+    <div v-else-if="filtered.length === 0" class="text-center py-16 bg-[#111119] rounded-2xl border border-white/[0.06]">
       <div class="text-3xl mb-3">🛍️</div>
       <p class="text-sm font-medium text-gray-400">{{ t('expenses.no_expenses') }}</p>
       <button @click="showModal = true" class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors">
@@ -125,14 +125,14 @@ async function remove(id: string) {
       </button>
     </div>
 
-    <div v-else class="bg-gray-900 rounded-2xl border border-gray-800 divide-y divide-gray-800 overflow-hidden">
+    <div v-else class="bg-[#111119] rounded-2xl border border-white/[0.06] divide-y divide-white/[0.06] overflow-hidden">
       <div
         v-for="e in filtered"
         :key="e.id"
-        class="flex items-center gap-3 md:gap-4 p-4 hover:bg-gray-800/40 transition-colors"
+        class="flex items-center gap-3 md:gap-4 p-4 hover:bg-white/[0.04] transition-colors"
         :class="e.status === 'bought' ? 'opacity-50' : ''"
       >
-        <div class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-base shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-white/[0.04] flex items-center justify-center text-base shrink-0">
           {{ expenseCategoryIcon(e.category) }}
         </div>
 
@@ -175,7 +175,7 @@ async function remove(id: string) {
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-md p-6">
         <h3 class="text-base font-semibold text-gray-50 mb-5">{{ t('expenses.modal_title') }}</h3>
 
         <form @submit.prevent="submit" class="space-y-4">
@@ -247,7 +247,7 @@ async function remove(id: string) {
 
           <div class="flex gap-3 pt-1">
             <button type="button" @click="showModal = false"
-              class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+              class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">
               {{ t('common.cancel') }}
             </button>
             <button type="submit"

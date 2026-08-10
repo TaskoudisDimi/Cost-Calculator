@@ -159,8 +159,8 @@ onMounted(async () => {
 
     <!-- Loading -->
     <div v-if="loading" class="space-y-3">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl h-32 animate-pulse" />
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl h-16 animate-pulse" />
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl h-32 animate-pulse" />
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl h-16 animate-pulse" />
     </div>
 
     <div v-else class="space-y-4">
@@ -183,7 +183,7 @@ onMounted(async () => {
 
       <!-- Connected card -->
       <div v-if="status?.connected"
-        class="bg-gray-900 border border-emerald-800/50 rounded-2xl p-5">
+        class="bg-[#111119] border border-emerald-800/50 rounded-2xl p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-900/40 border border-emerald-700/50 flex items-center justify-center text-xl">
@@ -213,7 +213,7 @@ onMounted(async () => {
         </div>
 
         <!-- Sync section -->
-        <div class="mt-4 pt-4 border-t border-gray-800">
+        <div class="mt-4 pt-4 border-t border-white/[0.06]">
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="text-sm font-medium text-gray-200">
@@ -242,12 +242,12 @@ onMounted(async () => {
           </div>
 
           <!-- Sync result -->
-          <div v-if="syncResult" class="mt-3 bg-gray-800/60 rounded-xl px-4 py-3 flex items-center gap-4 text-sm">
+          <div v-if="syncResult" class="mt-3 bg-white/[0.04]/60 rounded-xl px-4 py-3 flex items-center gap-4 text-sm">
             <div class="text-center">
               <p class="text-lg font-bold text-gray-100">{{ syncResult.transactions_found }}</p>
               <p class="text-xs text-gray-500">{{ locale === 'en' ? 'transactions' : 'συναλλαγές' }}</p>
             </div>
-            <div class="w-px h-8 bg-gray-700" />
+            <div class="w-px h-8 bg-white/[0.06]" />
             <div class="text-center">
               <p class="text-lg font-bold" :class="syncResult.bills_matched > 0 ? 'text-emerald-400' : 'text-gray-400'">
                 {{ syncResult.bills_matched }}
@@ -260,7 +260,7 @@ onMounted(async () => {
 
       <!-- Not connected — status pending -->
       <div v-else-if="status && !status.connected && status.status"
-        class="bg-gray-900 border border-amber-800/40 rounded-2xl p-5">
+        class="bg-[#111119] border border-amber-800/40 rounded-2xl p-5">
         <div class="flex items-center gap-3">
           <span class="text-2xl">⏳</span>
           <div>
@@ -275,7 +275,7 @@ onMounted(async () => {
         </div>
         <div class="flex gap-2 mt-4">
           <button @click="fetchStatus"
-            class="flex-1 text-sm text-gray-300 border border-gray-700 hover:bg-gray-800 rounded-xl py-2 transition-colors">
+            class="flex-1 text-sm text-gray-300 border border-white/[0.08] hover:bg-white/[0.04] rounded-xl py-2 transition-colors">
             {{ locale === 'en' ? 'Refresh status' : 'Ανανέωση κατάστασης' }}
           </button>
           <button @click="disconnect" :disabled="disconnecting"
@@ -286,7 +286,7 @@ onMounted(async () => {
       </div>
 
       <!-- No connection — pick a bank -->
-      <div v-else class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+      <div v-else class="bg-[#111119] border border-white/[0.06] rounded-2xl p-5">
         <div class="text-center py-4">
           <div class="text-4xl mb-3">🏦</div>
           <p class="text-sm font-semibold text-gray-200 mb-1">
@@ -314,7 +314,7 @@ onMounted(async () => {
       </div>
 
       <!-- Bank picker -->
-      <div v-if="showInstitutions && !status?.connected" class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+      <div v-if="showInstitutions && !status?.connected" class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
         <p class="text-sm font-semibold text-gray-200 mb-3">
           {{ locale === 'en' ? 'Greek banks' : 'Ελληνικές τράπεζες' }}
         </p>
@@ -322,7 +322,7 @@ onMounted(async () => {
           v-model="searchQuery"
           type="search"
           :placeholder="locale === 'en' ? 'Search…' : 'Αναζήτηση…'"
-          class="w-full px-3.5 py-2 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+          class="w-full px-3.5 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
         />
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
           <button
@@ -330,7 +330,7 @@ onMounted(async () => {
             :key="inst.id"
             @click="connect(inst)"
             :disabled="connecting !== ''"
-            class="flex items-center gap-3 p-3 rounded-xl border border-gray-700 hover:border-blue-500 hover:bg-blue-900/10 text-left transition-colors disabled:opacity-50"
+            class="flex items-center gap-3 p-3 rounded-xl border border-white/[0.08] hover:border-blue-500 hover:bg-blue-900/10 text-left transition-colors disabled:opacity-50"
           >
             <img v-if="inst.logo" :src="inst.logo" :alt="inst.name" class="w-8 h-8 rounded-lg object-contain bg-white p-0.5 shrink-0" />
             <div v-else class="w-8 h-8 rounded-lg bg-blue-900/40 flex items-center justify-center text-blue-400 text-sm font-bold shrink-0">
@@ -354,7 +354,7 @@ onMounted(async () => {
       </div>
 
       <!-- Info box -->
-      <div class="bg-gray-900/50 border border-gray-800 rounded-2xl p-4">
+      <div class="bg-[#111119]/50 border border-white/[0.06] rounded-2xl p-4">
         <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
           {{ locale === 'en' ? 'How it works' : 'Πώς λειτουργεί' }}
         </p>

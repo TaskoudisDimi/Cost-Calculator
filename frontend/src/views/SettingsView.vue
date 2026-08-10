@@ -557,7 +557,7 @@ async function confirmDeleteAccount() {
     </div>
 
     <!-- Profile section -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.profile') }}</h3>
 
       <div class="flex items-center gap-4 mb-5">
@@ -596,7 +596,7 @@ async function confirmDeleteAccount() {
             :value="authStore.user?.email"
             type="email"
             disabled
-            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-800 text-sm text-gray-600 cursor-not-allowed opacity-60"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.06] text-sm text-gray-600 cursor-not-allowed opacity-60"
           />
         </div>
 
@@ -628,7 +628,7 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Notifications section -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.notifications') }}</h3>
 
       <div class="space-y-4">
@@ -640,7 +640,7 @@ async function confirmDeleteAccount() {
           <button
             @click="settingsStore.notifEnabled = !settingsStore.notifEnabled"
             class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-            :class="settingsStore.notifEnabled ? 'bg-blue-600' : 'bg-gray-600'"
+            :class="settingsStore.notifEnabled ? 'bg-blue-600' : 'bg-white/[0.08]'"
           >
             <span
               class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -661,7 +661,7 @@ async function confirmDeleteAccount() {
               class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors"
               :class="settingsStore.notifDays === days
                 ? 'bg-blue-600 border-blue-600 text-white'
-                : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'"
+                : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-300'"
             >
               {{ days === 1 ? `1 ${t('settings.day')}` : `${days} ${t('settings.days')}` }}
             </button>
@@ -671,7 +671,7 @@ async function confirmDeleteAccount() {
         <button
           @click="saveNotifSettings"
           :disabled="savingNotif"
-          class="w-full py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-sm font-medium text-gray-200 transition-colors disabled:opacity-50"
+          class="w-full py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.08] text-sm font-medium text-gray-200 transition-colors disabled:opacity-50"
         >
           {{ savingNotif ? t('common.saving') : t('settings.save_settings') }}
         </button>
@@ -679,7 +679,7 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Currency / Display -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.appearance') }}</h3>
       <div class="space-y-4">
         <div>
@@ -692,7 +692,7 @@ async function confirmDeleteAccount() {
               class="flex-1 py-2 rounded-xl text-sm font-medium border transition-colors"
               :class="settingsStore.currency === opt.value
                 ? 'bg-blue-600 border-blue-600 text-white'
-                : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-200'"
+                : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               {{ opt.label }}
             </button>
@@ -707,7 +707,7 @@ async function confirmDeleteAccount() {
               class="flex items-center gap-2 flex-1 py-2 rounded-xl text-sm font-medium border transition-colors"
               :class="locale === 'el'
                 ? 'bg-blue-600 border-blue-600 text-white'
-                : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-200'"
+                : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               <span class="text-base leading-none">🇬🇷</span> Ελληνικά
             </button>
@@ -716,7 +716,7 @@ async function confirmDeleteAccount() {
               class="flex items-center gap-2 flex-1 py-2 rounded-xl text-sm font-medium border transition-colors justify-center"
               :class="locale === 'en'
                 ? 'bg-blue-600 border-blue-600 text-white'
-                : 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-200'"
+                : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               <span class="text-base leading-none">🇬🇧</span> English
             </button>
@@ -726,7 +726,7 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Members section -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-start justify-between mb-4">
         <div>
           <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide">{{ t('settings.members') }}</h3>
@@ -739,7 +739,7 @@ async function confirmDeleteAccount() {
         <div
           v-for="m in membersStore.members"
           :key="m.id"
-          class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-700/50 bg-gray-800/30"
+          class="flex items-center gap-3 p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03]"
         >
           <template v-if="editingMemberID === m.id">
             <!-- Color swatches in edit mode -->
@@ -756,7 +756,7 @@ async function confirmDeleteAccount() {
             <input
               v-model="editingMemberName"
               type="text"
-              class="flex-1 bg-gray-700 rounded-lg px-2.5 py-1 text-sm text-gray-100 border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="flex-1 bg-white/[0.06] rounded-lg px-2.5 py-1 text-sm text-gray-100 border border-white/[0.10] focus:outline-none focus:ring-1 focus:ring-blue-500"
               @keyup.enter="saveEditMember"
             />
             <button @click="saveEditMember" class="text-xs text-blue-400 hover:text-blue-300 font-medium px-2">{{ t('common.save') }}</button>
@@ -784,7 +784,7 @@ async function confirmDeleteAccount() {
       <p v-else class="text-sm text-gray-500 mb-4 text-center py-3">{{ t('settings.no_members') }}</p>
 
       <!-- Add new member -->
-      <div class="border-t border-gray-700/50 pt-4">
+      <div class="border-t border-white/[0.06] pt-4">
         <div class="flex gap-1 mb-2.5">
           <button
             v-for="c in memberColors"
@@ -800,7 +800,7 @@ async function confirmDeleteAccount() {
             v-model="newMemberName"
             type="text"
             :placeholder="t('settings.member_name_placeholder')"
-            class="flex-1 px-3 py-2 rounded-xl border border-gray-700 bg-gray-800 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-500"
+            class="flex-1 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-500"
             @keyup.enter="addMember"
           />
           <button
@@ -815,7 +815,7 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Bank connection -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400">
@@ -828,7 +828,7 @@ async function confirmDeleteAccount() {
         </div>
         <RouterLink
           to="/bank"
-          class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-700 bg-gray-800/40 text-sm font-medium text-gray-300 hover:text-white hover:border-blue-600/60 hover:bg-blue-600/10 transition-all"
+          class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm font-medium text-gray-300 hover:text-white hover:border-blue-600/60 hover:bg-blue-600/10 transition-all"
         >
           {{ locale === 'el' ? 'Διαχείριση' : 'Manage' }}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
@@ -839,13 +839,13 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Data export / import -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.export') }}</h3>
       <p class="text-sm text-gray-400 mb-4">{{ t('settings.export_desc') }}</p>
       <div class="flex flex-wrap gap-3">
         <button
           @click="exportBillsCSV"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -854,7 +854,7 @@ async function confirmDeleteAccount() {
         </button>
         <button
           @click="triggerImport"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-emerald-600/60 hover:bg-emerald-600/10 text-sm font-medium text-gray-300 hover:text-emerald-300 transition-all"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-emerald-600/60 hover:bg-emerald-600/10 text-sm font-medium text-gray-300 hover:text-emerald-300 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 7.5m0 0-4.5 4.5M12 7.5V3" />
@@ -863,7 +863,7 @@ async function confirmDeleteAccount() {
         </button>
         <button
           @click="exportCalendarICS"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-purple-600/60 hover:bg-purple-600/10 text-sm font-medium text-gray-300 hover:text-purple-300 transition-all"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-purple-600/60 hover:bg-purple-600/10 text-sm font-medium text-gray-300 hover:text-purple-300 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -877,10 +877,10 @@ async function confirmDeleteAccount() {
 
     <!-- Import preview modal -->
     <div v-if="showImportModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="showImportModal = false">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
 
         <!-- Header -->
-        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-800 shrink-0">
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/[0.06] shrink-0">
           <h3 class="text-base font-semibold text-gray-50">{{ t('settings.import_preview_title') }}</h3>
           <button @click="showImportModal = false" class="text-gray-500 hover:text-gray-300 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -890,7 +890,7 @@ async function confirmDeleteAccount() {
         </div>
 
         <!-- Summary badges -->
-        <div class="flex gap-3 px-5 py-3 border-b border-gray-800 shrink-0">
+        <div class="flex gap-3 px-5 py-3 border-b border-white/[0.06] shrink-0">
           <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-900/30 text-emerald-400 border border-emerald-700/40">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             {{ t('settings.import_matched') }}: {{ matchedRows.length }}
@@ -905,7 +905,7 @@ async function confirmDeleteAccount() {
         <div class="overflow-y-auto flex-1 px-5 py-3">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-left text-xs text-gray-500 border-b border-gray-800">
+              <tr class="text-left text-xs text-gray-500 border-b border-white/[0.06]">
                 <th class="pb-2 pr-3 font-medium">{{ t('settings.import_col_provider') }}</th>
                 <th class="pb-2 pr-3 font-medium text-right">{{ t('settings.import_col_amount') }}</th>
                 <th class="pb-2 pr-3 font-medium">{{ t('settings.import_col_due') }}</th>
@@ -916,7 +916,7 @@ async function confirmDeleteAccount() {
               <tr
                 v-for="(row, i) in importRows"
                 :key="i"
-                class="border-b border-gray-800/50 last:border-b-0"
+                class="border-b border-white/[0.05] last:border-b-0"
                 :class="row.matchedProviderID && row.amount > 0 && row.dueDate ? 'opacity-100' : 'opacity-40'"
               >
                 <td class="py-2.5 pr-3">
@@ -938,7 +938,7 @@ async function confirmDeleteAccount() {
                 <td class="py-2.5 text-xs">
                   <span
                     class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                    :class="row.status === 'paid' ? 'bg-emerald-900/30 text-emerald-400' : row.status === 'overdue' ? 'bg-red-900/30 text-red-400' : 'bg-gray-700 text-gray-400'"
+                    :class="row.status === 'paid' ? 'bg-emerald-900/30 text-emerald-400' : row.status === 'overdue' ? 'bg-red-900/30 text-red-400' : 'bg-white/[0.06] text-gray-400'"
                   >
                     {{ row.status }}
                   </span>
@@ -949,10 +949,10 @@ async function confirmDeleteAccount() {
         </div>
 
         <!-- Footer -->
-        <div class="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
+        <div class="flex gap-3 px-5 py-4 border-t border-white/[0.06] shrink-0">
           <button
             @click="showImportModal = false"
-            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors"
           >
             {{ t('common.cancel') }}
           </button>
@@ -968,7 +968,7 @@ async function confirmDeleteAccount() {
     </div>
 
     <!-- Gmail auto-import -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-start gap-3 mb-4">
         <svg viewBox="0 0 24 24" class="w-5 h-5 mt-0.5 shrink-0" fill="none">
           <path d="M3 5.5h18v13H3v-13Z" stroke="#4285F4" stroke-width="1.5" stroke-linejoin="round"/>
@@ -984,7 +984,7 @@ async function confirmDeleteAccount() {
         <button
           @click="connectGmail"
           :disabled="gmailScanning"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-600 hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all disabled:opacity-50"
         >
           <svg v-if="gmailScanning" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -1000,7 +1000,7 @@ async function confirmDeleteAccount() {
           <span>{{ t('settings.gmail_days').replace('{n}', String(gmailDays)) }}</span>
           <button v-for="d in [7, 30, 60]" :key="d" @click="gmailDays = d"
             class="px-2 py-0.5 rounded-md border text-xs transition-colors"
-            :class="gmailDays === d ? 'border-blue-600 text-blue-400 bg-blue-600/10' : 'border-gray-700 text-gray-500 hover:border-gray-600'">
+            :class="gmailDays === d ? 'border-blue-600 text-blue-400 bg-blue-600/10' : 'border-white/[0.08] text-gray-500 hover:border-white/[0.10]'">
             {{ d }}d
           </button>
         </div>
@@ -1015,8 +1015,8 @@ async function confirmDeleteAccount() {
 
     <!-- Gmail preview modal -->
     <div v-if="showGmailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="showGmailModal = false">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
-        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-800 shrink-0">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/[0.06] shrink-0">
           <div>
             <h3 class="text-base font-semibold text-gray-50">Gmail — {{ t('settings.gmail_found').replace('{n}', String(gmailFoundBills.length)) }}</h3>
             <p class="text-xs text-gray-500 mt-0.5">{{ gmailFoundBills.filter(b => b.userProviderID).length }} {{ locale === 'el' ? 'αντιστοιχίστηκαν' : 'matched to a provider' }}</p>
@@ -1027,8 +1027,8 @@ async function confirmDeleteAccount() {
         </div>
         <div class="overflow-y-auto flex-1 px-5 py-3 space-y-2">
           <div v-for="(item, i) in gmailFoundBills" :key="i"
-            class="p-3 rounded-xl border border-gray-700/50"
-            :class="item.userProviderID ? 'bg-gray-800/40' : 'bg-gray-800/20 opacity-50'"
+            class="p-3 rounded-xl border border-white/[0.06]"
+            :class="item.userProviderID ? 'bg-white/[0.04]' : 'bg-white/[0.02] opacity-50'"
           >
             <div class="flex items-center justify-between gap-2 mb-1">
               <span class="text-xs text-gray-500 truncate">{{ item.subject }}</span>
@@ -1041,8 +1041,8 @@ async function confirmDeleteAccount() {
             </div>
           </div>
         </div>
-        <div class="flex gap-3 px-5 py-4 border-t border-gray-800 shrink-0">
-          <button @click="showGmailModal = false" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+        <div class="flex gap-3 px-5 py-4 border-t border-white/[0.06] shrink-0">
+          <button @click="showGmailModal = false" class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">
             {{ t('common.cancel') }}
           </button>
           <button
@@ -1057,7 +1057,7 @@ async function confirmDeleteAccount() {
     </div>
 
     <!-- Email notifications info -->
-    <section class="bg-gray-900 rounded-2xl border border-gray-800 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-start gap-3">
         <div class="w-8 h-8 rounded-lg bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-indigo-400">
@@ -1078,7 +1078,7 @@ async function confirmDeleteAccount() {
     </section>
 
     <!-- Danger zone -->
-    <section class="bg-gray-900 rounded-2xl border border-red-950 p-5">
+    <section class="bg-[#111119] rounded-2xl border border-red-950 p-5">
       <h3 class="text-sm font-semibold text-red-400 uppercase tracking-wide mb-4">{{ t('settings.danger') }}</h3>
       <div class="flex items-start justify-between gap-4">
         <div>
@@ -1096,7 +1096,7 @@ async function confirmDeleteAccount() {
 
     <!-- Delete account modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4" @click.self="showDeleteModal = false">
-      <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-red-950">
+      <div class="bg-[#111119] rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-red-950">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-full bg-red-900/30 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-red-400">
@@ -1124,7 +1124,7 @@ async function confirmDeleteAccount() {
         <div class="flex gap-3">
           <button
             @click="showDeleteModal = false; deletePassword = ''"
-            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors"
           >
             {{ t('common.cancel') }}
           </button>

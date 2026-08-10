@@ -103,6 +103,9 @@ func (h *ProviderTemplatesHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	h.col().Doc(id).Delete(ctx)
+	if _, err := h.col().Doc(id).Delete(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete template"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }

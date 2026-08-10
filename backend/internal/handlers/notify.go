@@ -51,12 +51,10 @@ func (h *NotifyHandler) RegisterToken(c *gin.Context) {
 
 // POST /api/notify/send-reminders — called by Cloud Scheduler
 func (h *NotifyHandler) SendReminders(c *gin.Context) {
-	if h.schedulerSecret != "" {
-		got := c.GetHeader("X-Scheduler-Secret")
-		if got != h.schedulerSecret {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
+	got := c.GetHeader("X-Scheduler-Secret")
+	if h.schedulerSecret == "" || got != h.schedulerSecret {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
 	}
 
 	if h.app == nil {

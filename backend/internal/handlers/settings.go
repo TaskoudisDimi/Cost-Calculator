@@ -77,7 +77,7 @@ func (h *SettingsHandler) DeleteAccount(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	ctx := context.Background()
 
-	collections := []string{"bills", "userProviders", "userProviderTemplates", "expenses", "income", "fcmTokens"}
+	collections := []string{"bills", "userProviders", "userProviderTemplates", "expenses", "income", "fcmTokens", "members", "bankConnections"}
 
 	for _, col := range collections {
 		docs, err := h.fs.Collection(col).Where("user_id", "==", userID).Documents(ctx).GetAll()
@@ -89,12 +89,18 @@ func (h *SettingsHandler) DeleteAccount(c *gin.Context) {
 			batch.Delete(d.Ref)
 		}
 		if len(docs) > 0 {
-			batch.Commit(ctx)
+			if _, err := batch.Commit(ctx); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete account data"})
+				return
+			}
 		}
 	}
 
 	// Delete settings doc
-	h.fs.Collection("userSettings").Doc(userID).Delete(ctx)
+	if _, err := h.fs.Collection("userSettings").Doc(userID).Delete(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete account settings"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }

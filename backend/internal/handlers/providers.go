@@ -58,7 +58,7 @@ func (h *ProvidersHandler) ListUserProviders(c *gin.Context) {
 				if pDoc, err := h.fs.Collection("providers").Doc(up.ProviderID).Get(ctx); err == nil {
 					pDoc.DataTo(&up.Provider)
 					up.Provider.ID = pDoc.Ref.ID
-					d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
+					_, _ = d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
 				} else if tDoc, err2 := h.fs.Collection("userProviderTemplates").Doc(up.ProviderID).Get(ctx); err2 == nil {
 					var tmpl models.UserProviderTemplate
 					tDoc.DataTo(&tmpl)
@@ -66,7 +66,7 @@ func (h *ProvidersHandler) ListUserProviders(c *gin.Context) {
 						ID: tDoc.Ref.ID, Name: tmpl.Name,
 						Category: tmpl.Category, Color: tmpl.Color, PaymentURL: tmpl.PaymentURL,
 					}
-					d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
+					_, _ = d.Ref.Update(ctx, []firestore.Update{{Path: "provider", Value: up.Provider}})
 				}
 			}
 			ups = append(ups, up)
@@ -194,6 +194,9 @@ func (h *ProvidersHandler) DeleteUserProvider(c *gin.Context) {
 		return
 	}
 
-	h.fs.Collection("userProviders").Doc(id).Delete(ctx)
+	if _, err := h.fs.Collection("userProviders").Doc(id).Delete(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete provider"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }

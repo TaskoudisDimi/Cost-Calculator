@@ -24,7 +24,7 @@ func Load() *Config {
 		SchedulerSecret:     getEnv("SCHEDULER_SECRET", ""),
 		NordigenSecretID:    getEnv("NORDIGEN_SECRET_ID", ""),
 		NordigenSecretKey:   getEnv("NORDIGEN_SECRET_KEY", ""),
-		NordigenRedirectURL: getEnv("NORDIGEN_REDIRECT_URL", "https://billcalculator-fb2dd.web.app/bank/callback"),
+		NordigenRedirectURL: getEnv("NORDIGEN_REDIRECT_URL", "https://bills.task-code.com/bank/callback"),
 		ResendAPIKey:        getEnv("RESEND_API_KEY", ""),
 		ResendFromEmail:     getEnv("RESEND_FROM_EMAIL", "reminders@billtracker.app"),
 	}

@@ -278,6 +278,8 @@ func (h *BankHandler) Disconnect(c *gin.Context) {
 			if status.Code(err) == codes.NotFound {
 				continue
 			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to disconnect bank"})
+			return
 		}
 	}
 

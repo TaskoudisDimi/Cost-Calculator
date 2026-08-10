@@ -59,7 +59,7 @@ async function submit() {
       </div>
 
       <!-- Card -->
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-7 shadow-2xl">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-7 shadow-2xl">
         <h2 class="text-base font-semibold text-white mb-5">{{ t('register.title') }}</h2>
 
         <!-- Google -->
@@ -67,7 +67,7 @@ async function submit() {
           type="button"
           @click="loginGoogle"
           :disabled="googleLoading || loading"
-          class="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-gray-700 bg-gray-800/60 hover:bg-gray-800 text-sm font-medium text-gray-200 transition-colors disabled:opacity-55 mb-5"
+          class="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.06] hover:bg-white/[0.04] text-sm font-medium text-gray-200 transition-colors disabled:opacity-55 mb-5"
         >
           <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -79,9 +79,9 @@ async function submit() {
         </button>
 
         <div class="flex items-center gap-3 mb-5">
-          <div class="flex-1 h-px bg-gray-800" />
+          <div class="flex-1 h-px bg-white/[0.04]" />
           <span class="text-xs text-gray-600">{{ t('register.or_email') }}</span>
-          <div class="flex-1 h-px bg-gray-800" />
+          <div class="flex-1 h-px bg-white/[0.04]" />
         </div>
 
         <form @submit.prevent="submit" class="space-y-4">

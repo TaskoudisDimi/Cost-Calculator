@@ -87,7 +87,7 @@ async function sendReset() {
       </div>
 
       <!-- Card -->
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-7 shadow-2xl">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-7 shadow-2xl">
         <h2 class="text-base font-semibold text-white mb-5">{{ t('login.title') }}</h2>
 
         <!-- Google -->
@@ -95,7 +95,7 @@ async function sendReset() {
           type="button"
           @click="loginGoogle"
           :disabled="googleLoading || loading"
-          class="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-gray-700 bg-gray-800/60 hover:bg-gray-800 text-sm font-medium text-gray-200 transition-colors disabled:opacity-55 mb-5"
+          class="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.06] hover:bg-white/[0.04] text-sm font-medium text-gray-200 transition-colors disabled:opacity-55 mb-5"
         >
           <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -107,9 +107,9 @@ async function sendReset() {
         </button>
 
         <div class="flex items-center gap-3 mb-5">
-          <div class="flex-1 h-px bg-gray-800" />
+          <div class="flex-1 h-px bg-white/[0.04]" />
           <span class="text-xs text-gray-600">{{ t('login.or_email') }}</span>
-          <div class="flex-1 h-px bg-gray-800" />
+          <div class="flex-1 h-px bg-white/[0.04]" />
         </div>
 
         <form @submit.prevent="submit" class="space-y-4">
@@ -166,7 +166,7 @@ async function sendReset() {
 
     <!-- Password reset modal -->
     <div v-if="showReset" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <div v-if="resetSent" class="text-center py-4">
           <div class="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg class="w-7 h-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
@@ -196,7 +196,7 @@ async function sendReset() {
             <p v-if="resetError" class="text-sm text-red-400">{{ resetError }}</p>
             <div class="flex gap-3">
               <button @click="showReset = false"
-                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+                class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">
                 {{ t('common.cancel') }}
               </button>
               <button @click="sendReset" :disabled="resetLoading || !resetEmail"

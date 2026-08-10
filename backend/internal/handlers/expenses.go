@@ -133,11 +133,14 @@ func (h *ExpensesHandler) MarkBought(c *gin.Context) {
 	expense.UpdatedAt = now
 	expense.ID = id
 
-	h.col().Doc(id).Update(ctx, []firestore.Update{
+	if _, err := h.col().Doc(id).Update(ctx, []firestore.Update{
 		{Path: "status", Value: "bought"},
 		{Path: "bought_at", Value: now},
 		{Path: "updated_at", Value: now},
-	})
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update expense"})
+		return
+	}
 	c.JSON(http.StatusOK, expense)
 }
 

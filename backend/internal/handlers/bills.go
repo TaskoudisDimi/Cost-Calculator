@@ -66,7 +66,7 @@ func (h *BillsHandler) ListBills(c *gin.Context) {
 	}
 
 	if hasBatch {
-		batch.Commit(ctx)
+		_, _ = batch.Commit(ctx)
 	}
 	c.JSON(http.StatusOK, bills)
 }
@@ -198,7 +198,10 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 		updates = append(updates, firestore.Update{Path: "member_id", Value: *req.MemberID})
 	}
 
-	h.bills(ctx).Doc(id).Update(ctx, updates)
+	if _, err := h.bills(ctx).Doc(id).Update(ctx, updates); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update bill"})
+		return
+	}
 	bill.ID = id
 	c.JSON(http.StatusOK, bill)
 }
@@ -224,7 +227,10 @@ func (h *BillsHandler) DeleteBill(c *gin.Context) {
 		return
 	}
 
-	h.bills(ctx).Doc(id).Delete(ctx)
+	if _, err := h.bills(ctx).Doc(id).Delete(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete bill"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 
@@ -290,11 +296,14 @@ func (h *BillsHandler) MarkPaid(c *gin.Context) {
 	bill.UpdatedAt = now
 	bill.ID = id
 
-	h.bills(ctx).Doc(id).Update(ctx, []firestore.Update{
+	if _, err := h.bills(ctx).Doc(id).Update(ctx, []firestore.Update{
 		{Path: "status", Value: "paid"},
 		{Path: "paid_at", Value: now},
 		{Path: "updated_at", Value: now},
-	})
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update bill"})
+		return
+	}
 
 	// Auto-create next month's bill for recurring bills
 	if bill.Recurring {
@@ -305,6 +314,7 @@ func (h *BillsHandler) MarkPaid(c *gin.Context) {
 		}
 		next := models.Bill{
 			UserID:         bill.UserID,
+			MemberID:       bill.MemberID,
 			UserProviderID: bill.UserProviderID,
 			UserProvider:   bill.UserProvider,
 			Amount:         bill.Amount,
@@ -316,7 +326,7 @@ func (h *BillsHandler) MarkPaid(c *gin.Context) {
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		h.bills(ctx).Add(ctx, next)
+		_, _, _ = h.bills(ctx).Add(ctx, next)
 	}
 
 	c.JSON(http.StatusOK, bill)
@@ -361,11 +371,14 @@ func (h *BillsHandler) MarkUnpaid(c *gin.Context) {
 	bill.UpdatedAt = now
 	bill.ID = id
 
-	h.bills(ctx).Doc(id).Update(ctx, []firestore.Update{
+	if _, err := h.bills(ctx).Doc(id).Update(ctx, []firestore.Update{
 		{Path: "status", Value: newStatus},
 		{Path: "paid_at", Value: nil},
 		{Path: "updated_at", Value: now},
-	})
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update bill"})
+		return
+	}
 	c.JSON(http.StatusOK, bill)
 }
 
@@ -403,11 +416,15 @@ func (h *BillsHandler) Analytics(c *gin.Context) {
 	byCategory := make(map[string]float64)
 
 	// Bills for the year
-	billDocs, _ := h.bills(ctx).
+	billDocs, err := h.bills(ctx).
 		Where("user_id", "==", userID).
 		Where("due_date", ">=", yearStart).
 		Where("due_date", "<", yearEnd).
 		Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	for _, d := range billDocs {
 		var b models.Bill
@@ -424,9 +441,13 @@ func (h *BillsHandler) Analytics(c *gin.Context) {
 	}
 
 	// Income for the year
-	incomeDocs, _ := h.fs.Collection("income").
+	incomeDocs, err := h.fs.Collection("income").
 		Where("user_id", "==", userID).
 		Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	for _, d := range incomeDocs {
 		var inc models.Income
 		d.DataTo(&inc)
@@ -439,9 +460,13 @@ func (h *BillsHandler) Analytics(c *gin.Context) {
 	}
 
 	// Expenses for the year
-	expDocs, _ := h.fs.Collection("expenses").
+	expDocs, err := h.fs.Collection("expenses").
 		Where("user_id", "==", userID).
 		Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	for _, d := range expDocs {
 		var e models.Expense
 		d.DataTo(&e)
@@ -492,7 +517,11 @@ func (h *BillsHandler) Dashboard(c *gin.Context) {
 	monthEnd := monthStart.AddDate(0, 1, 0)
 
 	// Bills — fetch all, update overdue status, then filter by due_date month
-	billDocs, _ := h.bills(ctx).Where("user_id", "==", userID).Documents(ctx).GetAll()
+	billDocs, err := h.bills(ctx).Where("user_id", "==", userID).Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	var totalPending, totalOverdue, totalPaid int64
 	var amountBills, amountOverdue float64
 	upcoming := make([]models.Bill, 0)
@@ -531,7 +560,7 @@ func (h *BillsHandler) Dashboard(c *gin.Context) {
 		}
 	}
 	if hasBatch {
-		batch.Commit(ctx)
+		_, _ = batch.Commit(ctx)
 	}
 
 	// Sort upcoming by DueDate
@@ -547,10 +576,14 @@ func (h *BillsHandler) Dashboard(c *gin.Context) {
 	}
 
 	// Income for month
-	incomeDocs, _ := h.fs.Collection("income").
+	incomeDocs, err := h.fs.Collection("income").
 		Where("user_id", "==", userID).
 		Where("month", "==", month).
 		Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	var totalIncome float64
 	for _, d := range incomeDocs {
 		var inc models.Income
@@ -559,10 +592,14 @@ func (h *BillsHandler) Dashboard(c *gin.Context) {
 	}
 
 	// Planned expenses — fetch all planned for user, filter by month in memory
-	allExpDocs, _ := h.fs.Collection("expenses").
+	allExpDocs, err := h.fs.Collection("expenses").
 		Where("user_id", "==", userID).
 		Where("status", "==", "planned").
 		Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	var amountExpensesPlanned float64
 	plannedExpenses := make([]models.Expense, 0)
 	for _, d := range allExpDocs {

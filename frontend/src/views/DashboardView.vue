@@ -60,9 +60,10 @@ const memberIncomeBreakdown = computed(() => {
 })
 
 onMounted(async () => {
+  const hasBills = billsStore.bills.length > 0
   await Promise.all([
     billsStore.fetchDashboard(month.value),
-    billsStore.fetchBills(),
+    hasBills ? Promise.resolve() : billsStore.fetchBills(),
     budgetStore.fetchIncomes(month.value),
     budgetStore.fetchExpenses(month.value),
     membersStore.fetchMembers(),
@@ -126,11 +127,11 @@ async function onMonthChange() {
 
     <!-- Loading -->
     <div v-if="!d" class="space-y-4">
-      <div class="bg-gray-900 rounded-2xl border border-gray-800 h-52 animate-pulse" />
-      <div class="bg-gray-900 rounded-2xl border border-gray-800 h-28 animate-pulse" />
+      <div class="bg-[#111119] rounded-2xl border border-white/[0.06] h-52 animate-pulse" />
+      <div class="bg-[#111119] rounded-2xl border border-white/[0.06] h-28 animate-pulse" />
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 h-32 animate-pulse" />
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 h-32 animate-pulse" />
+        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] h-32 animate-pulse" />
+        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] h-32 animate-pulse" />
       </div>
     </div>
 
@@ -199,7 +200,7 @@ async function onMonthChange() {
 
         <!-- Empty state -->
         <div v-if="incomes.length === 0"
-          class="bg-gray-900 border border-dashed border-emerald-900/60 rounded-2xl p-8 text-center"
+          class="bg-[#111119] border border-dashed border-emerald-900/60 rounded-2xl p-8 text-center"
         >
           <div class="w-12 h-12 bg-emerald-900/25 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-emerald-400">
@@ -222,11 +223,11 @@ async function onMonthChange() {
         </div>
 
         <!-- Income list -->
-        <div v-else class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+        <div v-else class="bg-[#111119] border border-white/[0.06] rounded-2xl overflow-hidden">
           <div
             v-for="inc in incomes"
             :key="inc.id"
-            class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-800 last:border-b-0 group"
+            class="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06] last:border-b-0 group"
           >
             <div class="w-8 h-8 bg-emerald-900/25 rounded-xl flex items-center justify-center shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-emerald-400">
@@ -251,12 +252,12 @@ async function onMonthChange() {
               </svg>
             </button>
           </div>
-          <div class="flex justify-between px-4 py-3 bg-gray-800/30">
+          <div class="flex justify-between px-4 py-3 bg-white/[0.03]">
             <span class="text-xs text-gray-500">{{ t('dashboard.income_total') }}</span>
             <span class="text-sm font-bold text-emerald-400">{{ formatAmount(totalIncome) }}</span>
           </div>
           <!-- Per-member income breakdown -->
-          <div v-if="memberIncomeBreakdown.length > 0" class="border-t border-gray-800 px-4 py-3 flex flex-wrap gap-3">
+          <div v-if="memberIncomeBreakdown.length > 0" class="border-t border-white/[0.06] px-4 py-3 flex flex-wrap gap-3">
             <div
               v-for="m in memberIncomeBreakdown"
               :key="m.id"
@@ -273,14 +274,14 @@ async function onMonthChange() {
       </div>
 
       <!-- ─── Progress bar ─── -->
-      <div v-if="d.total_income > 0" class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+      <div v-if="d.total_income > 0" class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
         <div class="flex justify-between text-xs text-gray-500 mb-2">
           <span>{{ t('dashboard.spending_month') }}</span>
           <span class="font-semibold" :class="spentPercent >= 90 ? 'text-red-400' : 'text-gray-400'">
             {{ spentPercent.toFixed(0) }}%
           </span>
         </div>
-        <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden flex mb-3">
+        <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden flex mb-3">
           <div
             class="h-full transition-all duration-500"
             :class="d.amount_overdue > 0 ? 'bg-red-500' : 'bg-blue-500'"
@@ -305,7 +306,7 @@ async function onMonthChange() {
       </div>
 
       <!-- ─── Forecast widget ───────────────────── -->
-      <div v-if="forecast" class="bg-gray-900 border border-indigo-900/40 rounded-2xl p-4 flex items-center justify-between gap-4">
+      <div v-if="forecast" class="bg-[#111119] border border-indigo-900/40 rounded-2xl p-4 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-indigo-900/30 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-indigo-400">
@@ -327,7 +328,7 @@ async function onMonthChange() {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
         <!-- Upcoming -->
-        <div class="bg-gray-900 rounded-2xl border border-gray-800 p-4">
+        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] p-4">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('dashboard.upcoming') }}</p>
             <span class="text-xs font-bold text-blue-400">
@@ -364,8 +365,8 @@ async function onMonthChange() {
         </div>
 
         <!-- Overdue -->
-        <div class="bg-gray-900 rounded-2xl border p-4"
-          :class="overdueBills.length > 0 ? 'border-red-900/60' : 'border-gray-800'">
+        <div class="bg-[#111119] rounded-2xl border p-4"
+          :class="overdueBills.length > 0 ? 'border-red-900/60' : 'border-white/[0.06]'">
           <div class="flex items-center justify-between mb-3">
             <p class="text-xs font-semibold uppercase tracking-wider"
               :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-500'">
@@ -407,7 +408,7 @@ async function onMonthChange() {
       </div>
 
       <!-- ─── Αγορές (mini) ─────────────────────── -->
-      <div v-if="(d.planned_expenses ?? []).length > 0" class="bg-gray-900 rounded-2xl border border-amber-900/40 p-4">
+      <div v-if="(d.planned_expenses ?? []).length > 0" class="bg-[#111119] rounded-2xl border border-amber-900/40 p-4">
         <div class="flex items-center justify-between mb-3">
           <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider">{{ t('dashboard.expenses_month') }}</p>
           <span class="text-xs font-bold text-amber-400">{{ formatAmount(d.amount_expenses_planned) }}</span>
@@ -430,7 +431,7 @@ async function onMonthChange() {
       class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0"
       @click.self="showIncomeModal = false"
     >
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <h3 class="text-base font-semibold text-gray-50 mb-5">{{ t('dashboard.income_modal_title') }}</h3>
         <form @submit.prevent="addIncome" class="space-y-4">
           <div>
@@ -454,8 +455,8 @@ async function onMonthChange() {
                 @click="incomeForm.member_id = ''"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
                 :class="!incomeForm.member_id
-                  ? 'bg-gray-700 border-gray-500 text-gray-200'
-                  : 'border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400'"
+                  ? 'bg-white/[0.06] border-gray-500 text-gray-200'
+                  : 'border-white/[0.08] text-gray-500 hover:border-white/[0.10] hover:text-gray-400'"
               >
                 {{ t('dashboard.no_member') }}
               </button>
@@ -467,7 +468,7 @@ async function onMonthChange() {
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
                 :class="incomeForm.member_id === m.id
                   ? 'border-transparent text-white'
-                  : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'"
+                  : 'border-white/[0.08] text-gray-400 hover:border-white/[0.10] hover:text-gray-300'"
                 :style="incomeForm.member_id === m.id ? { backgroundColor: m.color, borderColor: m.color } : {}"
               >
                 <span class="w-4 h-4 rounded-full shrink-0" :style="{ backgroundColor: m.color }" />
@@ -477,7 +478,7 @@ async function onMonthChange() {
           </div>
           <div class="flex gap-3 pt-1">
             <button type="button" @click="showIncomeModal = false"
-              class="flex-1 px-4 py-2.5 rounded-xl border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+              class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">
               {{ t('common.cancel') }}
             </button>
             <button type="submit" :disabled="savingIncome"

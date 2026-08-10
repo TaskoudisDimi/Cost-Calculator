@@ -20,13 +20,19 @@ const { t } = useLocale()
 
 const sidebarOpen = ref(true)
 
-onMounted(async () => {
+onMounted(() => {
   const saved = localStorage.getItem('sidebar-open')
   if (saved !== null) sidebarOpen.value = saved === 'true'
 
   billsStore.startRealtimeSync()
   budgetStore.startRealtimeSync()
-  await settingsStore.fetchSettings()
+
+  // Fire all bootstrap requests in parallel — don't block layout render
+  Promise.all([
+    settingsStore.fetchSettings(),
+    billsStore.fetchBills(),
+    billsStore.fetchUserProviders(),
+  ])
 })
 
 onUnmounted(() => {
@@ -307,7 +313,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           <div
             v-for="t in toasts"
             :key="t.id"
-            class="flex items-stretch rounded-xl shadow-2xl bg-gray-900 border border-gray-800 text-sm font-medium pointer-events-auto overflow-hidden"
+            class="flex items-stretch rounded-xl shadow-2xl bg-[#111119] border border-white/[0.06] text-sm font-medium pointer-events-auto overflow-hidden"
           >
             <div class="w-1 shrink-0"
               :class="{

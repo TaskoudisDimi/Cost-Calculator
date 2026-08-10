@@ -124,15 +124,15 @@ function nextYear() {
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-white">{{ t('analytics.title') }}</h2>
-      <div class="flex items-center gap-2 bg-gray-900 border border-gray-800 rounded-xl px-1 py-1">
-        <button @click="prevYear" class="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800">
+      <div class="flex items-center gap-2 bg-[#111119] border border-white/[0.06] rounded-xl px-1 py-1">
+        <button @click="prevYear" class="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
         <span class="text-sm font-semibold text-white w-10 text-center">{{ year }}</span>
         <button @click="nextYear" :disabled="Number(year) >= new Date().getFullYear()"
-          class="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800 disabled:opacity-30">
+          class="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04] disabled:opacity-30">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
@@ -143,10 +143,10 @@ function nextYear() {
     <!-- Loading skeleton -->
     <div v-if="loading" class="space-y-4">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div v-for="i in 4" :key="i" class="bg-gray-900 border border-gray-800 rounded-2xl h-20 animate-pulse" />
+        <div v-for="i in 4" :key="i" class="bg-[#111119] border border-white/[0.06] rounded-2xl h-20 animate-pulse" />
       </div>
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl h-52 animate-pulse" />
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl h-36 animate-pulse" />
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl h-52 animate-pulse" />
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl h-36 animate-pulse" />
     </div>
 
     <div v-else-if="error" class="text-center py-12 text-red-400 text-sm">{{ error }}</div>
@@ -155,19 +155,19 @@ function nextYear() {
 
       <!-- KPI cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+        <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.income') }}</p>
           <p class="text-lg font-bold text-emerald-400">{{ formatAmount(data.total_income) }}</p>
         </div>
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+        <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.bills') }}</p>
           <p class="text-lg font-bold text-blue-400">{{ formatAmount(data.total_bills) }}</p>
         </div>
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+        <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.expenses') }}</p>
           <p class="text-lg font-bold text-amber-400">{{ formatAmount(data.total_expenses) }}</p>
         </div>
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4"
+        <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4"
           :class="data.total_saved >= 0 ? 'border-emerald-900/40' : 'border-red-900/40'">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.savings') }}</p>
           <p class="text-lg font-bold" :class="data.total_saved >= 0 ? 'text-white' : 'text-red-400'">
@@ -177,7 +177,7 @@ function nextYear() {
       </div>
 
       <!-- Bar chart -->
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-5">
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm font-semibold text-gray-200">{{ t('analytics.monthly_overview') }}</p>
           <div class="flex items-center gap-3 text-xs text-gray-500">
@@ -233,12 +233,12 @@ function nextYear() {
       </div>
 
       <!-- Category breakdown -->
-      <div v-if="sortedCategories.length > 0" class="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+      <div v-if="sortedCategories.length > 0" class="bg-[#111119] border border-white/[0.06] rounded-2xl p-5">
         <p class="text-sm font-semibold text-gray-200 mb-4">{{ t('analytics.categories_title') }}</p>
         <div class="space-y-3">
           <div v-for="item in sortedCategories" :key="item.cat" class="flex items-center gap-3">
             <span class="text-xs text-gray-400 w-28 shrink-0 truncate">{{ item.label }}</span>
-            <div class="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+            <div class="flex-1 bg-white/[0.04] rounded-full h-1.5 overflow-hidden">
               <div
                 class="h-1.5 rounded-full transition-all duration-500"
                 :style="{ width: item.pct + '%', backgroundColor: catColor(item.cat) }"
@@ -250,8 +250,8 @@ function nextYear() {
       </div>
 
       <!-- Monthly table -->
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-        <div class="grid grid-cols-4 px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-800/40">
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl overflow-hidden">
+        <div class="grid grid-cols-4 px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider bg-white/[0.04]">
           <span>{{ t('analytics.month_col') }}</span>
           <span class="text-right">{{ t('analytics.income') }}</span>
           <span class="text-right">{{ t('analytics.bills_short') }}</span>
@@ -260,7 +260,7 @@ function nextYear() {
         <div
           v-for="m in [...data.monthly].reverse()"
           :key="m.month"
-          class="grid grid-cols-4 px-4 py-2.5 border-t border-gray-800/60 text-sm"
+          class="grid grid-cols-4 px-4 py-2.5 border-t border-white/[0.05] text-sm"
           :class="(m.bills + m.expenses > 0 || m.income > 0) ? '' : 'opacity-30'"
         >
           <span class="text-gray-400 text-xs">{{ monthsShort[Number(m.month.slice(5, 7)) - 1] }}</span>
