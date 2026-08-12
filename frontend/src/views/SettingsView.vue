@@ -9,6 +9,7 @@ import { useBillsStore } from '@/stores/bills'
 import { useMembersStore } from '@/stores/members'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
+import { detectProviderFromEmail } from '@/utils/emailPatterns'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -373,11 +374,6 @@ async function confirmImport() {
 
 // ─── Gmail auto-import ───────────────────────────────────────────────────────
 
-type GmailBillItem = {
-  result: ReturnType<typeof billsStore.parseEmail> extends Promise<infer T> ? T : never
-  subject: string
-  userProviderID: string | null
-}
 
 const gmailClientID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || ''
 const gmailScanning = ref(false)
@@ -399,19 +395,45 @@ function loadGIS(): Promise<void> {
   })
 }
 
-function extractEmailBody(payload: unknown): string {
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|tr|td|th|li)[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&euro;/g, '€').replace(/&#8364;/g, '€')
+    .replace(/&#[0-9]+;/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function extractTextFromPart(payload: unknown): { plain: string; html: string } {
   const p = payload as { mimeType?: string; body?: { data?: string }; parts?: unknown[] }
-  if (!p) return ''
-  if (p.mimeType === 'text/plain' && p.body?.data) {
-    return atob(p.body.data.replace(/-/g, '+').replace(/_/g, '/'))
-  }
+  if (!p) return { plain: '', html: '' }
+  const decode = (d: string) => atob(d.replace(/-/g, '+').replace(/_/g, '/'))
+  if (p.mimeType === 'text/plain' && p.body?.data) return { plain: decode(p.body.data), html: '' }
+  if (p.mimeType === 'text/html' && p.body?.data) return { plain: '', html: decode(p.body.data) }
   if (p.parts) {
+    let plain = '', html = ''
     for (const part of p.parts) {
-      const text = extractEmailBody(part)
-      if (text) return text
+      const r = extractTextFromPart(part)
+      if (r.plain) plain = r.plain
+      if (r.html) html = r.html
     }
+    return { plain, html }
   }
-  return ''
+  return { plain: '', html: '' }
+}
+
+function extractEmailBody(payload: unknown): string {
+  const { plain, html } = extractTextFromPart(payload)
+  if (plain && plain.length > 30) return plain
+  if (html) return stripHtml(html)
+  return plain
 }
 
 async function scanGmailInbox(token: string) {
@@ -423,10 +445,14 @@ async function scanGmailInbox(token: string) {
     const after = new Date()
     after.setDate(after.getDate() - gmailDays.value)
     const afterStr = `${after.getFullYear()}/${String(after.getMonth() + 1).padStart(2, '0')}/${String(after.getDate()).padStart(2, '0')}`
-    const q = `subject:(λογαριασμός OR invoice OR bill OR payment OR τιμολόγιο) after:${afterStr}`
+    // Expanded query: more Greek/English billing keywords + known sender domains
+    const q = [
+      'subject:(λογαριασμός OR τιμολόγιο OR invoice OR "e-bill" OR ebill OR bill OR payment OR χρέωση OR οφειλή OR "due date" OR "ημ/νια λήξης")',
+      `after:${afterStr}`,
+    ].join(' ')
 
     const listResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=20`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=30`,
       { headers: { Authorization: `Bearer ${token}` } },
     )
     if (!listResp.ok) { gmailError.value = t('settings.gmail_error'); return }
@@ -436,7 +462,7 @@ async function scanGmailInbox(token: string) {
     const providers = Array.isArray(billsStore.userProviders) ? billsStore.userProviders : []
     const results: typeof gmailFoundBills.value = []
 
-    for (const msg of messages.slice(0, 10)) {
+    for (const msg of messages.slice(0, 15)) {
       const msgResp = await fetch(
         `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
         { headers: { Authorization: `Bearer ${token}` } },
@@ -446,14 +472,22 @@ async function scanGmailInbox(token: string) {
 
       const headers: { name: string; value: string }[] = msgData.payload?.headers || []
       const subject = headers.find(h => h.name === 'Subject')?.value || ''
+      const from = headers.find(h => h.name === 'From')?.value || ''
+
       const body = extractEmailBody(msgData.payload)
-      if (!body || body.length < 30) continue
+      // Prepend From + Subject so AI and pattern matching can use them
+      const fullText = `From: ${from}\nSubject: ${subject}\n\n${body}`.trim()
+      if (fullText.length < 50) continue
+
+      // Local provider detection from From/Subject before hitting the API
+      const localProvider = detectProviderFromEmail(from + ' ' + subject)
 
       try {
-        const parsed = await billsStore.parseEmail(body)
+        const parsed = await billsStore.parseEmail(fullText)
         if (!parsed.amount || !parsed.due_date) continue
 
-        const needle = (parsed.provider_name || '').toLowerCase()
+        const providerName = parsed.provider_name || localProvider
+        const needle = (providerName || '').toLowerCase()
         const match = needle ? providers.find(p =>
           (p.nickname || '').toLowerCase().includes(needle) ||
           needle.includes((p.nickname || '').toLowerCase()) ||
@@ -461,7 +495,11 @@ async function scanGmailInbox(token: string) {
           needle.includes((p.provider?.name || '').toLowerCase())
         ) : null
 
-        results.push({ result: parsed, subject, userProviderID: match?.id ?? null })
+        results.push({
+          result: { ...parsed, provider_name: providerName },
+          subject,
+          userProviderID: match?.id ?? null,
+        })
       } catch { /* skip unparseable */ }
     }
 
