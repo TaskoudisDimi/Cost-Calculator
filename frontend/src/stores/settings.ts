@@ -7,12 +7,14 @@ export interface UserSettings {
   notif_enabled: boolean
   notif_days: number
   currency: string
+  budget_limits?: Record<string, number>
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const notifEnabled = ref(false)
   const notifDays = ref(3)
   const currency = ref('EUR')
+  const budgetLimits = ref<Record<string, number>>({})
   const loading = ref(false)
 
   async function fetchSettings() {
@@ -23,6 +25,7 @@ export const useSettingsStore = defineStore('settings', () => {
       notifDays.value = data.notif_days
       currency.value = data.currency || 'EUR'
       activeCurrency.value = data.currency || 'EUR'
+      budgetLimits.value = data.budget_limits ?? {}
     } finally {
       loading.value = false
     }
@@ -33,6 +36,7 @@ export const useSettingsStore = defineStore('settings', () => {
       notif_enabled: notifEnabled.value,
       notif_days: notifDays.value,
       currency: currency.value,
+      budget_limits: budgetLimits.value,
     })
     activeCurrency.value = currency.value
   }
@@ -41,5 +45,5 @@ export const useSettingsStore = defineStore('settings', () => {
     await api.delete('/account')
   }
 
-  return { notifEnabled, notifDays, currency, loading, fetchSettings, saveSettings, deleteAccount }
+  return { notifEnabled, notifDays, currency, budgetLimits, loading, fetchSettings, saveSettings, deleteAccount }
 })

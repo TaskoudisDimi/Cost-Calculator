@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
 import CalculatorModal from '@/components/CalculatorModal.vue'
+import SearchModal from '@/components/SearchModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -19,10 +20,19 @@ const { toasts } = useToast()
 const { t } = useLocale()
 
 const sidebarOpen = ref(true)
+const showSearch = ref(false)
+
+function onGlobalKey(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    showSearch.value = true
+  }
+}
 
 onMounted(() => {
   const saved = localStorage.getItem('sidebar-open')
   if (saved !== null) sidebarOpen.value = saved === 'true'
+  window.addEventListener('keydown', onGlobalKey)
 
   billsStore.startRealtimeSync()
   budgetStore.startRealtimeSync()
@@ -38,6 +48,7 @@ onMounted(() => {
 onUnmounted(() => {
   billsStore.stopRealtimeSync()
   budgetStore.stopRealtimeSync()
+  window.removeEventListener('keydown', onGlobalKey)
 })
 
 function toggleSidebar() {
@@ -132,6 +143,22 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
         <span v-show="sidebarOpen" class="font-bold tracking-tight whitespace-nowrap text-[15px]">
           <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
         </span>
+      </div>
+
+      <!-- Search trigger -->
+      <div class="px-2 pt-2 pb-1">
+        <button
+          @click="showSearch = true"
+          class="flex items-center gap-2.5 w-full rounded-xl text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] transition-all"
+          :class="sidebarOpen ? 'px-3 py-2' : 'px-0 py-2 justify-center'"
+          title="Αναζήτηση (⌘K)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-[18px] h-[18px] shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803a7.5 7.5 0 0 0 10.607 0Z" />
+          </svg>
+          <span v-show="sidebarOpen" class="text-[13px] font-medium flex-1 text-left">Αναζήτηση</span>
+          <kbd v-show="sidebarOpen" class="text-[10px] text-gray-700 border border-white/[0.06] rounded px-1 py-0.5 font-mono">⌘K</kbd>
+        </button>
       </div>
 
       <!-- Nav -->
@@ -243,6 +270,11 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
         <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
       </span>
       <div class="flex items-center gap-1">
+        <button @click="showSearch = true" class="p-2 text-gray-500 hover:text-gray-200 hover:bg-white/[0.06] rounded-xl transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803a7.5 7.5 0 0 0 10.607 0Z" />
+          </svg>
+        </button>
         <RouterLink
           :to="{ name: 'settings' }"
           class="p-2 rounded-xl transition-all"
@@ -272,6 +304,9 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- Floating calculator -->
     <CalculatorModal />
+
+    <!-- Global search -->
+    <SearchModal v-if="showSearch" @close="showSearch = false" />
 
     <!-- ─── Mobile bottom tab bar ────────────────────── -->
     <nav

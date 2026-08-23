@@ -5,7 +5,7 @@ import { useBudgetStore } from '@/stores/budget'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLocale } from '@/composables/useLocale'
 import { formatAmount, formatDate, expenseCategoryLabel, expenseCategoryIcon, expenseStatusLabel, expenseStatusClass, currentMonth, monthLabel } from '@/utils/format'
-import type { ExpenseCategory } from '@/types'
+import type { Expense, ExpenseCategory } from '@/types'
 
 const { confirm } = useConfirm()
 const { t, locale } = useLocale()
@@ -13,6 +13,7 @@ const { t, locale } = useLocale()
 const store = useBudgetStore()
 const { expenses, loading } = storeToRefs(store)
 const showModal = ref(false)
+const editingExpense = ref<Expense | null>(null)
 const filterStatus = ref<'all' | 'planned' | 'bought'>('all')
 const month = ref(currentMonth())
 
@@ -50,8 +51,27 @@ async function onMonthChange() {
   await store.fetchExpenses(month.value)
 }
 
+function openCreate() {
+  editingExpense.value = null
+  form.value = { name: '', amount: '', category: 'other', store: '', notes: '', planned_date: '' }
+  showModal.value = true
+}
+
+function openEdit(e: Expense) {
+  editingExpense.value = e
+  form.value = {
+    name: e.name,
+    amount: String(e.amount),
+    category: e.category,
+    store: e.store ?? '',
+    notes: e.notes ?? '',
+    planned_date: e.planned_date ? e.planned_date.slice(0, 10) : '',
+  }
+  showModal.value = true
+}
+
 async function submit() {
-  await store.createExpense({
+  const payload = {
     name: form.value.name,
     amount: parseFloat(form.value.amount),
     category: form.value.category,
@@ -59,8 +79,14 @@ async function submit() {
     store: form.value.store,
     notes: form.value.notes,
     planned_date: form.value.planned_date ? new Date(form.value.planned_date).toISOString() : undefined,
-  })
+  }
+  if (editingExpense.value) {
+    await store.updateExpense(editingExpense.value.id, payload)
+  } else {
+    await store.createExpense(payload)
+  }
   showModal.value = false
+  editingExpense.value = null
   form.value = { name: '', amount: '', category: 'other', store: '', notes: '', planned_date: '' }
 }
 
@@ -92,7 +118,7 @@ async function remove(id: string) {
           @change="onMonthChange"
         />
         <button
-          @click="showModal = true"
+          @click="openCreate"
           class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
         >
           {{ t('expenses.new_expense') }}
@@ -164,6 +190,15 @@ async function remove(id: string) {
             <span class="sm:hidden">✓</span>
           </button>
           <button
+            @click="openEdit(e)"
+            class="text-gray-500 hover:text-blue-400 px-1.5 py-1.5 rounded-lg transition-colors"
+            title="Επεξεργασία"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+            </svg>
+          </button>
+          <button
             @click="remove(e.id)"
             class="text-gray-500 hover:text-red-400 px-1.5 py-1.5 rounded-lg transition-colors text-sm leading-none"
           >
@@ -176,7 +211,9 @@ async function remove(id: string) {
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
       <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <h3 class="text-base font-semibold text-gray-50 mb-5">{{ t('expenses.modal_title') }}</h3>
+        <h3 class="text-base font-semibold text-gray-50 mb-5">
+          {{ editingExpense ? (locale === 'el' ? 'Επεξεργασία αγοράς' : 'Edit expense') : t('expenses.modal_title') }}
+        </h3>
 
         <form @submit.prevent="submit" class="space-y-4">
           <div>
@@ -246,13 +283,13 @@ async function remove(id: string) {
           </div>
 
           <div class="flex gap-3 pt-1">
-            <button type="button" @click="showModal = false"
+            <button type="button" @click="showModal = false; editingExpense = null"
               class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">
               {{ t('common.cancel') }}
             </button>
             <button type="submit"
               class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
-              {{ t('expenses.add') }}
+              {{ editingExpense ? (locale === 'el' ? 'Αποθήκευση' : 'Save') : t('expenses.add') }}
             </button>
           </div>
         </form>

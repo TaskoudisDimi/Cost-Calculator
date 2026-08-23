@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useBillsStore } from '@/stores/bills'
+import { useSettingsStore } from '@/stores/settings'
 import { useLocale } from '@/composables/useLocale'
 import { formatAmount, categoryLabel } from '@/utils/format'
 import type { AnalyticsSummary } from '@/types'
 
 const store = useBillsStore()
-const { t } = useLocale()
+const settingsStore = useSettingsStore()
+const { t, locale } = useLocale()
 const year = ref(String(new Date().getFullYear()))
 const data = ref<AnalyticsSummary | null>(null)
 const loading = ref(false)
@@ -80,12 +82,22 @@ const sortedCategories = computed(() => {
   if (!data.value) return []
   const entries = Object.entries(data.value.by_category).sort((a, b) => b[1] - a[1])
   const maxVal = entries[0]?.[1] ?? 1
-  return entries.map(([cat, amount]) => ({
-    cat,
-    label: categoryLabel(cat),
-    amount,
-    pct: (amount / maxVal) * 100,
-  }))
+  const limits = settingsStore.budgetLimits
+  return entries.map(([cat, amount]) => {
+    const limit = limits[cat] ?? null
+    const monthlyAvg = amount / 12
+    return {
+      cat,
+      label: categoryLabel(cat),
+      amount,
+      pct: (amount / maxVal) * 100,
+      limit,
+      monthlyAvg,
+      limitPct: limit ? Math.min((monthlyAvg / limit) * 100, 100) : null,
+      overLimit: limit ? monthlyAvg > limit : false,
+      nearLimit: limit ? monthlyAvg >= limit * 0.8 && monthlyAvg <= limit : false,
+    }
+  })
 })
 
 const categoryColors: Record<string, string> = {
@@ -234,17 +246,43 @@ function nextYear() {
 
       <!-- Category breakdown -->
       <div v-if="sortedCategories.length > 0" class="bg-[#111119] border border-white/[0.06] rounded-2xl p-5">
-        <p class="text-sm font-semibold text-gray-200 mb-4">{{ t('analytics.categories_title') }}</p>
-        <div class="space-y-3">
-          <div v-for="item in sortedCategories" :key="item.cat" class="flex items-center gap-3">
-            <span class="text-xs text-gray-400 w-28 shrink-0 truncate">{{ item.label }}</span>
-            <div class="flex-1 bg-white/[0.04] rounded-full h-1.5 overflow-hidden">
-              <div
-                class="h-1.5 rounded-full transition-all duration-500"
-                :style="{ width: item.pct + '%', backgroundColor: catColor(item.cat) }"
-              />
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm font-semibold text-gray-200">{{ t('analytics.categories_title') }}</p>
+          <span class="text-xs text-gray-500">{{ locale === 'el' ? 'Ετήσιο σύνολο' : 'Yearly total' }}</span>
+        </div>
+        <div class="space-y-4">
+          <div v-for="item in sortedCategories" :key="item.cat">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-xs text-gray-400 w-28 shrink-0 truncate">{{ item.label }}</span>
+              <div class="flex-1 bg-white/[0.04] rounded-full h-1.5 overflow-hidden">
+                <div
+                  class="h-1.5 rounded-full transition-all duration-500"
+                  :style="{ width: item.pct + '%', backgroundColor: catColor(item.cat) }"
+                />
+              </div>
+              <span class="text-xs font-semibold text-gray-200 w-20 text-right shrink-0">{{ formatAmount(item.amount) }}</span>
             </div>
-            <span class="text-xs font-semibold text-gray-200 w-20 text-right shrink-0">{{ formatAmount(item.amount) }}</span>
+            <!-- Budget limit indicator -->
+            <div v-if="item.limit !== null" class="flex items-center gap-3">
+              <span class="w-28 shrink-0" />
+              <div class="flex-1 relative">
+                <div class="bg-white/[0.04] rounded-full h-1 overflow-hidden">
+                  <div
+                    class="h-1 rounded-full transition-all duration-500"
+                    :class="item.overLimit ? 'bg-red-500' : item.nearLimit ? 'bg-amber-400' : 'bg-emerald-500/60'"
+                    :style="{ width: item.limitPct + '%' }"
+                  />
+                </div>
+              </div>
+              <span
+                class="text-[10px] font-medium w-20 text-right shrink-0"
+                :class="item.overLimit ? 'text-red-400' : item.nearLimit ? 'text-amber-400' : 'text-gray-600'"
+              >
+                <span v-if="item.overLimit">⚠ {{ locale === 'el' ? 'Υπέρβαση' : 'Over limit' }}</span>
+                <span v-else-if="item.nearLimit">⚡ {{ locale === 'el' ? 'Κοντά' : 'Near limit' }}</span>
+                <span v-else>/ {{ formatAmount(item.limit) }}</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

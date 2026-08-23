@@ -109,6 +109,59 @@ func (h *IncomeHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
 }
 
+func (h *IncomeHandler) Update(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	id := c.Param("id")
+	ctx := context.Background()
+
+	doc, err := h.fs.Collection("income").Doc(id).Get(ctx)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+	var existing models.Income
+	doc.DataTo(&existing)
+	if existing.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	var req struct {
+		Description string  `json:"description" binding:"required,min=1"`
+		Amount      float64 `json:"amount" binding:"required,gt=0"`
+		Month       string  `json:"month" binding:"required"`
+		MemberID    string  `json:"member_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	now := time.Now()
+	if _, err := h.fs.Collection("income").Doc(id).Update(ctx, []firestore.Update{
+		{Path: "description", Value: req.Description},
+		{Path: "amount", Value: req.Amount},
+		{Path: "month", Value: req.Month},
+		{Path: "member_id", Value: req.MemberID},
+		{Path: "updated_at", Value: now},
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update income"})
+		return
+	}
+
+	existing.Description = req.Description
+	existing.Amount = req.Amount
+	existing.Month = req.Month
+	existing.MemberID = req.MemberID
+	existing.UpdatedAt = now
+	existing.ID = id
+	c.JSON(http.StatusOK, existing)
+}
+
 func (h *IncomeHandler) BulkDelete(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	ctx := context.Background()

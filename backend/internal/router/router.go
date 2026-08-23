@@ -69,12 +69,14 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 
 		protected.GET("/expenses", expensesH.List)
 		protected.POST("/expenses", expensesH.Create)
-		protected.PATCH("/expenses/:id/buy", expensesH.MarkBought)
+		protected.PUT("/expenses/:id", expensesH.Update)
+			protected.PATCH("/expenses/:id/buy", expensesH.MarkBought)
 		protected.DELETE("/expenses/:id", expensesH.Delete)
 
 		protected.GET("/income", incomeH.List)
 		protected.POST("/income", incomeH.Create)
-		protected.DELETE("/income/:id", incomeH.Delete)
+		protected.PUT("/income/:id", incomeH.Update)
+			protected.DELETE("/income/:id", incomeH.Delete)
 		protected.DELETE("/income", incomeH.BulkDelete)
 
 		protected.GET("/dashboard", billsH.Dashboard)

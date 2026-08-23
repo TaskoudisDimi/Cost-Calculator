@@ -5,6 +5,7 @@ import { useMembersStore } from '@/stores/members'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
+import { useReceiptUpload } from '@/composables/useReceiptUpload'
 import { formatDate, formatAmount, statusLabel, statusClass, monthLabel } from '@/utils/format'
 import { detectProviderFromEmail } from '@/utils/emailPatterns'
 import type { Bill, BillStatus, ProviderCategory } from '@/types'
@@ -47,6 +48,30 @@ const qrDataUrl = ref('')
 const qrScanInput = ref<HTMLInputElement | null>(null)
 const qrScanning = ref(false)
 const qrScanError = ref('')
+
+// Receipt attachments
+const { uploading: receiptUploading, upload: uploadReceipt, remove: removeReceiptFile } = useReceiptUpload()
+const receiptInputs = ref<Record<string, HTMLInputElement | null>>({})
+const previewUrl = ref<string | null>(null)
+
+async function onReceiptSelected(bill: Bill, e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  try {
+    const url = await uploadReceipt(bill.id, file)
+    await store.updateBill(bill.id, { attachment_url: url })
+    toast(locale.value === 'el' ? 'Το αρχείο ανέβηκε' : 'File uploaded', 'success')
+  } catch {
+    toast(locale.value === 'el' ? 'Σφάλμα ανεβάσματος' : 'Upload failed', 'error')
+  }
+  ;(e.target as HTMLInputElement).value = ''
+}
+
+async function deleteAttachment(bill: Bill) {
+  if (!bill.attachment_url) return
+  await removeReceiptFile(bill.attachment_url)
+  await store.updateBill(bill.id, { attachment_url: '' })
+}
 
 const notifSupported = ref('Notification' in window)
 const notifDismissed = ref(localStorage.getItem('notif_dismissed') === '1')
@@ -1152,6 +1177,66 @@ async function onQrFileSelected(event: Event) {
                   {{ copiedId === item.bill.id ? '✓ ' + (locale === 'el' ? 'Αντιγράφηκε' : 'Copied') : (locale === 'el' ? 'Αντιγραφή' : 'Copy') }}
                 </span>
               </button>
+            </div>
+
+            <!-- Attachment -->
+            <div class="px-4 pb-3">
+              <!-- Existing attachment preview -->
+              <div v-if="item.bill.attachment_url" class="flex items-center gap-2 group">
+                <a
+                  :href="item.bill.attachment_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-2 flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05] transition-all min-w-0"
+                  @click.stop
+                >
+                  <!-- Image preview thumbnail or PDF icon -->
+                  <img
+                    v-if="/\.(jpg|jpeg|png|webp|gif)$/i.test(item.bill.attachment_url)"
+                    :src="item.bill.attachment_url"
+                    class="w-8 h-8 rounded-lg object-cover shrink-0 border border-white/[0.08]"
+                    alt="receipt"
+                  />
+                  <div v-else class="w-8 h-8 rounded-lg bg-red-900/30 border border-red-900/40 flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                  </div>
+                  <span class="text-xs text-blue-300 truncate">{{ locale === 'el' ? 'Δείτε παραστατικό' : 'View receipt' }}</span>
+                </a>
+                <button
+                  @click.stop="deleteAttachment(item.bill)"
+                  class="shrink-0 p-2 text-gray-600 hover:text-red-400 rounded-xl hover:bg-red-500/8 transition-all"
+                  :title="locale === 'el' ? 'Διαγραφή αρχείου' : 'Delete file'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Upload button (no attachment yet) -->
+              <div v-else>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  class="hidden"
+                  :ref="el => { if (item.bill) receiptInputs[item.bill.id] = el as HTMLInputElement }"
+                  @change="onReceiptSelected(item.bill, $event)"
+                  @click.stop
+                />
+                <button
+                  @click.stop="receiptInputs[item.bill.id]?.click()"
+                  :disabled="receiptUploading"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/[0.08] text-gray-600 hover:text-gray-300 hover:border-white/[0.16] hover:bg-white/[0.03] transition-all text-xs w-full"
+                >
+                  <svg v-if="!receiptUploading" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                  </svg>
+                  <span v-if="receiptUploading" class="animate-spin text-sm">⏳</span>
+                  {{ receiptUploading ? (locale === 'el' ? 'Ανέβασμα…' : 'Uploading…') : (locale === 'el' ? 'Επισύναψη παραστατικού' : 'Attach receipt') }}
+                </button>
+              </div>
             </div>
 
             <div class="mx-4 h-px bg-white/[0.04] mb-3" />

@@ -763,6 +763,52 @@ async function confirmDeleteAccount() {
       </div>
     </section>
 
+    <!-- Budget limits section -->
+    <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
+      <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-1">
+        {{ locale === 'el' ? 'Μηνιαία Όρια Κατηγορίας' : 'Monthly Category Limits' }}
+      </h3>
+      <p class="text-xs text-gray-500 mb-4">
+        {{ locale === 'el' ? 'Ορίστε μέγιστο ποσό ανά κατηγορία λογαριασμών. Θα λαμβάνετε προειδοποίηση στα Analytics όταν πλησιάζετε το όριο.' : 'Set a monthly cap per bill category. You\'ll see a warning in Analytics when approaching the limit.' }}
+      </p>
+      <div class="space-y-2.5">
+        <div
+          v-for="cat in [
+            { key: 'energy', label: locale === 'el' ? '⚡ Ενέργεια' : '⚡ Energy' },
+            { key: 'water', label: locale === 'el' ? '💧 Νερό' : '💧 Water' },
+            { key: 'telecom', label: locale === 'el' ? '📡 Τηλεπικοινωνίες' : '📡 Telecom' },
+            { key: 'streaming', label: locale === 'el' ? '🎬 Streaming' : '🎬 Streaming' },
+            { key: 'subscription', label: locale === 'el' ? '📋 Συνδρομές' : '📋 Subscriptions' },
+            { key: 'housing', label: locale === 'el' ? '🏠 Στέγαση' : '🏠 Housing' },
+            { key: 'finance', label: locale === 'el' ? '🏦 Χρηματοοικονομικά' : '🏦 Finance' },
+            { key: 'car', label: locale === 'el' ? '🚗 Αυτοκίνητο' : '🚗 Car' },
+            { key: 'other', label: locale === 'el' ? '📌 Άλλο' : '📌 Other' },
+          ]"
+          :key="cat.key"
+          class="flex items-center gap-3"
+        >
+          <span class="text-sm text-gray-300 w-44 shrink-0">{{ cat.label }}</span>
+          <div class="relative flex-1">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              :value="settingsStore.budgetLimits[cat.key] ?? ''"
+              @change="(e) => {
+                const v = parseFloat((e.target as HTMLInputElement).value)
+                if (v > 0) settingsStore.budgetLimits[cat.key] = v
+                else delete settingsStore.budgetLimits[cat.key]
+                settingsStore.saveSettings()
+              }"
+              class="w-full px-3 py-2 pr-10 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              :placeholder="locale === 'el' ? 'Χωρίς όριο' : 'No limit'"
+            />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{{ settingsStore.currency }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Members section -->
     <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-start justify-between mb-4">

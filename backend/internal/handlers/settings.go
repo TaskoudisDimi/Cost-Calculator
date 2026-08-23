@@ -19,9 +19,10 @@ func NewSettingsHandler(fs *firestore.Client) *SettingsHandler {
 }
 
 type UserSettings struct {
-	NotifEnabled bool   `json:"notif_enabled" firestore:"notif_enabled"`
-	NotifDays    int    `json:"notif_days" firestore:"notif_days"`
-	Currency     string `json:"currency" firestore:"currency"`
+	NotifEnabled bool               `json:"notif_enabled" firestore:"notif_enabled"`
+	NotifDays    int                `json:"notif_days" firestore:"notif_days"`
+	Currency     string             `json:"currency" firestore:"currency"`
+	BudgetLimits map[string]float64 `json:"budget_limits" firestore:"budget_limits"`
 }
 
 func (h *SettingsHandler) GetSettings(c *gin.Context) {

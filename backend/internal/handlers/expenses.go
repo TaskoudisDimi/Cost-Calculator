@@ -144,6 +144,59 @@ func (h *ExpensesHandler) MarkBought(c *gin.Context) {
 	c.JSON(http.StatusOK, expense)
 }
 
+func (h *ExpensesHandler) Update(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	id := c.Param("id")
+	ctx := context.Background()
+
+	doc, err := h.col().Doc(id).Get(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var existing models.Expense
+	doc.DataTo(&existing)
+	if existing.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	var req createExpenseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cat := req.Category
+	if cat == "" {
+		cat = "other"
+	}
+
+	now := time.Now()
+	if _, err := h.col().Doc(id).Update(ctx, []firestore.Update{
+		{Path: "name", Value: req.Name},
+		{Path: "amount", Value: req.Amount},
+		{Path: "category", Value: cat},
+		{Path: "store", Value: req.Store},
+		{Path: "notes", Value: req.Notes},
+		{Path: "planned_date", Value: req.PlannedDate},
+		{Path: "updated_at", Value: now},
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update expense"})
+		return
+	}
+
+	existing.Name = req.Name
+	existing.Amount = req.Amount
+	existing.Category = cat
+	existing.Store = req.Store
+	existing.Notes = req.Notes
+	existing.PlannedDate = req.PlannedDate
+	existing.UpdatedAt = now
+	existing.ID = id
+	c.JSON(http.StatusOK, existing)
+}
+
 func (h *ExpensesHandler) Delete(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	id := c.Param("id")

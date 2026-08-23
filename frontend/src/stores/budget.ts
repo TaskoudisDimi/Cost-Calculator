@@ -40,6 +40,15 @@ export const useBudgetStore = defineStore('budget', () => {
     return data
   }
 
+  async function updateExpense(id: string, payload: {
+    name: string; amount: number; category?: string; month?: string
+    store?: string; notes?: string; planned_date?: string
+  }) {
+    const { data } = await api.put<Expense>(`/expenses/${id}`, payload)
+    expenses.value = safeArr<Expense>(expenses).map(e => e.id === id ? data : e)
+    return data
+  }
+
   async function markBought(id: string) {
     const { data } = await api.patch<Expense>(`/expenses/${id}/buy`)
     const arr = safeArr<Expense>(expenses)
@@ -63,6 +72,12 @@ export const useBudgetStore = defineStore('budget', () => {
   async function createIncome(payload: { description: string; amount: number; month: string; member_id?: string }) {
     const { data } = await api.post<Income>('/income', payload)
     incomes.value = [data, ...safeArr<Income>(incomes)]
+    return data
+  }
+
+  async function updateIncome(id: string, payload: { description: string; amount: number; month: string; member_id?: string }) {
+    const { data } = await api.put<Income>(`/income/${id}`, payload)
+    incomes.value = safeArr<Income>(incomes).map(i => i.id === id ? data : i)
     return data
   }
 
@@ -109,8 +124,8 @@ export const useBudgetStore = defineStore('budget', () => {
 
   return {
     expenses, incomes, loading,
-    fetchExpenses, createExpense, markBought, deleteExpense,
-    fetchIncomes, createIncome, deleteIncome, bulkDeleteIncome,
+    fetchExpenses, createExpense, updateExpense, markBought, deleteExpense,
+    fetchIncomes, createIncome, updateIncome, deleteIncome, bulkDeleteIncome,
     startRealtimeSync, stopRealtimeSync,
   }
 })

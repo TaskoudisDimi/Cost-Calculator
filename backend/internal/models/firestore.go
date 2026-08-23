@@ -47,6 +47,7 @@ type Bill struct {
 	Notes          string       `json:"notes" firestore:"notes"`
 	PaymentCode    string       `json:"payment_code" firestore:"payment_code"`
 	Recurring      bool         `json:"recurring" firestore:"recurring"`
+	AttachmentURL  string       `json:"attachment_url" firestore:"attachment_url"`
 	CreatedAt      time.Time    `json:"created_at" firestore:"created_at"`
 	UpdatedAt      time.Time    `json:"updated_at" firestore:"updated_at"`
 }
