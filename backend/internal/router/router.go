@@ -64,7 +64,8 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.DELETE("/bills", billsH.BulkDeleteBills)
 		protected.PATCH("/bills/:id/pay", billsH.MarkPaid)
 		protected.PATCH("/bills/:id/unpay", billsH.MarkUnpaid)
-		protected.POST("/bills/scan", scanH.ScanBill)
+		protected.POST("/bills/copy-month", billsH.CopyMonth)
+			protected.POST("/bills/scan", scanH.ScanBill)
 		protected.POST("/bills/parse-email", scanH.ParseEmail)
 
 		protected.GET("/expenses", expensesH.List)

@@ -211,6 +211,102 @@ func (h *BillsHandler) UpdateBill(c *gin.Context) {
 	c.JSON(http.StatusOK, bill)
 }
 
+// CopyMonth duplicates bills from one month into another, resetting status/payment fields.
+// Body: { from_month: "YYYY-MM", to_month: "YYYY-MM", bill_ids: ["id1",...] }
+// If bill_ids is empty/omitted, all bills from from_month are copied.
+func (h *BillsHandler) CopyMonth(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	ctx := context.Background()
+
+	var req struct {
+		FromMonth string   `json:"from_month" binding:"required"`
+		ToMonth   string   `json:"to_month" binding:"required"`
+		BillIDs   []string `json:"bill_ids"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Parse target month (YYYY-MM) to compute due date offset
+	fromT, err := time.Parse("2006-01", req.FromMonth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from_month"})
+		return
+	}
+	toT, err := time.Parse("2006-01", req.ToMonth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to_month"})
+		return
+	}
+	monthDiff := (toT.Year()-fromT.Year())*12 + int(toT.Month()-fromT.Month())
+
+	// Fetch all user bills and filter by from_month (and optionally by bill_ids)
+	docs, err := h.bills(ctx).Where("user_id", "==", userID).Documents(ctx).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	idSet := make(map[string]bool, len(req.BillIDs))
+	for _, id := range req.BillIDs {
+		idSet[id] = true
+	}
+
+	now := time.Now()
+	created := make([]models.Bill, 0)
+
+	for _, d := range docs {
+		var b models.Bill
+		if err := d.DataTo(&b); err != nil {
+			continue
+		}
+		b.ID = d.Ref.ID
+
+		if b.DueDate.Format("2006-01") != req.FromMonth {
+			continue
+		}
+		if len(req.BillIDs) > 0 && !idSet[b.ID] {
+			continue
+		}
+
+		// Shift due date by monthDiff months
+		newDue := b.DueDate.AddDate(0, monthDiff, 0)
+
+		newBill := models.Bill{
+			UserID:         userID,
+			MemberID:       b.MemberID,
+			UserProviderID: b.UserProviderID,
+			UserProvider:   b.UserProvider,
+			Amount:         b.Amount,
+			DueDate:        newDue,
+			IssuedDate:     nil,
+			Status:         "pending",
+			PaidAt:         nil,
+			Notes:          "",
+			PaymentCode:    "",
+			AttachmentURL:  "",
+			Recurring:      b.Recurring,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		// Auto-mark overdue if new due date is in the past
+		if newDue.Before(now) {
+			newBill.Status = "overdue"
+		}
+
+		ref, _, err := h.bills(ctx).Add(ctx, newBill)
+		if err != nil {
+			continue
+		}
+		newBill.ID = ref.ID
+		created = append(created, newBill)
+	}
+
+	c.JSON(http.StatusCreated, created)
+}
+
 func (h *BillsHandler) DeleteBill(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	id := c.Param("id")

@@ -121,6 +121,16 @@ export const useBillsStore = defineStore('bills', () => {
     bills.value = safeArr<Bill>(bills).filter(b => !ids.includes(b.id))
   }
 
+  async function copyMonth(fromMonth: string, toMonth: string, billIds?: string[]): Promise<Bill[]> {
+    const { data } = await api.post<Bill[]>('/bills/copy-month', {
+      from_month: fromMonth,
+      to_month: toMonth,
+      bill_ids: billIds ?? [],
+    })
+    bills.value = [...safeArr<Bill>(bills), ...data]
+    return data
+  }
+
   async function fetchProviderTemplates() {
     const { data } = await api.get<UserProviderTemplate[]>('/user/provider-templates')
     providerTemplates.value = data
@@ -196,7 +206,7 @@ export const useBillsStore = defineStore('bills', () => {
 
   return {
     bills, userProviders, providers, providerTemplates, dashboard, loading,
-    fetchDashboard, fetchBills, fetchAnalytics, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills,
+    fetchDashboard, fetchBills, fetchAnalytics, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills, copyMonth,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
     scanBill, parseEmail, registerNotificationToken, startRealtimeSync, stopRealtimeSync,
