@@ -52,6 +52,7 @@ const qrScanError = ref('')
 // Copy-month modal
 const showCopyModal = ref(false)
 const copyFromMonth = ref('')
+const copyToMonth = ref('')
 const copySelectedIds = ref<Set<string>>(new Set())
 const copyLoading = ref(false)
 
@@ -62,18 +63,25 @@ const copySourceBills = computed(() => {
 })
 
 function openCopyModal() {
-  // Default source = previous month relative to the currently selected month
-  if (filterMonth.value !== 'all') {
-    const [y, m] = filterMonth.value.split('-').map(Number)
-    const prev = new Date(y!, m! - 1, 1)
-    prev.setMonth(prev.getMonth() - 1)
-    copyFromMonth.value = prev.toISOString().slice(0, 7)
-  }
+  const now = new Date()
+  const thisMonth = now.toISOString().slice(0, 7)
+
+  // "To" = the month the user is currently viewing (or current month)
+  copyToMonth.value = filterMonth.value !== 'all' ? filterMonth.value : thisMonth
+
+  // "From" = previous month of the destination
+  const [y, m] = copyToMonth.value.split('-').map(Number)
+  const prev = new Date(y!, m! - 1, 1)
+  prev.setMonth(prev.getMonth() - 1)
+  copyFromMonth.value = prev.toISOString().slice(0, 7)
+
   copySelectedIds.value = new Set()
-  showCopyModal.value = true
 }
 
 watch(showCopyModal, (v) => { if (v) openCopyModal() })
+
+// When source month changes, reset selections only
+watch(copyFromMonth, () => { copySelectedIds.value = new Set() })
 
 function toggleCopyId(id: string) {
   const s = new Set(copySelectedIds.value)
@@ -91,15 +99,15 @@ function toggleAllCopy() {
 }
 
 async function confirmCopy() {
-  if (copySelectedIds.value.size === 0 || filterMonth.value === 'all') return
+  if (copySelectedIds.value.size === 0 || !copyToMonth.value || !copyFromMonth.value) return
   copyLoading.value = true
   try {
     const ids = [...copySelectedIds.value]
-    await store.copyMonth(copyFromMonth.value, filterMonth.value, ids)
+    await store.copyMonth(copyFromMonth.value, copyToMonth.value, ids)
     toast(
       locale.value === 'el'
-        ? `${ids.length} λογαριασμοί αντιγράφηκαν`
-        : `${ids.length} bills copied`,
+        ? `${ids.length} λογαριασμοί αντιγράφηκαν στον ${monthLabel(copyToMonth.value)}`
+        : `${ids.length} bills copied to ${monthLabel(copyToMonth.value)}`,
       'success',
     )
     showCopyModal.value = false
@@ -948,6 +956,17 @@ async function onQrFileSelected(event: Event) {
           </span>
         </button>
 
+        <!-- Copy-month button (always visible) -->
+        <button
+          @click="showCopyModal = true"
+          class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-white/[0.06] bg-[#111119] text-gray-500 hover:text-indigo-300 hover:border-indigo-500/30 hover:bg-indigo-500/8 transition-all"
+          :title="locale === 'el' ? 'Αντιγραφή λογαριασμών σε άλλο μήνα' : 'Copy bills to another month'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+          </svg>
+        </button>
+
         <!-- Select mode toggle -->
         <button
           @click="selectionMode ? exitSelectionMode() : (selectionMode = true)"
@@ -983,18 +1002,6 @@ async function onQrFileSelected(event: Event) {
           {{ monthLabel(month) }}
         </button>
 
-        <!-- Copy-month trigger button (shown only when a specific month is selected) -->
-        <button
-          v-if="filterMonth !== 'all'"
-          @click="showCopyModal = true"
-          class="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-300 border border-indigo-500/25 bg-indigo-500/8 hover:bg-indigo-500/15 hover:border-indigo-500/40 transition-all whitespace-nowrap"
-          :title="locale === 'el' ? 'Αντιγραφή λογαριασμών από άλλο μήνα' : 'Copy bills from another month'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-          </svg>
-          {{ locale === 'el' ? 'Αντιγραφή μήνα' : 'Copy month' }}
-        </button>
       </div>
 
       <!-- Expandable filter panel -->
@@ -1670,25 +1677,32 @@ async function onQrFileSelected(event: Event) {
     <div v-if="showCopyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="showCopyModal = false">
       <div class="bg-[#111119] border border-white/[0.06] rounded-2xl shadow-2xl w-full max-w-md p-6">
 
-        <h3 class="text-base font-semibold text-gray-50 mb-1">
+        <h3 class="text-base font-semibold text-gray-50 mb-5">
           {{ locale === 'el' ? 'Αντιγραφή λογαριασμών' : 'Copy bills' }}
         </h3>
-        <p class="text-xs text-gray-500 mb-5">
-          {{ locale === 'el'
-            ? `Επίλεξε λογαριασμούς να αντιγραφούν στον ${monthLabel(filterMonth)}.`
-            : `Select bills to copy into ${monthLabel(filterMonth)}.` }}
-        </p>
 
-        <!-- Source month picker -->
-        <div class="mb-4">
-          <label class="block text-xs font-medium text-gray-400 mb-1.5">
-            {{ locale === 'el' ? 'Αντιγραφή από:' : 'Copy from:' }}
-          </label>
-          <input
-            v-model="copyFromMonth"
-            type="month"
-            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+        <!-- From / To month pickers side by side -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">
+              {{ locale === 'el' ? 'Από:' : 'From:' }}
+            </label>
+            <input
+              v-model="copyFromMonth"
+              type="month"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">
+              {{ locale === 'el' ? 'Σε:' : 'To:' }}
+            </label>
+            <input
+              v-model="copyToMonth"
+              type="month"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
 
         <!-- Bill list -->
