@@ -229,8 +229,7 @@ func (h *BillsHandler) CopyMonth(c *gin.Context) {
 	}
 
 	// Parse target month (YYYY-MM) to compute due date offset
-	fromT, err := time.Parse("2006-01", req.FromMonth)
-	if err != nil {
+	if _, err := time.Parse("2006-01", req.FromMonth); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from_month"})
 		return
 	}
@@ -239,8 +238,6 @@ func (h *BillsHandler) CopyMonth(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to_month"})
 		return
 	}
-	monthDiff := (toT.Year()-fromT.Year())*12 + int(toT.Month()-fromT.Month())
-
 	// Fetch all user bills and filter by from_month (and optionally by bill_ids)
 	docs, err := h.bills(ctx).Where("user_id", "==", userID).Documents(ctx).GetAll()
 	if err != nil {
@@ -270,8 +267,9 @@ func (h *BillsHandler) CopyMonth(c *gin.Context) {
 			continue
 		}
 
-		// Shift due date by monthDiff months
-		newDue := b.DueDate.AddDate(0, monthDiff, 0)
+		// Shift due date to target month, clamping day to last valid day of that month.
+		// (AddDate overflows: e.g. Jul 31 + 2 months = Oct 1 instead of Sep 30.)
+		newDue := clampToMonth(b.DueDate, toT.Year(), int(toT.Month()))
 
 		newBill := models.Bill{
 			UserID:         userID,
@@ -443,6 +441,18 @@ func nextMonthDay(t time.Time) time.Time {
 		d = lastOfNext
 	}
 	return time.Date(y, m+1, d, 0, 0, 0, 0, t.Location())
+}
+
+// clampToMonth places t into the given year/month, preserving the day but
+// clamping it to the last valid day of that month (e.g. Jul 31 → Sep 30).
+func clampToMonth(t time.Time, year, month int) time.Time {
+	day := t.Day()
+	// time.Date with day=0 gives the last day of the previous month
+	lastDay := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, t.Location()).Day()
+	if day > lastDay {
+		day = lastDay
+	}
+	return time.Date(year, time.Month(month), day, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
 }
 
 func (h *BillsHandler) MarkUnpaid(c *gin.Context) {
