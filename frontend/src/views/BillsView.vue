@@ -171,6 +171,7 @@ const form = ref({
   issued_date: '',
   notes: '',
   payment_code: '',
+  payment_url: '',
   recurring: false,
 })
 
@@ -555,7 +556,7 @@ async function parseEmail() {
 
 function openCreate() {
   editingBill.value = null
-  form.value = { user_provider_id: '', member_id: '', amount: '', due_date: '', issued_date: '', notes: '', payment_code: '', recurring: false }
+  form.value = { user_provider_id: '', member_id: '', amount: '', due_date: '', issued_date: '', notes: '', payment_code: '', payment_url: '', recurring: false }
   scanError.value = ''
   qrScanError.value = ''
   showModal.value = true
@@ -573,6 +574,7 @@ function openEdit(id: string) {
     issued_date: bill.issued_date ? bill.issued_date.split('T')[0] ?? '' : '',
     notes: bill.notes,
     payment_code: bill.payment_code || '',
+    payment_url: bill.payment_url || '',
     recurring: bill.recurring ?? false,
   }
   scanError.value = ''
@@ -590,6 +592,7 @@ async function submitForm() {
     issued_date: form.value.issued_date ? new Date(form.value.issued_date).toISOString() : undefined,
     notes: form.value.notes,
     payment_code: form.value.payment_code,
+    payment_url: form.value.payment_url,
   }
   try {
     if (editingBill.value) {
@@ -1358,8 +1361,8 @@ async function onQrFileSelected(event: Event) {
               </button>
 
               <a
-                v-if="item.bill.user_provider?.provider?.payment_url"
-                :href="item.bill.user_provider.provider.payment_url"
+                v-if="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
+                :href="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-blue-300 hover:border-blue-500/25 hover:bg-blue-500/8 transition-all shrink-0"
@@ -1624,6 +1627,24 @@ async function onQrFileSelected(event: Event) {
               placeholder="π.χ. RF47 1234 5678 9012"
             />
             <p class="text-xs text-gray-500 mt-1">{{ t('bills.payment_code_hint') }}</p>
+          </div>
+
+          <!-- Custom payment URL -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">
+              {{ locale === 'el' ? 'Σύνδεσμος πληρωμής' : 'Payment URL' }}
+            </label>
+            <input
+              v-model="form.payment_url"
+              type="url"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :placeholder="locale === 'el' ? 'π.χ. https://www.dei.gr/pay' : 'e.g. https://provider.com/pay'"
+            />
+            <p class="text-xs text-gray-500 mt-1">
+              {{ locale === 'el'
+                ? 'Προαιρετικό. Αντικαθιστά τον προεπιλεγμένο σύνδεσμο του παρόχου.'
+                : 'Optional. Overrides the default provider payment link.' }}
+            </p>
           </div>
 
           <div v-if="!editingBill">

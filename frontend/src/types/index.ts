@@ -47,6 +47,7 @@ export interface Bill {
   paid_at: string | null
   notes: string
   payment_code: string
+  payment_url: string
   recurring: boolean
   attachment_url: string
   created_at: string
