@@ -106,6 +106,12 @@ async function onMonthChange() {
     budgetStore.fetchExpenses(month.value),
   ])
 }
+
+async function payBill(id: string) {
+  await billsStore.markPaid(id)
+  toast(locale.value === 'en' ? 'Paid ✓' : 'Πληρώθηκε ✓', 'success')
+  await billsStore.fetchDashboard(month.value)
+}
 </script>
 
 <template>
@@ -136,6 +142,29 @@ async function onMonthChange() {
     </div>
 
     <div v-else class="space-y-4">
+
+      <!-- ─── Overdue banner ───────────────────── -->
+      <div
+        v-if="overdueBills.length > 0"
+        class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/25"
+      >
+        <div class="w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-red-400">
+            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 1.998-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-red-300">
+            {{ overdueBills.length === 1
+              ? (locale === 'el' ? '1 εκπρόθεσμος λογαριασμός' : '1 overdue bill')
+              : (locale === 'el' ? `${overdueBills.length} εκπρόθεσμοι λογαριασμοί` : `${overdueBills.length} overdue bills`) }}
+          </p>
+          <p class="text-xs text-red-400/70 mt-0.5">{{ formatAmount(d.amount_overdue) }} {{ locale === 'el' ? 'συνολικά' : 'total' }}</p>
+        </div>
+        <RouterLink :to="{ name: 'bills' }" class="text-xs font-bold text-red-400 hover:text-red-300 shrink-0 transition-colors">
+          {{ locale === 'el' ? 'Δες' : 'View' }} →
+        </RouterLink>
+      </div>
 
       <!-- ─── Hero card ─────────────────────────── -->
       <div
@@ -181,6 +210,111 @@ async function onMonthChange() {
             <p class="text-sm font-bold text-amber-400">{{ formatAmount(d.amount_expenses_planned) }}</p>
           </div>
         </div>
+      </div>
+
+      <!-- ─── Bills: Upcoming + Overdue ─────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <!-- Upcoming -->
+        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] p-4">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('dashboard.upcoming') }}</p>
+            <span class="text-xs font-bold text-blue-400">
+              {{ formatAmount(d.amount_bills - d.amount_overdue) }}
+            </span>
+          </div>
+          <p v-if="pendingBills.length === 0" class="text-sm text-gray-600 py-3 text-center">{{ t('dashboard.no_pending') }}</p>
+          <ul v-else class="space-y-3">
+            <li v-for="b in pendingBills" :key="b.id" class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  :style="{ backgroundColor: b.user_provider?.provider?.color || '#6B7280' }">
+                  {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-medium text-gray-100 truncate">
+                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
+                    </p>
+                    <span
+                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
+                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
+                    >
+                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500">{{ formatDate(b.due_date) }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <p class="text-sm font-semibold text-gray-200">{{ formatAmount(b.amount) }}</p>
+                <button
+                  @click="payBill(b.id)"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
+                  :title="locale === 'el' ? 'Πληρώθηκε' : 'Mark paid'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Overdue -->
+        <div class="bg-[#111119] rounded-2xl border p-4"
+          :class="overdueBills.length > 0 ? 'border-red-900/60' : 'border-white/[0.06]'">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-semibold uppercase tracking-wider"
+              :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-500'">
+              {{ t('dashboard.overdue') }}
+            </p>
+            <span class="text-xs font-bold" :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-700'">
+              {{ formatAmount(d.amount_overdue) }}
+            </span>
+          </div>
+          <p v-if="overdueBills.length === 0" class="text-sm text-gray-600 py-3 text-center">{{ t('dashboard.no_overdue') }}</p>
+          <ul v-else class="space-y-3">
+            <li v-for="b in overdueBills" :key="b.id" class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  :style="{ backgroundColor: b.user_provider?.provider?.color || '#6B7280' }">
+                  {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-medium text-gray-100 truncate">
+                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
+                    </p>
+                    <span
+                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
+                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
+                    >
+                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-red-400">{{ formatDate(b.due_date) }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <p class="text-sm font-semibold text-red-400">{{ formatAmount(b.amount) }}</p>
+                <button
+                  @click="payBill(b.id)"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 transition-colors shrink-0"
+                  :title="locale === 'el' ? 'Πληρώθηκε' : 'Mark paid'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
       </div>
 
       <!-- ─── Έσοδα ──────────────────────────────── -->
@@ -322,89 +456,6 @@ async function onMonthChange() {
           <p class="text-lg font-bold text-indigo-300">~{{ formatAmount(forecast.total) }}</p>
           <p class="text-[11px] text-gray-500">{{ t('dashboard.forecast_desc') }}</p>
         </div>
-      </div>
-
-      <!-- ─── Bills: Upcoming + Overdue ─────────── -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-        <!-- Upcoming -->
-        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] p-4">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('dashboard.upcoming') }}</p>
-            <span class="text-xs font-bold text-blue-400">
-              {{ formatAmount(d.amount_bills - d.amount_overdue) }}
-            </span>
-          </div>
-          <p v-if="pendingBills.length === 0" class="text-sm text-gray-600 py-3 text-center">{{ t('dashboard.no_pending') }}</p>
-          <ul v-else class="space-y-3">
-            <li v-for="b in pendingBills" :key="b.id" class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  :style="{ backgroundColor: b.user_provider?.provider?.color || '#6B7280' }">
-                  {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <p class="text-sm font-medium text-gray-100 truncate">
-                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
-                    </p>
-                    <span
-                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
-                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
-                    >
-                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-gray-500">{{ formatDate(b.due_date) }}</p>
-                </div>
-              </div>
-              <p class="text-sm font-semibold text-gray-200 shrink-0">{{ formatAmount(b.amount) }}</p>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Overdue -->
-        <div class="bg-[#111119] rounded-2xl border p-4"
-          :class="overdueBills.length > 0 ? 'border-red-900/60' : 'border-white/[0.06]'">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold uppercase tracking-wider"
-              :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-500'">
-              {{ t('dashboard.overdue') }}
-            </p>
-            <span class="text-xs font-bold" :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-700'">
-              {{ formatAmount(d.amount_overdue) }}
-            </span>
-          </div>
-          <p v-if="overdueBills.length === 0" class="text-sm text-gray-600 py-3 text-center">{{ t('dashboard.no_overdue') }}</p>
-          <ul v-else class="space-y-3">
-            <li v-for="b in overdueBills" :key="b.id" class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  :style="{ backgroundColor: b.user_provider?.provider?.color || '#6B7280' }">
-                  {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <p class="text-sm font-medium text-gray-100 truncate">
-                      {{ b.user_provider?.nickname || b.user_provider?.provider?.name }}
-                    </p>
-                    <span
-                      v-if="b.member_id && membersStore.members.find(m => m.id === b.member_id)"
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shrink-0"
-                      :style="{ backgroundColor: membersStore.members.find(m => m.id === b.member_id)!.color + 'cc' }"
-                    >
-                      {{ membersStore.members.find(m => m.id === b.member_id)!.name }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-red-400">{{ formatDate(b.due_date) }}</p>
-                </div>
-              </div>
-              <p class="text-sm font-semibold text-red-400 shrink-0">{{ formatAmount(b.amount) }}</p>
-            </li>
-          </ul>
-        </div>
-
       </div>
 
       <!-- ─── Αγορές (mini) ─────────────────────── -->

@@ -40,6 +40,7 @@ const dateFrom = ref('')
 const dateTo = ref('')
 const copiedId = ref<string | null>(null)
 
+const showMoreMenu = ref(false)
 const showEmailInput = ref(false)
 const emailContent = ref('')
 const parsingEmail = ref(false)
@@ -929,7 +930,7 @@ async function onQrFileSelected(event: Event) {
           </button>
         </div>
 
-        <!-- Filter panel toggle -->
+        <!-- Filter toggle -->
         <button
           @click="filterOpen = !filterOpen"
           class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all relative"
@@ -945,57 +946,89 @@ async function onQrFileSelected(event: Event) {
             class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-[#0b0b10]" />
         </button>
 
-        <!-- Group mode cycle button -->
-        <button
-          @click="cycleGroupMode()"
-          class="shrink-0 flex items-center gap-1.5 px-2.5 h-10 rounded-xl border transition-all"
-          :class="groupMode !== 'none'
-            ? groupMode === 'member'
-              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
-              : 'border-violet-500/40 bg-violet-500/10 text-violet-400'
-            : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
-          :title="locale === 'el' ? 'Ομαδοποίηση' : 'Group'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 shrink-0">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-          </svg>
-          <span v-if="groupMode !== 'none'" class="text-[11px] font-bold leading-none">
-            {{ groupMode === 'category' ? (locale === 'el' ? 'Κατηγορία' : 'Category') : (locale === 'el' ? 'Μέλος' : 'Member') }}
-          </span>
-        </button>
+        <!-- More actions menu -->
+        <div class="relative shrink-0">
+          <button
+            @click.stop="showMoreMenu = !showMoreMenu"
+            class="flex items-center justify-center w-10 h-10 rounded-xl border transition-all"
+            :class="showMoreMenu || groupMode !== 'none' || selectionMode
+              ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+              : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
+            :title="locale === 'el' ? 'Περισσότερες ενέργειες' : 'More actions'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+          </button>
 
-        <!-- Copy-month button (always visible) -->
-        <button
-          @click="showCopyModal = true"
-          class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-white/[0.06] bg-[#111119] text-gray-500 hover:text-indigo-300 hover:border-indigo-500/30 hover:bg-indigo-500/8 transition-all"
-          :title="locale === 'el' ? 'Αντιγραφή λογαριασμών σε άλλο μήνα' : 'Copy bills to another month'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-          </svg>
-        </button>
+          <!-- Dropdown -->
+          <Transition
+            enter-active-class="transition-all duration-150 ease-out"
+            enter-from-class="opacity-0 scale-95 -translate-y-1"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition-all duration-100 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 -translate-y-1"
+          >
+            <!-- Close overlay -->
+            <div v-if="showMoreMenu" class="fixed inset-0 z-20" @click="showMoreMenu = false" />
+            <div
+              v-if="showMoreMenu"
+              class="absolute right-0 top-12 z-30 w-52 bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
+              @click.stop
+            >
+              <!-- Group by -->
+              <div class="px-3 py-2 border-b border-white/[0.05]">
+                <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">{{ locale === 'el' ? 'Ομαδοποίηση' : 'Group by' }}</p>
+                <div class="flex gap-1.5">
+                  <button
+                    v-for="g in (['none', 'category', 'member'] as const)"
+                    :key="g"
+                    @click="groupMode = g; showMoreMenu = false"
+                    class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    :class="groupMode === g
+                      ? g === 'none' ? 'bg-white/[0.08] text-white' : g === 'category' ? 'bg-violet-500/20 text-violet-300' : 'bg-emerald-500/20 text-emerald-300'
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]'"
+                  >
+                    {{ g === 'none' ? (locale === 'el' ? 'Χωρίς' : 'None') : g === 'category' ? (locale === 'el' ? 'Κατηγ.' : 'Cat.') : (locale === 'el' ? 'Μέλος' : 'Member') }}
+                  </button>
+                </div>
+              </div>
 
-        <!-- Gmail scan button -->
-        <button
-          @click="showGmailModal = true"
-          class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-white/[0.06] bg-[#111119] text-gray-500 hover:text-red-300 hover:border-red-500/30 hover:bg-red-500/8 transition-all"
-          :title="locale === 'el' ? 'Σάρωση Gmail για λογαριασμούς' : 'Scan Gmail for bills'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-          </svg>
-        </button>
-
-        <!-- Select mode toggle -->
-        <button
-          @click="selectionMode ? exitSelectionMode() : (selectionMode = true)"
-          class="shrink-0 px-3 h-10 rounded-xl border text-sm font-semibold transition-all"
-          :class="selectionMode
-            ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
-            : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
-        >
-          {{ locale === 'el' ? 'Επιλογή' : 'Select' }}
-        </button>
+              <!-- Actions -->
+              <div class="p-1.5 space-y-0.5">
+                <button
+                  @click="showCopyModal = true; showMoreMenu = false"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/[0.05] hover:text-white transition-colors text-left"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                  {{ locale === 'el' ? 'Αντιγραφή μήνα' : 'Copy month' }}
+                </button>
+                <button
+                  @click="showGmailModal = true; showMoreMenu = false"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/[0.05] hover:text-white transition-colors text-left"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-red-400 shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                  </svg>
+                  {{ locale === 'el' ? 'Σάρωση Gmail' : 'Scan Gmail' }}
+                </button>
+                <button
+                  @click="selectionMode ? exitSelectionMode() : (selectionMode = true); showMoreMenu = false"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left"
+                  :class="selectionMode ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:bg-white/[0.05] hover:text-white'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 shrink-0" :class="selectionMode ? 'text-blue-400' : 'text-gray-500'">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  {{ selectionMode ? (locale === 'el' ? 'Ακύρωση επιλογής' : 'Cancel select') : (locale === 'el' ? 'Επιλογή' : 'Select') }}
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
       </div>
 
       <!-- Row 2: Month chips + Copy button -->
