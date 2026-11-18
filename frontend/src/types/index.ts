@@ -48,8 +48,24 @@ export interface Bill {
   notes: string
   payment_code: string
   payment_url: string
+  payment_card_id: string
+  auto_pay: boolean
   recurring: boolean
   attachment_url: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Card {
+  id: string
+  user_id: string
+  nickname: string
+  last_four: string
+  expiry_mm: number
+  expiry_yy: number
+  card_type: 'visa' | 'mastercard' | 'amex' | 'other'
+  is_default: boolean
+  color: string
   created_at: string
   updated_at: string
 }

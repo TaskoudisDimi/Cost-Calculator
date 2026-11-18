@@ -23,12 +23,13 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 
 	nordigenSvc := nordigen.New(nordigenSecretID, nordigenSecretKey)
 
+	cardsH := handlers.NewCardsHandler(fs)
 	providersH := handlers.NewProvidersHandler(fs)
 	templatesH := handlers.NewProviderTemplatesHandler(fs)
 	billsH := handlers.NewBillsHandler(fs)
 	expensesH := handlers.NewExpensesHandler(fs)
 	incomeH := handlers.NewIncomeHandler(fs)
-	scanH := handlers.NewScanHandler(anthropicKey)
+	scanH := handlers.NewScanHandler(anthropicKey, fs)
 	var emailClient *email.Client
 	if resendAPIKey != "" {
 		emailClient = email.NewClient(resendAPIKey, resendFromEmail)
@@ -65,8 +66,14 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.PATCH("/bills/:id/pay", billsH.MarkPaid)
 		protected.PATCH("/bills/:id/unpay", billsH.MarkUnpaid)
 		protected.POST("/bills/copy-month", billsH.CopyMonth)
-			protected.POST("/bills/scan", scanH.ScanBill)
+		protected.POST("/bills/scan", scanH.ScanBill)
 		protected.POST("/bills/parse-email", scanH.ParseEmail)
+		protected.POST("/bills/scan-emails", scanH.ScanEmails)
+
+		protected.GET("/cards", cardsH.List)
+		protected.POST("/cards", cardsH.Create)
+		protected.PUT("/cards/:id", cardsH.Update)
+		protected.DELETE("/cards/:id", cardsH.Delete)
 
 		protected.GET("/expenses", expensesH.List)
 		protected.POST("/expenses", expensesH.Create)

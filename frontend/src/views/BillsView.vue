@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, unref, watch } from 'vue'
 import { useBillsStore } from '@/stores/bills'
+import { useCardsStore } from '@/stores/cards'
 import { useMembersStore } from '@/stores/members'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
@@ -8,6 +9,7 @@ import { useLocale } from '@/composables/useLocale'
 import { useReceiptUpload } from '@/composables/useReceiptUpload'
 import { formatDate, formatAmount, statusLabel, statusClass, monthLabel } from '@/utils/format'
 import { detectProviderFromEmail } from '@/utils/emailPatterns'
+import GmailScanModal from '@/components/GmailScanModal.vue'
 import type { Bill, BillStatus, ProviderCategory } from '@/types'
 import QRCode from 'qrcode'
 
@@ -16,9 +18,11 @@ const { confirm } = useConfirm()
 const { t, locale } = useLocale()
 
 const store = useBillsStore()
+const cardsStore = useCardsStore()
 const membersStore = useMembersStore()
 
 const showModal = ref(false)
+const showGmailModal = ref(false)
 const editingBill = ref<string | null>(null)
 const filterStatus = ref<BillStatus | 'all'>('all')
 const filterMember = ref<string>('all')
@@ -381,6 +385,7 @@ onMounted(async () => {
     hasBills ? Promise.resolve() : store.fetchBills(),
     hasProviders ? Promise.resolve() : store.fetchUserProviders(),
     membersStore.fetchMembers(),
+    cardsStore.fetchCards(),
   ])
 })
 
@@ -967,6 +972,17 @@ async function onQrFileSelected(event: Event) {
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+          </svg>
+        </button>
+
+        <!-- Gmail scan button -->
+        <button
+          @click="showGmailModal = true"
+          class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-white/[0.06] bg-[#111119] text-gray-500 hover:text-red-300 hover:border-red-500/30 hover:bg-red-500/8 transition-all"
+          :title="locale === 'el' ? 'Σάρωση Gmail για λογαριασμούς' : 'Scan Gmail for bills'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
           </svg>
         </button>
 
@@ -1791,6 +1807,9 @@ async function onQrFileSelected(event: Event) {
         </div>
       </div>
     </div>
+
+  <!-- Gmail Scan Modal -->
+  <GmailScanModal v-if="showGmailModal" @close="showGmailModal = false" />
 
   </div>
 </template>

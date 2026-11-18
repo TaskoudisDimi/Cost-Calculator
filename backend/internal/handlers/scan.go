@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -11,17 +12,61 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 )
 
 var claudeHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
+// dailyScanLimit is the maximum AI scan calls a user can make per day across all scan endpoints.
+const dailyScanLimit = 30
+
 type ScanHandler struct {
 	apiKey string
+	fs     *firestore.Client
 }
 
-func NewScanHandler(apiKey string) *ScanHandler {
-	return &ScanHandler{apiKey: apiKey}
+func NewScanHandler(apiKey string, fs *firestore.Client) *ScanHandler {
+	return &ScanHandler{apiKey: apiKey, fs: fs}
+}
+
+// checkRateLimit returns (allowed, currentCount, error).
+// It increments the counter on the first call and resets it daily.
+func (h *ScanHandler) checkRateLimit(ctx context.Context, userID string) (bool, int, error) {
+	if h.fs == nil {
+		return true, 0, nil
+	}
+	today := time.Now().UTC().Format("2006-01-02")
+	docRef := h.fs.Collection("scanUsage").Doc(userID + "_" + today)
+
+	var count int
+	err := h.fs.RunTransaction(ctx, func(_ context.Context, tx *firestore.Transaction) error {
+		doc, err := tx.Get(docRef)
+		if err != nil {
+			// First scan of the day
+			return tx.Set(docRef, map[string]interface{}{
+				"user_id":    userID,
+				"date":       today,
+				"count":      1,
+				"expires_at": time.Now().UTC().Add(48 * time.Hour), // TTL-ish
+			})
+		}
+		var data struct {
+			Count int `firestore:"count"`
+		}
+		if err := doc.DataTo(&data); err != nil {
+			return err
+		}
+		count = data.Count
+		if count >= dailyScanLimit {
+			return nil // will check outside
+		}
+		return tx.Update(docRef, []firestore.Update{{Path: "count", Value: count + 1}})
+	})
+	if err != nil {
+		return true, 0, err // fail open
+	}
+	return count < dailyScanLimit, count + 1, nil
 }
 
 type ScanResult struct {
@@ -33,9 +78,55 @@ type ScanResult struct {
 	PaymentCode  string   `json:"payment_code"`
 }
 
+func (h *ScanHandler) ScanEmails(c *gin.Context) {
+	if h.apiKey == "" {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "bill scanning is not configured"})
+		return
+	}
+	userID := c.MustGet("user_id").(string)
+	ctx := context.Background()
+	// Each email in the batch counts as 1 scan call
+	if allowed, used, _ := h.checkRateLimit(ctx, userID); !allowed {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": fmt.Sprintf("daily scan limit reached (%d/%d)", used, dailyScanLimit)})
+		return
+	}
+
+	var req struct {
+		Emails []struct {
+			Subject string `json:"subject"`
+			From    string `json:"from"`
+			Body    string `json:"body"`
+			Date    string `json:"date"`
+		} `json:"emails" binding:"required,min=1,max=20"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	results := make([]*ScanResult, 0, len(req.Emails))
+	for _, e := range req.Emails {
+		content := fmt.Sprintf("Subject: %s\nFrom: %s\nDate: %s\n\n%s", e.Subject, e.From, e.Date, e.Body)
+		result, err := callClaudeEmailText(h.apiKey, content)
+		if err != nil || result == nil || result.Amount == nil {
+			results = append(results, nil)
+			continue
+		}
+		results = append(results, result)
+	}
+
+	c.JSON(http.StatusOK, results)
+}
+
 func (h *ScanHandler) ParseEmail(c *gin.Context) {
 	if h.apiKey == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "bill scanning is not configured"})
+		return
+	}
+	userID := c.MustGet("user_id").(string)
+	ctx := context.Background()
+	if allowed, used, _ := h.checkRateLimit(ctx, userID); !allowed {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": fmt.Sprintf("daily scan limit reached (%d/%d)", used, dailyScanLimit)})
 		return
 	}
 
@@ -58,6 +149,12 @@ func (h *ScanHandler) ParseEmail(c *gin.Context) {
 func (h *ScanHandler) ScanBill(c *gin.Context) {
 	if h.apiKey == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "bill scanning is not configured"})
+		return
+	}
+	userID := c.MustGet("user_id").(string)
+	ctx := context.Background()
+	if allowed, used, _ := h.checkRateLimit(ctx, userID); !allowed {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": fmt.Sprintf("daily scan limit reached (%d/%d)", used, dailyScanLimit)})
 		return
 	}
 

@@ -166,6 +166,11 @@ export const useBillsStore = defineStore('bills', () => {
     return data
   }
 
+  async function scanEmails(emails: { subject: string; from: string; body: string; date: string }[]): Promise<(ScanResult | null)[]> {
+    const { data } = await api.post<(ScanResult | null)[]>('/bills/scan-emails', { emails })
+    return data
+  }
+
   async function registerNotificationToken(token: string): Promise<void> {
     await api.post('/notify/register', { token })
   }
@@ -209,6 +214,6 @@ export const useBillsStore = defineStore('bills', () => {
     fetchDashboard, fetchBills, fetchAnalytics, createBill, updateBill, markPaid, markUnpaid, deleteBill, bulkDeleteBills, copyMonth,
     fetchProviders, fetchUserProviders, addUserProvider, deleteUserProvider,
     fetchProviderTemplates, createProviderTemplate, deleteProviderTemplate,
-    scanBill, parseEmail, registerNotificationToken, startRealtimeSync, stopRealtimeSync,
+    scanBill, parseEmail, scanEmails, registerNotificationToken, startRealtimeSync, stopRealtimeSync,
   }
 })

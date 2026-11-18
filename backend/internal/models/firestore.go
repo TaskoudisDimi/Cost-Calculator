@@ -47,6 +47,8 @@ type Bill struct {
 	Notes          string       `json:"notes" firestore:"notes"`
 	PaymentCode    string       `json:"payment_code" firestore:"payment_code"`
 	PaymentURL     string       `json:"payment_url" firestore:"payment_url"`
+	PaymentCardID  string       `json:"payment_card_id" firestore:"payment_card_id"`
+	AutoPay        bool         `json:"auto_pay" firestore:"auto_pay"`
 	Recurring      bool         `json:"recurring" firestore:"recurring"`
 	AttachmentURL  string       `json:"attachment_url" firestore:"attachment_url"`
 	CreatedAt      time.Time    `json:"created_at" firestore:"created_at"`
@@ -78,6 +80,21 @@ type UserProviderTemplate struct {
 	Category   string `json:"category" firestore:"category"`
 	Color      string `json:"color" firestore:"color"`
 	PaymentURL string `json:"payment_url" firestore:"payment_url"`
+}
+
+// Card stores payment card metadata (no actual card numbers — PCI DSS)
+type Card struct {
+	ID        string    `json:"id" firestore:"-"`
+	UserID    string    `json:"user_id" firestore:"user_id"`
+	Nickname  string    `json:"nickname" firestore:"nickname"`
+	LastFour  string    `json:"last_four" firestore:"last_four"`
+	ExpiryMM  int       `json:"expiry_mm" firestore:"expiry_mm"`
+	ExpiryYY  int       `json:"expiry_yy" firestore:"expiry_yy"`
+	CardType  string    `json:"card_type" firestore:"card_type"` // visa, mastercard, amex, other
+	IsDefault bool      `json:"is_default" firestore:"is_default"`
+	Color     string    `json:"color" firestore:"color"`
+	CreatedAt time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" firestore:"updated_at"`
 }
 
 // BankConnection stores the Nordigen/GoCardless bank link for a user
