@@ -20,6 +20,7 @@ const month = ref(currentMonth())
 const showIncomeModal = ref(false)
 const incomeForm = ref({ description: '', amount: '', member_id: '' })
 const savingIncome = ref(false)
+const incomeExpanded = ref(false)
 
 const d = computed(() => billsStore.dashboard)
 const incomes = computed(() => {
@@ -319,18 +320,34 @@ async function payBill(id: string) {
 
       <!-- ─── Έσοδα ──────────────────────────────── -->
       <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-300">{{ t('dashboard.income_section') }}</h3>
-          <button
-            @click="showIncomeModal = true"
-            class="flex items-center gap-1.5 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 px-3.5 py-1.5 rounded-xl transition-colors"
+        <button
+          @click="incomeExpanded = !incomeExpanded"
+          class="flex items-center justify-between w-full mb-3 group"
+        >
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">{{ t('dashboard.income_section') }}</h3>
+            <span v-if="totalIncome > 0" class="text-xs font-bold text-emerald-400">{{ formatAmount(totalIncome) }}</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-4 h-4 text-gray-600 transition-transform duration-200"
+            :class="incomeExpanded ? '' : '-rotate-90'"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            {{ t('dashboard.new_income') }}
-          </button>
-        </div>
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+
+        <div v-if="incomeExpanded" class="mb-3">
+          <div class="flex justify-end mb-3">
+            <button
+              @click="showIncomeModal = true"
+              class="flex items-center gap-1.5 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 px-3.5 py-1.5 rounded-xl transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              {{ t('dashboard.new_income') }}
+            </button>
+          </div>
 
         <!-- Empty state -->
         <div v-if="incomes.length === 0"
@@ -405,6 +422,7 @@ async function payBill(id: string) {
             </div>
           </div>
         </div>
+        </div><!-- /v-if incomeExpanded -->
       </div>
 
       <!-- ─── Progress bar ─── -->

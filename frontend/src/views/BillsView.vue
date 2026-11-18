@@ -48,6 +48,7 @@ const emailError = ref('')
 
 const qrBill = ref<Bill | null>(null)
 const qrDataUrl = ref('')
+const hasWebShare = typeof navigator !== 'undefined' && 'share' in navigator
 
 // Feature 4: QR scan from image
 const qrScanInput = ref<HTMLInputElement | null>(null)
@@ -487,15 +488,35 @@ async function showQR(bill: Bill) {
 }
 
 async function payWithIRIS(bill: Bill) {
+  await showQR(bill)
+}
+
+function tryIRISDeeplink(bill: Bill) {
   const code = bill.payment_code
   if (!code) return
+  const amount = bill.amount.toFixed(2)
+  const name = encodeURIComponent(bill.user_provider?.nickname || bill.user_provider?.provider?.name || '')
+  const deeplink = `iris://payment?rf=${encodeURIComponent(code)}&amount=${amount}&currency=EUR&creditorName=${name}`
+  const a = document.createElement('a')
+  a.href = deeplink
+  a.click()
+}
+
+async function sharePaymentCode(bill: Bill) {
+  const code = bill.payment_code
+  if (!code) return
+  const name = bill.user_provider?.nickname || bill.user_provider?.provider?.name || ''
+  const amount = bill.amount.toFixed(2)
   if (navigator.share) {
     try {
-      await navigator.share({ title: t('bills.pay_iris'), text: code })
+      await navigator.share({
+        title: `Πληρωμή ${name}`,
+        text: `Κωδικός RF: ${code}\nΠοσό: ${amount}€`,
+      })
       return
     } catch { /* cancelled */ }
   }
-  await showQR(bill)
+  await copyPaymentCode(code, bill.id)
 }
 
 async function enableNotifications() {
@@ -1449,37 +1470,109 @@ async function onQrFileSelected(event: Event) {
 
     </template>
 
-    <!-- QR / IRIS modal -->
-    <div v-if="qrBill" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4" @click.self="qrBill = null">
-      <div class="bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl p-6 w-full max-w-xs text-center">
-        <div class="flex items-center justify-center gap-2 mb-1">
-          <span class="text-lg">📱</span>
-          <h3 class="text-base font-semibold text-gray-50">{{ t('bills.pay_iris') }}</h3>
-        </div>
-        <p class="text-sm font-medium text-gray-300 mb-1">
-          {{ qrBill.user_provider?.nickname || qrBill.user_provider?.provider?.name }}
-        </p>
-        <p class="text-xs text-gray-400 mb-4">{{ t('bills.iris_scan_desc') }}</p>
-        <div class="flex justify-center mb-4">
-          <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code" class="rounded-xl w-52 h-52" />
-          <div v-else class="w-52 h-52 flex items-center justify-center text-gray-500 text-sm">{{ t('bills.no_code') }}</div>
-        </div>
-        <p class="text-xs font-mono text-blue-400 bg-white/[0.04] rounded-lg px-3 py-2 mb-4 break-all select-all">
-          {{ qrBill.payment_code }}
-        </p>
-        <div class="flex gap-2">
-          <button
-            @click="copyPaymentCode(qrBill!.payment_code, qrBill!.id)"
-            class="flex-1 py-2 rounded-xl border border-white/[0.08] text-xs font-medium text-gray-300 hover:bg-white/[0.06] transition-colors"
-          >
-            {{ copiedId === qrBill.id ? t('bills.copied') : t('bills.copy') }}
+    <!-- Pay Now modal -->
+    <div v-if="qrBill" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="qrBill = null">
+      <div class="bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/[0.06]">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-base font-black shrink-0 shadow-lg"
+            :style="{ backgroundColor: qrBill.user_provider?.provider?.color || '#6B7280' }">
+            {{ (qrBill.user_provider?.nickname || qrBill.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-white truncate">{{ qrBill.user_provider?.nickname || qrBill.user_provider?.provider?.name }}</p>
+            <p class="text-lg font-black tabular-nums text-white">{{ formatAmount(qrBill.amount) }}</p>
+          </div>
+          <button @click="qrBill = null" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
           </button>
-          <button
-            @click="qrBill = null"
-            class="flex-1 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-gray-300 transition-colors"
+        </div>
+
+        <div class="p-5 space-y-3">
+
+          <!-- RF code (if available) -->
+          <div v-if="qrBill.payment_code">
+
+            <!-- IRIS deeplink -->
+            <button
+              @click="tryIRISDeeplink(qrBill!)"
+              class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 transition-colors mb-3"
+            >
+              <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3" />
+                </svg>
+              </div>
+              <div class="text-left">
+                <p class="text-sm font-bold text-white">{{ locale === 'el' ? 'Άνοιξε IRIS' : 'Open IRIS' }}</p>
+                <p class="text-xs text-blue-200">{{ locale === 'el' ? 'Πλήρωσε από την τραπεζική εφαρμογή' : 'Pay via banking app' }}</p>
+              </div>
+            </button>
+
+            <!-- Share (mobile) -->
+            <button
+              v-if="hasWebShare"
+              @click="sharePaymentCode(qrBill!)"
+              class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] transition-colors mb-3"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-gray-400 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+              </svg>
+              <span class="text-sm font-semibold text-gray-200">{{ locale === 'el' ? 'Μοιράσου με τράπεζα' : 'Share to banking app' }}</span>
+            </button>
+
+            <!-- RF code display + copy -->
+            <div class="bg-white/[0.03] rounded-xl border border-white/[0.06] p-3">
+              <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-2">RF code</p>
+              <div class="flex items-center gap-2">
+                <code class="text-sm font-mono text-blue-400 flex-1 select-all break-all">{{ qrBill.payment_code }}</code>
+                <button
+                  @click="copyPaymentCode(qrBill!.payment_code, qrBill!.id)"
+                  class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                  :class="copiedId === qrBill.id ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.06] text-gray-400 hover:text-white hover:bg-white/[0.1]'"
+                >{{ copiedId === qrBill.id ? '✓' : (locale === 'el' ? 'Αντιγραφή' : 'Copy') }}</button>
+              </div>
+            </div>
+
+            <!-- QR code -->
+            <div v-if="qrDataUrl" class="flex flex-col items-center gap-2 pt-3">
+              <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{{ locale === 'el' ? 'Σκαναρέ με κάμερα τράπεζας' : 'Scan with banking app' }}</p>
+              <img :src="qrDataUrl" alt="QR Code" class="rounded-xl w-40 h-40" />
+            </div>
+
+          </div>
+
+          <!-- Payment URL only (no RF code) -->
+          <a
+            v-if="qrBill.payment_url || qrBill.user_provider?.provider?.payment_url"
+            :href="qrBill.payment_url || qrBill.user_provider?.provider?.payment_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="markPaid(qrBill!.id); qrBill = null"
+            class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 transition-colors"
           >
-            {{ t('common.close') }}
-          </button>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            <div class="text-left">
+              <p class="text-sm font-bold text-white">{{ locale === 'el' ? 'Πλήρωσε online' : 'Pay online' }}</p>
+              <p class="text-xs text-emerald-200">{{ locale === 'el' ? 'Ανοίγει ο ιστότοπος του παρόχου' : 'Opens provider website' }}</p>
+            </div>
+          </a>
+
+          <!-- Mark paid separator -->
+          <div class="pt-1">
+            <button
+              @click="markPaid(qrBill!.id); qrBill = null"
+              class="w-full py-2.5 rounded-xl border border-white/[0.08] text-sm font-semibold text-gray-400 hover:text-white hover:border-white/[0.15] transition-colors"
+            >
+              {{ locale === 'el' ? '✓ Σημείωσε ως πληρωμένο' : '✓ Mark as paid (done externally)' }}
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

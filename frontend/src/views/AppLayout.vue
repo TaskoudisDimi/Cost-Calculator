@@ -22,6 +22,8 @@ const { t, locale } = useLocale()
 const sidebarOpen = ref(true)
 const showSearch = ref(false)
 
+const isGlobalLoading = computed(() => billsStore.loading)
+
 function onGlobalKey(e: KeyboardEvent) {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault()
@@ -125,6 +127,20 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
 <template>
   <div class="min-h-screen bg-[#0b0b10] flex">
+
+    <!-- ─── Global loading bar ──────────────────────── -->
+    <div class="fixed top-0 left-0 right-0 z-[300] h-[2px] pointer-events-none overflow-hidden">
+      <Transition
+        enter-active-class="transition-opacity duration-150"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-300"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isGlobalLoading" class="loading-bar h-full" />
+      </Transition>
+    </div>
 
     <!-- ─── Desktop sidebar ──────────────────────────── -->
     <aside
@@ -298,7 +314,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
     <!-- ─── Main content ─────────────────────────────── -->
     <main
       class="flex-1 pt-14 md:pt-0 pb-24 md:pb-0 p-4 md:p-8 min-w-0 transition-[margin] duration-200 max-w-full"
-      :class="sidebarOpen ? 'md:ml-56' : 'md:ml-[52px]'"
+      :class="[sidebarOpen ? 'md:ml-56' : 'md:ml-[52px]', isGlobalLoading ? 'pointer-events-none select-none' : '']"
     >
       <RouterView v-slot="{ Component }">
         <KeepAlive :max="5">
@@ -382,3 +398,16 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
   </div>
 </template>
+
+<style scoped>
+.loading-bar {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%);
+  background-size: 200% 100%;
+  animation: loading-sweep 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+</style>
