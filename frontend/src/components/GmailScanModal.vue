@@ -29,7 +29,7 @@ function connectGmail() {
     return
   }
   // @ts-expect-error google loaded via script tag in index.html
-  window.google.accounts.oauth2.requestAccessToken({
+  const tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: 'https://www.googleapis.com/auth/gmail.readonly',
     callback: (tokenResp: { access_token?: string; error?: string }) => {
@@ -40,6 +40,7 @@ function connectGmail() {
       scanGmail(tokenResp.access_token)
     },
   })
+  tokenClient.requestAccessToken()
 }
 
 // ── Gmail scan ───────────────────────────────────────────────────────────────
