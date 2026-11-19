@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { storage, auth } from '@/firebase'
+import { auth, getStorageInstance } from '@/firebase'
 
 export function useReceiptUpload() {
   const uploading = ref(false)
@@ -9,6 +8,9 @@ export function useReceiptUpload() {
   async function upload(billId: string, file: File): Promise<string> {
     const uid = auth.currentUser?.uid
     if (!uid) throw new Error('Not authenticated')
+
+    const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage')
+    const storage = await getStorageInstance()
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
     const path = `receipts/${uid}/${billId}/${Date.now()}.${ext}`
@@ -29,6 +31,8 @@ export function useReceiptUpload() {
 
   async function remove(url: string): Promise<void> {
     try {
+      const { ref: storageRef, deleteObject } = await import('firebase/storage')
+      const storage = await getStorageInstance()
       const fileRef = storageRef(storage, url)
       await deleteObject(fileRef)
     } catch {

@@ -3,6 +3,10 @@ import { useAuthStore } from '@/stores/auth'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const authStore = useAuthStore()
+
+// Warmup ping — fires immediately so Cloud Run is ready by the time auth resolves
+const baseURL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+fetch(`${baseURL}/api/health`, { method: 'GET' }).catch(() => {/* ignore */})
 </script>
 
 <template>

@@ -44,6 +44,9 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 
 	api := r.Group("/api")
 
+	// Health check — unauthenticated, used for warmup ping
+	api.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"ok": true}) })
+
 	// Scheduler-called endpoint (authenticated via X-Scheduler-Secret header)
 	api.POST("/notify/send-reminders", notifyH.SendReminders)
 
