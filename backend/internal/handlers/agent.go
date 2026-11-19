@@ -1,68 +1,50 @@
 package handlers
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"time"
+	"sync"
 
 	"cloud.google.com/go/firestore"
+	"github.com/dimitris-taskou/cost-calculator/internal/agent"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type AgentHandler struct {
 	fs         *firestore.Client
-	agentURL   string
-	agentSecret string
+	anthropicKey string
+	encKey     []byte // 32-byte AES key for card decryption
 }
 
-func NewAgentHandler(fs *firestore.Client) *AgentHandler {
+func NewAgentHandler(fs *firestore.Client, anthropicKey string) *AgentHandler {
+	var encKey []byte
+	if k := os.Getenv("CARD_ENCRYPTION_KEY"); len(k) == 32 {
+		encKey = []byte(k)
+	}
 	return &AgentHandler{
-		fs:          fs,
-		agentURL:    os.Getenv("AGENT_SERVICE_URL"),
-		agentSecret: os.Getenv("AGENT_SECRET"),
+		fs:           fs,
+		anthropicKey: anthropicKey,
+		encKey:       encKey,
 	}
 }
 
 type agentStartRequest struct {
-	BillID              string  `json:"bill_id"`
-	CredentialID        string  `json:"credential_id"`
-	// Card details provided by the user at payment time (never stored full)
-	CardNumber          string  `json:"card_number"`
-	CardExpiry          string  `json:"card_expiry"`
-	CardCVV             string  `json:"card_cvv"`
-	CardHolder          string  `json:"card_holder"`
+	CredentialID string `json:"credential_id"`
+	CardID       string `json:"card_id"`
 }
 
-type agentJobPayload struct {
-	JobID               string  `json:"job_id"`
-	BillID              string  `json:"bill_id"`
-	ProviderName        string  `json:"provider_name"`
-	Amount              float64 `json:"amount"`
-	PaymentCode         string  `json:"payment_code,omitempty"`
-	PaymentURL          string  `json:"payment_url,omitempty"`
-	CredentialLabel     string  `json:"credential_label,omitempty"`
-	CredentialUsername  string  `json:"credential_username,omitempty"`
-	CredentialPassword  string  `json:"credential_password,omitempty"`
-	CardNumber          string  `json:"card_number,omitempty"`
-	CardExpiry          string  `json:"card_expiry,omitempty"`
-	CardCVV             string  `json:"card_cvv,omitempty"`
-	CardHolder          string  `json:"card_holder,omitempty"`
-}
+// active jobs: job_id → OTP channel
+var (
+	otpMu   sync.Mutex
+	otpJobs = map[string]chan string{}
+)
 
 // Pay starts an AI payment job and streams SSE events back to the frontend.
 func (h *AgentHandler) Pay(c *gin.Context) {
-	if h.agentURL == "" {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Agent service not configured"})
-		return
-	}
-
 	userID := c.MustGet("user_id").(string)
 	billID := c.Param("billId")
 
@@ -72,7 +54,7 @@ func (h *AgentHandler) Pay(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx := c.Request.Context()
 
 	// Fetch bill
 	billDoc, err := h.fs.Collection("bills").Doc(billID).Get(ctx)
@@ -111,11 +93,10 @@ func (h *AgentHandler) Pay(c *gin.Context) {
 		paymentURL = bill.UserProvider.Provider.PaymentURL
 	}
 
-	// Fetch credentials if requested
-	var credLabel, credUsername, credPassword string
+	// Fetch credential from Firestore
+	var credLabel, credUser, credPass string
 	if req.CredentialID != "" {
-		credDoc, err := h.fs.Collection("userCredentials").Doc(req.CredentialID).Get(ctx)
-		if err == nil {
+		if credDoc, err := h.fs.Collection("userCredentials").Doc(req.CredentialID).Get(ctx); err == nil {
 			var cred struct {
 				UserID   string `firestore:"user_id"`
 				Label    string `firestore:"label"`
@@ -124,27 +105,49 @@ func (h *AgentHandler) Pay(c *gin.Context) {
 			}
 			if credDoc.DataTo(&cred) == nil && cred.UserID == userID {
 				credLabel = cred.Label
-				credUsername = cred.Username
-				credPassword = cred.Password
+				credUser = cred.Username
+				credPass = cred.Password
+			}
+		}
+	}
+
+	// Fetch card from Firestore and decrypt
+	var cardNum, cardExpiry, cardCVV, cardHolder string
+	if req.CardID != "" && len(h.encKey) == 32 {
+		if cardDoc, err := h.fs.Collection("cards").Doc(req.CardID).Get(ctx); err == nil {
+			data := cardDoc.Data()
+			if uid, _ := data["user_id"].(string); uid == userID {
+				cardNum = h.decryptField(data, "number_enc")
+				cardExpiry = h.decryptField(data, "expiry_enc")
+				cardCVV = h.decryptField(data, "cvv_enc")
+				if cn, ok := data["cardholder_name"].(string); ok {
+					cardHolder = cn
+				}
 			}
 		}
 	}
 
 	jobID := uuid.New().String()
-	payload := agentJobPayload{
-		JobID:              jobID,
-		BillID:             billID,
-		ProviderName:       providerName,
-		Amount:             bill.Amount,
-		PaymentCode:        bill.PaymentCode,
-		PaymentURL:         paymentURL,
-		CredentialLabel:    credLabel,
-		CredentialUsername: credUsername,
-		CredentialPassword: credPassword,
-		CardNumber:         req.CardNumber,
-		CardExpiry:         req.CardExpiry,
-		CardCVV:            req.CardCVV,
-		CardHolder:         req.CardHolder,
+	otpCh := make(chan string, 1)
+	otpMu.Lock()
+	otpJobs[jobID] = otpCh
+	otpMu.Unlock()
+
+	cfg := agent.JobConfig{
+		JobID:        jobID,
+		APIKey:       h.anthropicKey,
+		ProviderName: providerName,
+		Amount:       bill.Amount,
+		PaymentCode:  bill.PaymentCode,
+		PaymentURL:   paymentURL,
+		CredLabel:    credLabel,
+		CredUser:     credUser,
+		CredPass:     credPass,
+		CardNumber:   cardNum,
+		CardExpiry:   cardExpiry,
+		CardCVV:      cardCVV,
+		CardHolder:   cardHolder,
+		OTPCh:        otpCh,
 	}
 
 	// Set SSE headers
@@ -153,17 +156,29 @@ func (h *AgentHandler) Pay(c *gin.Context) {
 	c.Header("X-Accel-Buffering", "no")
 	c.Header("Connection", "keep-alive")
 
-	// Forward SSE stream from agent service
-	h.streamAgentJob(c, payload)
+	out := make(chan agent.Event, 32)
+
+	go func() {
+		defer close(out)
+		defer func() {
+			otpMu.Lock()
+			delete(otpJobs, jobID)
+			otpMu.Unlock()
+		}()
+		agent.RunLoop(c.Request.Context(), cfg, out)
+	}()
+
+	for ev := range out {
+		b, _ := json.Marshal(ev)
+		fmt.Fprintf(c.Writer, "data: %s\n\n", b)
+		c.Writer.Flush()
+	}
+	fmt.Fprintf(c.Writer, "data: {\"type\":\"done\"}\n\n")
+	c.Writer.Flush()
 }
 
-// SubmitOTP forwards an OTP code to the agent service for a running job.
+// SubmitOTP forwards an OTP to the waiting agent job.
 func (h *AgentHandler) SubmitOTP(c *gin.Context) {
-	if h.agentURL == "" {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Agent service not configured"})
-		return
-	}
-
 	jobID := c.Param("jobId")
 	var body struct {
 		OTP string `json:"otp"`
@@ -173,63 +188,23 @@ func (h *AgentHandler) SubmitOTP(c *gin.Context) {
 		return
 	}
 
-	jsonBody, _ := json.Marshal(map[string]string{"otp": body.OTP})
-	req, _ := http.NewRequest("POST", h.agentURL+"/otp/"+jobID, bytes.NewReader(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Agent-Secret", h.agentSecret)
+	otpMu.Lock()
+	ch, ok := otpJobs[jobID]
+	otpMu.Unlock()
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
 		return
 	}
-	defer resp.Body.Close()
-	c.JSON(resp.StatusCode, gin.H{"ok": resp.StatusCode == 200})
-}
-
-func (h *AgentHandler) streamAgentJob(c *gin.Context, payload agentJobPayload) {
-	jsonBody, err := json.Marshal(payload)
-	if err != nil {
-		writeSSEEvent(c, map[string]any{"type": "error", "message": err.Error()})
-		return
-	}
-
-	req, err := http.NewRequestWithContext(c.Request.Context(), "POST", h.agentURL+"/pay", bytes.NewReader(jsonBody))
-	if err != nil {
-		writeSSEEvent(c, map[string]any{"type": "error", "message": err.Error()})
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Agent-Secret", h.agentSecret)
-
-	client := &http.Client{Timeout: 10 * time.Minute}
-	resp, err := client.Do(req)
-	if err != nil {
-		writeSSEEvent(c, map[string]any{"type": "error", "message": fmt.Sprintf("Agent unreachable: %v", err)})
-		return
-	}
-	defer resp.Body.Close()
-
-	// Forward SSE lines from agent to frontend
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
-			continue
-		}
-		fmt.Fprintf(c.Writer, "%s\n", line)
-		c.Writer.Flush()
+	select {
+	case ch <- body.OTP:
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	default:
+		c.JSON(http.StatusConflict, gin.H{"error": "OTP already submitted"})
 	}
 }
 
-func writeSSEEvent(c *gin.Context, data map[string]any) {
-	b, _ := json.Marshal(data)
-	fmt.Fprintf(c.Writer, "data: %s\n\n", b)
-	c.Writer.Flush()
-}
-
-// GetCredentials returns the user's credential list (labels only, no passwords)
-// for the agent trigger UI to let user select which credentials to use.
+// GetCredentials returns the user's credential list (labels only) for the agent UI.
 func (h *AgentHandler) GetCredentials(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	ctx := context.Background()
@@ -250,17 +225,22 @@ func (h *AgentHandler) GetCredentials(c *gin.Context) {
 	}
 	result := make([]credSummary, 0, len(docs))
 	for _, d := range docs {
-		var label, url string
-		if v, ok := d.Data()["label"].(string); ok {
-			label = v
-		}
-		if v, ok := d.Data()["url"].(string); ok {
-			url = v
-		}
+		data := d.Data()
+		label, _ := data["label"].(string)
+		url, _ := data["url"].(string)
 		result = append(result, credSummary{ID: d.Ref.ID, Label: label, URL: url})
 	}
 	c.JSON(http.StatusOK, result)
 }
 
-// Ensure io is used
-var _ io.Reader
+func (h *AgentHandler) decryptField(data map[string]any, field string) string {
+	enc, _ := data[field].(string)
+	if enc == "" || len(h.encKey) != 32 {
+		return ""
+	}
+	plain, err := agent.Decrypt(h.encKey, enc)
+	if err != nil {
+		return ""
+	}
+	return plain
+}

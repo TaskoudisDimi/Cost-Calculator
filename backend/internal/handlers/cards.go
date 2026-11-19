@@ -3,19 +3,26 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/dimitris-taskou/cost-calculator/internal/agent"
 	"github.com/dimitris-taskou/cost-calculator/internal/models"
 	"github.com/gin-gonic/gin"
 )
 
 type CardsHandler struct {
-	fs *firestore.Client
+	fs     *firestore.Client
+	encKey []byte
 }
 
 func NewCardsHandler(fs *firestore.Client) *CardsHandler {
-	return &CardsHandler{fs: fs}
+	var encKey []byte
+	if k := os.Getenv("CARD_ENCRYPTION_KEY"); len(k) == 32 {
+		encKey = []byte(k)
+	}
+	return &CardsHandler{fs: fs, encKey: encKey}
 }
 
 func (h *CardsHandler) col() *firestore.CollectionRef {
@@ -188,6 +195,97 @@ func (h *CardsHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+// StoreSecure encrypts and stores full card details for agent use.
+// Returns 503 if no encryption key is configured.
+func (h *CardsHandler) StoreSecure(c *gin.Context) {
+	if len(h.encKey) != 32 {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Secure card storage not configured"})
+		return
+	}
+	userID := c.MustGet("user_id").(string)
+	id := c.Param("id")
+	ctx := context.Background()
+
+	// Verify ownership
+	doc, err := h.col().Doc(id).Get(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var card models.Card
+	doc.DataTo(&card)
+	if card.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	var req struct {
+		Number         string `json:"number" binding:"required"`
+		Expiry         string `json:"expiry" binding:"required"` // MM/YY
+		CVV            string `json:"cvv" binding:"required"`
+		CardholderName string `json:"cardholder_name"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	numEnc, err := agent.Encrypt(h.encKey, req.Number)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "encryption failed"})
+		return
+	}
+	expEnc, _ := agent.Encrypt(h.encKey, req.Expiry)
+	cvvEnc, _ := agent.Encrypt(h.encKey, req.CVV)
+
+	updates := []firestore.Update{
+		{Path: "number_enc", Value: numEnc},
+		{Path: "expiry_enc", Value: expEnc},
+		{Path: "cvv_enc", Value: cvvEnc},
+		{Path: "cardholder_name", Value: req.CardholderName},
+		{Path: "has_secure_details", Value: true},
+		{Path: "updated_at", Value: time.Now()},
+	}
+	if _, err := h.col().Doc(id).Update(ctx, updates); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "has_secure_details": true})
+}
+
+// ClearSecure removes stored secure card details.
+func (h *CardsHandler) ClearSecure(c *gin.Context) {
+	userID := c.MustGet("user_id").(string)
+	id := c.Param("id")
+	ctx := context.Background()
+
+	doc, err := h.col().Doc(id).Get(ctx)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	var card models.Card
+	doc.DataTo(&card)
+	if card.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	updates := []firestore.Update{
+		{Path: "number_enc", Value: firestore.Delete},
+		{Path: "expiry_enc", Value: firestore.Delete},
+		{Path: "cvv_enc", Value: firestore.Delete},
+		{Path: "cardholder_name", Value: firestore.Delete},
+		{Path: "has_secure_details", Value: false},
+		{Path: "updated_at", Value: time.Now()},
+	}
+	if _, err := h.col().Doc(id).Update(ctx, updates); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not clear"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (h *CardsHandler) clearDefaultCards(ctx context.Context, userID string) {

@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL, resendAPIKey, resendFromEmail string, agentEnabled bool) *gin.Engine {
+func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL, resendAPIKey, resendFromEmail string) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -38,7 +38,7 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 	settingsH := handlers.NewSettingsHandler(fs)
 	bankH := handlers.NewBankHandler(fs, nordigenSvc, nordigenRedirectURL)
 	membersH := handlers.NewMembersHandler(fs)
-	agentH := handlers.NewAgentHandler(fs)
+	agentH := handlers.NewAgentHandler(fs, anthropicKey)
 
 	authMW := middleware.Auth(authClient)
 
@@ -75,6 +75,8 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.POST("/cards", cardsH.Create)
 		protected.PUT("/cards/:id", cardsH.Update)
 		protected.DELETE("/cards/:id", cardsH.Delete)
+		protected.POST("/cards/:id/secure", cardsH.StoreSecure)
+		protected.DELETE("/cards/:id/secure", cardsH.ClearSecure)
 
 		protected.GET("/expenses", expensesH.List)
 		protected.POST("/expenses", expensesH.Create)
@@ -108,11 +110,9 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.PUT("/members/:id", membersH.Update)
 		protected.DELETE("/members/:id", membersH.Delete)
 
-		if agentEnabled {
-			protected.POST("/agent/pay/:billId", agentH.Pay)
-			protected.POST("/agent/otp/:jobId", agentH.SubmitOTP)
-			protected.GET("/agent/credentials", agentH.GetCredentials)
-		}
+		protected.POST("/agent/pay/:billId", agentH.Pay)
+		protected.POST("/agent/otp/:jobId", agentH.SubmitOTP)
+		protected.GET("/agent/credentials", agentH.GetCredentials)
 	}
 
 	return r

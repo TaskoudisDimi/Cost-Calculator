@@ -53,25 +53,41 @@
                 </div>
               </div>
 
-              <!-- Card details -->
+              <!-- Card selector -->
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Κάρτα πληρωμής <span class="text-gray-600 font-normal normal-case">(προαιρετικό αν υπάρχει RF)</span></label>
-                <div class="grid grid-cols-2 gap-2">
-                  <input
-                    v-model="cardNumber"
-                    placeholder="1234 5678 9012 3456"
-                    maxlength="19"
-                    class="col-span-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono tracking-widest"
-                    @input="formatCardNumber"
-                  />
-                  <input v-model="cardExpiry" placeholder="MM/YY" maxlength="5"
-                    class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
-                  <input v-model="cardCVV" placeholder="CVV" maxlength="4" type="password"
-                    class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
-                  <input v-model="cardHolder" placeholder="Ονοματεπώνυμο κατόχου" maxlength="50"
-                    class="col-span-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 uppercase" />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                  Κάρτα πληρωμής
+                  <span class="text-gray-600 font-normal normal-case ml-1">(προαιρετικό αν υπάρχει RF)</span>
+                </label>
+                <div v-if="cards.length === 0" class="text-xs text-gray-500 py-2">
+                  Δεν βρέθηκαν κάρτες.
+                  <RouterLink :to="{ name: 'cards' }" class="text-blue-400 ml-1">Πρόσθεσε →</RouterLink>
                 </div>
-                <p class="text-[10px] text-gray-600 mt-1.5">Τα στοιχεία χρησιμοποιούνται μόνο κατά τη διάρκεια της πληρωμής και δεν αποθηκεύονται.</p>
+                <div v-else class="space-y-1.5">
+                  <button
+                    v-for="card in cards" :key="card.id"
+                    @click="selectedCardId = selectedCardId === card.id ? '' : card.id"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors text-left"
+                    :class="selectedCardId === card.id
+                      ? 'bg-indigo-600/15 border-indigo-500/40 text-white'
+                      : 'border-white/[0.07] text-gray-300 hover:border-white/[0.15] hover:bg-white/[0.04]'"
+                  >
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-black text-white"
+                      :style="{ backgroundColor: card.color || '#6366f1' }">
+                      {{ card.card_type === 'visa' ? 'V' : card.card_type === 'mastercard' ? 'M' : '💳' }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <span class="text-sm font-medium block truncate">{{ card.nickname }}</span>
+                      <span class="text-xs text-gray-500">•••• {{ card.last_four }}</span>
+                    </div>
+                    <span v-if="!card.has_secure_details" class="text-[10px] text-amber-500/80 shrink-0">χωρίς πλήρη στοιχεία</span>
+                    <span v-else class="text-[10px] text-emerald-500/80 shrink-0">✓ έτοιμη</span>
+                  </button>
+                  <p v-if="selectedCardId && !selectedCard?.has_secure_details" class="text-[10px] text-amber-400 mt-1">
+                    Η κάρτα δεν έχει αποθηκευμένα πλήρη στοιχεία.
+                    <RouterLink :to="{ name: 'cards' }" class="text-amber-300 underline">Πρόσθεσε τα →</RouterLink>
+                  </p>
+                </div>
               </div>
 
               <!-- Start button -->
@@ -194,20 +210,20 @@ function formatAmount(v: number): string {
 }
 
 type Phase = 'setup' | 'running' | 'otp' | 'success' | 'error'
+type CardSummary = { id: string; nickname: string; last_four: string; card_type: string; color: string; has_secure_details: boolean; is_default: boolean }
 
 const phase = ref<Phase>('setup')
 const credentials = ref<{ id: string; label: string; url: string }[]>([])
+const cards = ref<CardSummary[]>([])
 const selectedCredId = ref('')
-const cardNumber = ref('')
-const cardExpiry = ref('')
-const cardCVV = ref('')
-const cardHolder = ref('')
+const selectedCardId = ref('')
 const eventLog = ref<{ type: string; message: string }[]>([])
 const otpInput = ref('')
 const successRef = ref('')
 const errorMessage = ref('')
 const currentJobId = ref('')
 const isRunning = computed(() => phase.value === 'running' || phase.value === 'otp')
+const selectedCard = computed(() => cards.value.find(c => c.id === selectedCardId.value) ?? null)
 
 let eventSource: EventSource | null = null
 
@@ -218,7 +234,7 @@ const canStart = computed(() => {
 watch(() => props.modelValue, async (v) => {
   if (v) {
     resetToSetup()
-    await loadCredentials()
+    await Promise.all([loadCredentials(), loadCards()])
   } else {
     cleanup()
   }
@@ -233,10 +249,16 @@ async function loadCredentials() {
   }
 }
 
-function formatCardNumber(e: Event) {
-  const input = e.target as HTMLInputElement
-  const v = input.value.replace(/\D/g, '').substring(0, 16)
-  cardNumber.value = v.replace(/(.{4})/g, '$1 ').trim()
+async function loadCards() {
+  try {
+    const { data } = await api.get('/cards')
+    cards.value = data
+    // Auto-select default card
+    const def = data.find((c: CardSummary) => c.is_default)
+    if (def) selectedCardId.value = def.id
+  } catch {
+    cards.value = []
+  }
 }
 
 async function startPayment() {
@@ -247,12 +269,8 @@ async function startPayment() {
   currentJobId.value = ''
 
   const body = {
-    bill_id: props.bill.id,
     credential_id: selectedCredId.value,
-    card_number: cardNumber.value.replace(/\s/g, ''),
-    card_expiry: cardExpiry.value,
-    card_cvv: cardCVV.value,
-    card_holder: cardHolder.value.toUpperCase(),
+    card_id: selectedCardId.value,
   }
 
   const user = auth.currentUser
@@ -375,6 +393,7 @@ function resetToSetup() {
   successRef.value = ''
   errorMessage.value = ''
   currentJobId.value = ''
+  selectedCredId.value = ''
   cleanup()
 }
 

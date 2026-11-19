@@ -4,6 +4,7 @@ import { useCardsStore } from '@/stores/cards'
 import { useLocale } from '@/composables/useLocale'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import api from '@/api/client'
 import type { Card } from '@/types'
 
 const store = useCardsStore()
@@ -117,6 +118,51 @@ async function setDefault(card: Card) {
   toast(locale.value === 'el' ? 'Προεπιλεγμένη κάρτα ορίστηκε' : 'Default card set', 'success')
 }
 
+// Secure card storage for AI agent
+const secureCardId = ref<string | null>(null)
+const secureForm = ref({ number: '', expiry: '', cvv: '', cardholder_name: '' })
+const secureSaving = ref(false)
+
+async function toggleSecure(card: Card) {
+  if ((card as any).has_secure_details) {
+    const ok = await confirm(locale.value === 'el'
+      ? 'Διαγραφή αποθηκευμένων στοιχείων κάρτας για AI agent;'
+      : 'Remove stored secure card details for AI agent?')
+    if (!ok) return
+    await api.delete(`/cards/${card.id}/secure`)
+    await store.fetchCards()
+    toast(locale.value === 'el' ? 'Στοιχεία διαγράφηκαν' : 'Secure details removed', 'success')
+  } else {
+    secureCardId.value = card.id
+    secureForm.value = { number: '', expiry: '', cvv: '', cardholder_name: '' }
+  }
+}
+
+async function saveSecure() {
+  if (!secureCardId.value) return
+  secureSaving.value = true
+  try {
+    await api.post(`/cards/${secureCardId.value}/secure`, {
+      number: secureForm.value.number.replace(/\s/g, ''),
+      expiry: secureForm.value.expiry,
+      cvv: secureForm.value.cvv,
+      cardholder_name: secureForm.value.cardholder_name.toUpperCase(),
+    })
+    await store.fetchCards()
+    secureCardId.value = null
+    toast(locale.value === 'el' ? 'Στοιχεία αποθηκεύτηκαν κρυπτογραφημένα ✓' : 'Secure details saved ✓', 'success')
+  } catch {
+    toast(locale.value === 'el' ? 'Σφάλμα αποθήκευσης' : 'Save failed', 'error')
+  } finally {
+    secureSaving.value = false
+  }
+}
+
+function formatSecureCardNumber(e: Event) {
+  const v = (e.target as HTMLInputElement).value.replace(/\D/g, '').substring(0, 16)
+  secureForm.value.number = v.replace(/(.{4})/g, '$1 ').trim()
+}
+
 onMounted(() => store.fetchCards())
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -224,6 +270,20 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
             class="text-xs text-gray-500 hover:text-blue-400 transition-colors"
           >
             {{ locale === 'el' ? 'Ορισμός ως προεπιλογή' : 'Set as default' }}
+          </button>
+          <!-- AI Agent secure storage toggle -->
+          <button
+            @click="toggleSecure(card)"
+            class="text-xs transition-colors flex items-center gap-1"
+            :class="card.has_secure_details
+              ? 'text-emerald-500 hover:text-emerald-400'
+              : 'text-gray-600 hover:text-blue-400'"
+            :title="card.has_secure_details ? 'Αποθηκευμένη για agent' : 'Αποθήκευσε πλήρη στοιχεία για AI agent'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+            </svg>
+            {{ card.has_secure_details ? 'AI ✓' : 'AI' }}
           </button>
           <div class="flex-1" />
           <button
@@ -335,4 +395,51 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
       </div>
     </div>
   </div>
+
+  <!-- Secure card details modal for AI agent -->
+  <div v-if="secureCardId" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="secureCardId = null">
+    <div class="bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-sm p-5">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-blue-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-white">Στοιχεία για AI Agent</p>
+          <p class="text-xs text-gray-500">Αποθηκεύονται κρυπτογραφημένα (AES-256)</p>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        <input
+          v-model="secureForm.number"
+          @input="formatSecureCardNumber"
+          placeholder="1234 5678 9012 3456"
+          maxlength="19"
+          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono tracking-widest"
+        />
+        <div class="grid grid-cols-2 gap-2">
+          <input v-model="secureForm.expiry" placeholder="MM/YY" maxlength="5"
+            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
+          <input v-model="secureForm.cvv" placeholder="CVV" maxlength="4" type="password"
+            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
+        </div>
+        <input v-model="secureForm.cardholder_name" placeholder="ΟΝΟΜΑΤΕΠΩΝΥΜΟ" maxlength="50"
+          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 uppercase font-mono" />
+      </div>
+
+      <div class="flex gap-2">
+        <button @click="secureCardId = null"
+          class="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-sm text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors">
+          Ακύρωση
+        </button>
+        <button @click="saveSecure" :disabled="secureSaving || !secureForm.number || !secureForm.cvv"
+          class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold transition-colors">
+          {{ secureSaving ? '...' : 'Αποθήκευση' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>

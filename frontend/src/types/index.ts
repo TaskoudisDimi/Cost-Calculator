@@ -66,6 +66,7 @@ export interface Card {
   card_type: 'visa' | 'mastercard' | 'amex' | 'other'
   is_default: boolean
   color: string
+  has_secure_details?: boolean
   created_at: string
   updated_at: string
 }
