@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL, resendAPIKey, resendFromEmail string) *gin.Engine {
+func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, anthropicKey, schedulerSecret, nordigenSecretID, nordigenSecretKey, nordigenRedirectURL, resendAPIKey, resendFromEmail string, agentEnabled bool) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -38,6 +38,7 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 	settingsH := handlers.NewSettingsHandler(fs)
 	bankH := handlers.NewBankHandler(fs, nordigenSvc, nordigenRedirectURL)
 	membersH := handlers.NewMembersHandler(fs)
+	agentH := handlers.NewAgentHandler(fs)
 
 	authMW := middleware.Auth(authClient)
 
@@ -106,6 +107,12 @@ func New(fs *firestore.Client, authClient *auth.Client, app *firebasesdk.App, an
 		protected.POST("/members", membersH.Create)
 		protected.PUT("/members/:id", membersH.Update)
 		protected.DELETE("/members/:id", membersH.Delete)
+
+		if agentEnabled {
+			protected.POST("/agent/pay/:billId", agentH.Pay)
+			protected.POST("/agent/otp/:jobId", agentH.SubmitOTP)
+			protected.GET("/agent/credentials", agentH.GetCredentials)
+		}
 	}
 
 	return r

@@ -10,6 +10,7 @@ import { useReceiptUpload } from '@/composables/useReceiptUpload'
 import { formatDate, formatAmount, statusLabel, statusClass, monthLabel } from '@/utils/format'
 import { detectProviderFromEmail } from '@/utils/emailPatterns'
 import GmailScanModal from '@/components/GmailScanModal.vue'
+import AgentPayModal from '@/components/AgentPayModal.vue'
 import type { Bill, BillStatus, ProviderCategory } from '@/types'
 import QRCode from 'qrcode'
 
@@ -49,6 +50,8 @@ const emailError = ref('')
 const qrBill = ref<Bill | null>(null)
 const qrDataUrl = ref('')
 const hasWebShare = typeof navigator !== 'undefined' && 'share' in navigator
+const agentBill = ref<Bill | null>(null)
+const showAgentModal = ref(false)
 
 // Feature 4: QR scan from image
 const qrScanInput = ref<HTMLInputElement | null>(null)
@@ -1419,6 +1422,18 @@ async function onQrFileSelected(event: Event) {
                 {{ t('bills.undo') }}
               </button>
 
+              <!-- AI auto-pay button -->
+              <button
+                v-if="item.bill.status !== 'paid'"
+                @click="agentBill = item.bill; showAgentModal = true"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-blue-500/25 bg-blue-500/8 text-blue-400 hover:bg-blue-500/18 hover:border-blue-500/40 transition-all shrink-0"
+                :title="locale === 'el' ? 'AI αυτόματη πληρωμή' : 'AI auto-pay'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                </svg>
+              </button>
+
               <button
                 v-if="item.bill.payment_code && item.bill.status !== 'paid'"
                 @click="payWithIRIS(item.bill)"
@@ -1936,6 +1951,13 @@ async function onQrFileSelected(event: Event) {
 
   <!-- Gmail Scan Modal -->
   <GmailScanModal v-if="showGmailModal" @close="showGmailModal = false" />
+
+  <!-- AI Agent Pay Modal -->
+  <AgentPayModal
+    v-model="showAgentModal"
+    :bill="agentBill"
+    @paid="(id) => { store.markPaid(id); showAgentModal = false }"
+  />
 
   </div>
 </template>

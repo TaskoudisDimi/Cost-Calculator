@@ -13,6 +13,8 @@ type Config struct {
 	NordigenRedirectURL string
 	ResendAPIKey        string
 	ResendFromEmail     string
+	AgentServiceURL     string
+	AgentSecret         string
 }
 
 func Load() *Config {
@@ -27,6 +29,8 @@ func Load() *Config {
 		NordigenRedirectURL: getEnv("NORDIGEN_REDIRECT_URL", "https://bills.task-code.com/bank/callback"),
 		ResendAPIKey:        getEnv("RESEND_API_KEY", ""),
 		ResendFromEmail:     getEnv("RESEND_FROM_EMAIL", "reminders@billtracker.app"),
+		AgentServiceURL:     getEnv("AGENT_SERVICE_URL", ""),
+		AgentSecret:         getEnv("AGENT_SECRET", ""),
 	}
 }
 
