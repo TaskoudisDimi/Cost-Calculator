@@ -149,6 +149,12 @@ func RunLoop(ctx context.Context, cfg JobConfig, out chan<- Event) {
 					emit("error", blk.Text)
 					return
 				}
+				if idx := strings.Index(blk.Text, "CARD_DECLINED:"); idx >= 0 {
+					reason := strings.TrimSpace(strings.SplitN(blk.Text[idx:], "CARD_DECLINED:", 2)[1])
+					reason = strings.SplitN(reason, "\n", 2)[0]
+					emit("error", "Η κάρτα απορρίφθηκε: "+reason)
+					return
+				}
 			}
 		}
 
@@ -278,7 +284,9 @@ func buildSystemPrompt(cfg JobConfig) string {
 - Πλήρωσε ΜΟΝΟ το ακριβές ποσό: %.2f EUR
 - ΜΗΝ αποδεχτείς επιπλέον χρεώσεις
 - Αν δεις CAPTCHA αδύνατο να λύσεις, πες: "CAPTCHA_BLOCKED"
-- Αν ποσό ΔΕΝ ταιριάζει, πες: "AMOUNT_MISMATCH: [ποσό]"`,
+- Αν ποσό ΔΕΝ ταιριάζει, πες: "AMOUNT_MISMATCH: [ποσό που εμφανίζεται]"
+- Αν η κάρτα απορριφθεί λόγω ανεπαρκούς υπολοίπου ή οποιουδήποτε άλλου λόγου, πες: "CARD_DECLINED: [λόγος]"
+- Αν η κάρτα δεν είναι αποδεκτή (3D Secure, unsupported), πες: "CARD_DECLINED: [λόγος]"`,
 		cfg.ProviderName, cfg.Amount, rfPart, credPart, cardPart,
 		cfg.Amount, cfg.Amount, cfg.Amount)
 }
