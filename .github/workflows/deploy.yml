@@ -81,5 +81,6 @@ jobs:
             --memory 2Gi \
             --cpu 2 \
             --timeout 600 \
+            --update-env-vars "CARD_ENCRYPTION_KEY=${{ secrets.CARD_ENCRYPTION_KEY }}" \
             --quiet
 
