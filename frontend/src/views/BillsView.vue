@@ -1396,15 +1396,17 @@ async function onQrFileSelected(event: Event) {
 
             <div class="mx-4 h-px bg-white/[0.04] mb-3" />
 
-            <!-- Actions -->
+            <!-- Actions — 3-button layout: Pay | AI-Pay | (IRIS or link or edit) -->
             <div class="flex items-center gap-2 px-4 pb-4">
+
+              <!-- Primary: Mark Paid / Undo -->
               <button
                 v-if="item.bill.status !== 'paid'"
                 @click="markPaid(item.bill.id)"
-                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px]"
                 :class="item.bill.status === 'overdue'
-                  ? 'bg-red-500/10 border border-red-500/25 text-red-300 hover:bg-red-500/18 hover:border-red-500/40'
-                  : 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/18 hover:border-emerald-500/40'"
+                  ? 'bg-red-500/10 border border-red-500/25 text-red-300 hover:bg-red-500/18 hover:border-red-500/40 active:scale-[0.97]'
+                  : 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/18 hover:border-emerald-500/40 active:scale-[0.97]'"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 shrink-0">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -1414,7 +1416,7 @@ async function onQrFileSelected(event: Event) {
               <button
                 v-else
                 @click="markUnpaid(item.bill.id)"
-                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-amber-300 hover:border-amber-500/25 hover:bg-amber-500/8 text-sm font-semibold transition-all"
+                class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-amber-300 hover:border-amber-500/25 hover:bg-amber-500/8 text-sm font-semibold transition-all min-h-[48px] active:scale-[0.97]"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 shrink-0">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
@@ -1422,46 +1424,43 @@ async function onQrFileSelected(event: Event) {
                 {{ t('bills.undo') }}
               </button>
 
-              <!-- AI auto-pay button -->
+              <!-- AI auto-pay (always visible for unpaid) -->
               <button
                 v-if="item.bill.status !== 'paid'"
                 @click="agentBill = item.bill; showAgentModal = true"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-blue-500/25 bg-blue-500/8 text-blue-400 hover:bg-blue-500/18 hover:border-blue-500/40 transition-all shrink-0"
+                class="w-12 h-12 flex items-center justify-center rounded-xl border border-blue-500/30 bg-blue-600/12 text-blue-400 hover:bg-blue-600/22 hover:border-blue-500/50 transition-all shrink-0 active:scale-[0.95]"
                 :title="locale === 'el' ? 'AI αυτόματη πληρωμή' : 'AI auto-pay'"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
                 </svg>
               </button>
 
+              <!-- Payment shortcut (IRIS > payment_url > edit) -->
               <button
                 v-if="item.bill.payment_code && item.bill.status !== 'paid'"
                 @click="payWithIRIS(item.bill)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/8 text-violet-400 hover:bg-violet-500/15 hover:border-violet-500/35 transition-all shrink-0"
+                class="w-12 h-12 flex items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/8 text-violet-400 hover:bg-violet-500/15 hover:border-violet-500/35 transition-all shrink-0 active:scale-[0.95]"
                 :title="t('bills.pay_iris')"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3" />
                 </svg>
               </button>
-
               <a
-                v-if="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
+                v-else-if="(item.bill.payment_url || item.bill.user_provider?.provider?.payment_url) && item.bill.status !== 'paid'"
                 :href="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-blue-300 hover:border-blue-500/25 hover:bg-blue-500/8 transition-all shrink-0"
-                :title="locale === 'el' ? 'Πήγαινε στη πλατφόρμα' : 'Go to provider'"
+                target="_blank" rel="noopener noreferrer"
+                class="w-12 h-12 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-blue-300 hover:border-blue-500/25 hover:bg-blue-500/8 transition-all shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                 </svg>
               </a>
-
               <button
+                v-else
                 @click="openEdit(item.bill.id)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.06] transition-all shrink-0"
-                :title="locale === 'el' ? 'Επεξεργασία' : 'Edit'"
+                class="w-12 h-12 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.06] transition-all shrink-0 active:scale-[0.95]"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
