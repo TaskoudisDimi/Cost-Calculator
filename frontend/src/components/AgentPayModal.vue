@@ -67,7 +67,7 @@
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Κωδικοί σύνδεσης</label>
                 <div v-if="credentials.length === 0" class="text-xs text-gray-500 py-2">
                   Δεν βρέθηκαν αποθηκευμένοι κωδικοί.
-                  <RouterLink :to="{ name: 'credentials' }" class="text-blue-400 ml-1">Πρόσθεσε →</RouterLink>
+                  <button @click="emit('update:modelValue', false); router.push({ name: 'credentials' })" class="text-blue-400 ml-1 hover:underline">Πρόσθεσε →</button>
                 </div>
                 <div v-else class="space-y-1.5">
                   <button
@@ -98,7 +98,7 @@
                 </label>
                 <div v-if="cards.length === 0" class="text-xs text-gray-500 py-2">
                   Δεν βρέθηκαν κάρτες.
-                  <RouterLink :to="{ name: 'cards' }" class="text-blue-400 ml-1">Πρόσθεσε →</RouterLink>
+                  <button @click="emit('update:modelValue', false); router.push({ name: 'cards' })" class="text-blue-400 ml-1 hover:underline">Πρόσθεσε →</button>
                 </div>
                 <div v-else class="space-y-1.5">
                   <button
@@ -122,7 +122,7 @@
                   </button>
                   <p v-if="selectedCardId && !selectedCard?.has_secure_details" class="text-[10px] text-amber-400 mt-1">
                     Η κάρτα δεν έχει αποθηκευμένα πλήρη στοιχεία.
-                    <RouterLink :to="{ name: 'cards' }" class="text-amber-300 underline">Πρόσθεσε τα →</RouterLink>
+                    <button @click="emit('update:modelValue', false); router.push({ name: 'cards' })" class="text-amber-300 underline">Πρόσθεσε τα →</button>
                   </p>
                 </div>
               </div>
@@ -228,9 +228,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { auth } from '@/firebase'
 import api from '@/api/client'
 import type { Bill } from '@/types'
+
+const router = useRouter()
 
 const props = defineProps<{
   modelValue: boolean

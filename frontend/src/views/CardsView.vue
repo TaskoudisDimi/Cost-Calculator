@@ -27,6 +27,11 @@ const form = ref({
   card_type: 'visa' as CardType,
   is_default: false,
   color: CARD_COLORS[0]!,
+  // AI payment details (optional, stored encrypted)
+  aiNumber: '',
+  aiCVV: '',
+  aiCardholder: '',
+  aiEnabled: false,
 })
 
 const isExpired = (card: Card) => {
@@ -50,6 +55,10 @@ function openCreate() {
     card_type: 'visa',
     is_default: store.cards.length === 0,
     color: CARD_COLORS[store.cards.length % CARD_COLORS.length]!,
+    aiNumber: '',
+    aiCVV: '',
+    aiCardholder: '',
+    aiEnabled: false,
   }
   showModal.value = true
 }
@@ -64,16 +73,24 @@ function openEdit(card: Card) {
     card_type: card.card_type as CardType,
     is_default: card.is_default,
     color: card.color || CARD_COLORS[0]!,
+    aiNumber: '',
+    aiCVV: '',
+    aiCardholder: '',
+    aiEnabled: false,
   }
   showModal.value = true
 }
 
 async function submit() {
-  if (!form.value.nickname || form.value.last_four.length !== 4) return
+  const lastFour = form.value.aiNumber
+    ? form.value.aiNumber.replace(/\s/g, '').slice(-4)
+    : form.value.last_four
+  if (!form.value.nickname || lastFour.length !== 4) return
   saving.value = true
   try {
-    if (editingId.value) {
-      await store.updateCard(editingId.value, {
+    let cardId = editingId.value
+    if (cardId) {
+      await store.updateCard(cardId, {
         nickname: form.value.nickname,
         expiry_mm: form.value.expiry_mm,
         expiry_yy: form.value.expiry_yy,
@@ -81,18 +98,32 @@ async function submit() {
         is_default: form.value.is_default,
         color: form.value.color,
       })
-      toast(locale.value === 'el' ? 'Κάρτα αποθηκεύτηκε' : 'Card saved', 'success')
     } else {
-      await store.createCard({
+      const created = await store.createCard({
         nickname: form.value.nickname,
-        last_four: form.value.last_four,
+        last_four: lastFour,
         expiry_mm: form.value.expiry_mm,
         expiry_yy: form.value.expiry_yy,
         card_type: form.value.card_type,
         is_default: form.value.is_default,
         color: form.value.color,
       })
-      toast(locale.value === 'el' ? 'Κάρτα προστέθηκε' : 'Card added', 'success')
+      cardId = created.id
+    }
+    // Save AI payment details if provided
+    const rawNum = form.value.aiNumber.replace(/\s/g, '')
+    if (cardId && rawNum.length >= 15 && form.value.aiCVV) {
+      const expiry = `${String(form.value.expiry_mm).padStart(2, '0')}/${String(form.value.expiry_yy).slice(-2)}`
+      await api.post(`/cards/${cardId}/secure`, {
+        number: rawNum,
+        expiry,
+        cvv: form.value.aiCVV,
+        cardholder_name: form.value.aiCardholder.toUpperCase(),
+      })
+      await store.fetchCards()
+      toast(locale.value === 'el' ? 'Κάρτα & AI στοιχεία αποθηκεύτηκαν ✓' : 'Card & AI details saved ✓', 'success')
+    } else {
+      toast(locale.value === 'el' ? (editingId.value ? 'Κάρτα αποθηκεύτηκε' : 'Κάρτα προστέθηκε') : (editingId.value ? 'Card saved' : 'Card added'), 'success')
     }
     showModal.value = false
   } catch {
@@ -163,6 +194,16 @@ function formatSecureCardNumber(e: Event) {
   secureForm.value.number = v.replace(/(.{4})/g, '$1 ').trim()
 }
 
+function formatAiNumber(e: Event) {
+  const v = (e.target as HTMLInputElement).value.replace(/\D/g, '').substring(0, 16)
+  form.value.aiNumber = v.replace(/(.{4})/g, '$1 ').trim()
+  // Auto-detect card type from first digit
+  const d = v.charAt(0)
+  if (d === '4') form.value.card_type = 'visa'
+  else if (d === '5') form.value.card_type = 'mastercard'
+  else if (d === '3') form.value.card_type = 'amex'
+}
+
 onMounted(() => store.fetchCards())
 
 const months = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -196,18 +237,18 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
     </div>
 
     <!-- Notice -->
-    <div class="mb-5 px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 flex gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5">
+    <div class="mb-5 px-4 py-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
       </svg>
       <div>
-        <p class="text-xs font-medium text-amber-300">
-          {{ locale === 'el' ? 'Ασφάλεια' : 'Security note' }}
+        <p class="text-xs font-medium text-blue-300">
+          {{ locale === 'el' ? 'Ασφάλεια & AI Πληρωμές' : 'Security & AI Payments' }}
         </p>
-        <p class="text-xs text-amber-400/80 mt-0.5">
+        <p class="text-xs text-blue-400/80 mt-0.5">
           {{ locale === 'el'
-            ? 'Αποθηκεύουμε μόνο τα τελευταία 4 ψηφία και τη λήξη. Δεν αποθηκεύεται ο πλήρης αριθμός κάρτας.'
-            : 'We only store the last 4 digits and expiry. Full card numbers are never stored.' }}
+            ? 'Μπορείς να αποθηκεύσεις τον πλήρη αριθμό κάρτας κρυπτογραφημένο (AES-256) ώστε ο AI agent να κάνει αυτόματες πληρωμές. Δεν εμφανίζεται ποτέ στην οθόνη.'
+            : 'You can optionally store the full card number encrypted (AES-256) so the AI agent can make automatic payments. It is never shown on screen.' }}
         </p>
       </div>
     </div>
@@ -326,12 +367,27 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
             class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
-        <!-- Last four + type row -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
+        <!-- Card number (full or last 4) -->
+        <div v-if="!editingId">
+          <label class="block text-xs font-medium text-gray-400 mb-1.5">
+            {{ locale === 'el' ? 'Αριθμός κάρτας' : 'Card number' }}
+          </label>
+          <input
+            :value="form.aiNumber"
+            @input="formatAiNumber"
+            type="text" inputmode="numeric" maxlength="19"
+            :placeholder="locale === 'el' ? '1234 5678 9012 3456' : '1234 5678 9012 3456'"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono tracking-widest text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p class="text-[11px] text-gray-600 mt-1">{{ locale === 'el' ? 'Αποθηκεύεται κρυπτογραφημένος για AI πληρωμές. Τα τελευταία 4 ψηφία εξάγονται αυτόματα.' : 'Stored encrypted for AI payments. Last 4 digits extracted automatically.' }}</p>
+        </div>
+
+        <!-- Last four (edit mode only) + type row -->
+        <div class="grid gap-3" :class="editingId ? 'grid-cols-2' : 'grid-cols-1'">
+          <div v-if="editingId">
             <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Τελευταία 4 ψηφία' : 'Last 4 digits' }}</label>
             <input v-model="form.last_four" type="text" maxlength="4" inputmode="numeric" :placeholder="locale === 'el' ? 'π.χ. 1234' : 'e.g. 1234'"
-              :disabled="!!editingId"
+              disabled
               class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
           </div>
           <div>
@@ -343,6 +399,20 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
               <option value="amex">Amex</option>
               <option value="other">{{ locale === 'el' ? 'Άλλη' : 'Other' }}</option>
             </select>
+          </div>
+        </div>
+
+        <!-- CVV + Cardholder (shown when number entered) -->
+        <div v-if="!editingId && form.aiNumber.replace(/\s/g,'').length >= 15" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">CVV</label>
+            <input v-model="form.aiCVV" type="password" maxlength="4" placeholder="•••"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Όνομα κατόχου' : 'Cardholder' }}</label>
+            <input v-model="form.aiCardholder" type="text" maxlength="30" placeholder="FULL NAME"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm uppercase font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
 
@@ -388,7 +458,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
         <button @click="showModal = false" class="flex-1 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-400 hover:text-gray-200 transition-colors">
           {{ locale === 'el' ? 'Ακύρωση' : 'Cancel' }}
         </button>
-        <button @click="submit" :disabled="saving || !form.nickname || form.last_four.length !== 4"
+        <button @click="submit" :disabled="saving || !form.nickname || (editingId ? false : form.aiNumber.replace(/\s/g,'').length < 15 && form.last_four.length !== 4)"
           class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-semibold transition-colors">
           {{ saving ? '...' : (locale === 'el' ? 'Αποθήκευση' : 'Save') }}
         </button>
