@@ -160,15 +160,15 @@
                 </div>
               </div>
 
-              <!-- OTP input -->
+              <!-- OTP / user input -->
               <div v-if="phase === 'otp'" class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                <p class="text-sm font-bold text-amber-300 mb-1">Απαιτείται OTP</p>
-                <p class="text-xs text-amber-400/70 mb-3">Εισάγετε τον κωδικό που λάβατε στο κινητό σας.</p>
+                <p class="text-sm font-bold text-amber-300 mb-1">Απαιτείται εισαγωγή</p>
+                <p class="text-xs text-amber-400/70 mb-3">{{ inputPrompt }}</p>
                 <div class="flex gap-2">
                   <input
                     v-model="otpInput"
-                    placeholder="000000"
-                    maxlength="8"
+                    placeholder="Απάντηση..."
+                    maxlength="20"
                     class="flex-1 px-3 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white text-center text-lg font-mono tracking-widest focus:outline-none focus:border-amber-500/50"
                     @keyup.enter="submitOTP"
                   />
@@ -264,6 +264,7 @@ const successRef = ref('')
 const errorMessage = ref('')
 const currentJobId = ref('')
 const isRunning = computed(() => phase.value === 'running' || phase.value === 'otp')
+const inputPrompt = ref('Εισάγετε τον OTP που λάβατε στο κινητό σας.')
 const selectedCard = computed(() => cards.value.find(c => c.id === selectedCardId.value) ?? null)
 
 const internalBill = ref<Bill | null>(null)
@@ -399,7 +400,14 @@ function handleAgentEvent(event: Record<string, any>) {
 
   if (type === 'otp_required') {
     phase.value = 'otp'
+    inputPrompt.value = message || 'Εισάγετε τον OTP που λάβατε στο κινητό σας.'
     eventLog.value.push({ type, message: message || 'Απαιτείται OTP' })
+  }
+
+  if (type === 'user_input_required') {
+    phase.value = 'otp'
+    inputPrompt.value = message || 'Απαιτείται εισαγωγή στοιχείου από τον χρήστη.'
+    eventLog.value.push({ type: 'otp_required', message: message || 'Απαιτείται εισαγωγή' })
   }
 
   if (type === 'otp_received') {

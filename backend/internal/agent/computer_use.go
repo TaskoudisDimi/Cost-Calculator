@@ -122,12 +122,19 @@ func RunLoop(ctx context.Context, cfg JobConfig, out chan<- Event) {
 			return
 		}
 
-		otpNeeded := false
+		pauseType := ""  // "otp" or "user_input"
+		pausePrompt := ""
 		for _, blk := range resp.Content {
 			if blk.Type == "text" && blk.Text != "" {
 				emit("agent_message", blk.Text)
 				if strings.Contains(blk.Text, "OTP_REQUIRED") {
-					otpNeeded = true
+					pauseType = "otp"
+					pausePrompt = "Εισάγετε τον OTP που λάβατε στο κινητό"
+				}
+				if idx := strings.Index(blk.Text, "USER_INPUT_REQUIRED:"); idx >= 0 {
+					pauseType = "user_input"
+					rest := strings.SplitN(blk.Text[idx:], "USER_INPUT_REQUIRED:", 2)[1]
+					pausePrompt = strings.TrimSpace(strings.SplitN(rest, "\n", 2)[0])
 				}
 				if strings.Contains(blk.Text, "PAYMENT_COMPLETE") {
 					ref := strings.TrimSpace(strings.SplitN(blk.Text, "PAYMENT_COMPLETE", 2)[1])
@@ -145,20 +152,24 @@ func RunLoop(ctx context.Context, cfg JobConfig, out chan<- Event) {
 			}
 		}
 
-		if otpNeeded {
-			out <- Event{Type: "otp_required", JobID: cfg.JobID, Message: "Εισάγετε τον OTP που λάβατε στο κινητό"}
+		if pauseType != "" {
+			evtType := "otp_required"
+			if pauseType == "user_input" {
+				evtType = "user_input_required"
+			}
+			out <- Event{Type: evtType, JobID: cfg.JobID, Message: pausePrompt}
 			select {
-			case otp := <-cfg.OTPCh:
-				emit("otp_received", "OTP λήφθηκε, συνεχίζω...")
-				otpScript := fmt.Sprintf(
+			case answer := <-cfg.OTPCh:
+				emit("otp_received", "Απάντηση λήφθηκε, συνεχίζω...")
+				fillScript := fmt.Sprintf(
 					`(function(){var el=document.querySelector('input[type="number"],input[type="text"],input[type="tel"]');if(el){el.value=%q;el.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
-					otp,
+					answer,
 				)
-				_, _ = chromedp.Run(chromeCtx, chromedp.Evaluate[any](otpScript))
+				_, _ = chromedp.Run(chromeCtx, chromedp.Evaluate[any](fillScript))
 				_, _ = chromedp.Run(chromeCtx, chromedp.KeyEvent("\r"))
 				time.Sleep(2 * time.Second)
-			case <-time.After(2 * time.Minute):
-				emit("error", "Timeout: δεν λήφθηκε OTP εντός 2 λεπτών.")
+			case <-time.After(3 * time.Minute):
+				emit("error", "Timeout: δεν ελήφθη απάντηση εντός 3 λεπτών.")
 				return
 			case <-ctx.Done():
 				return
@@ -212,6 +223,7 @@ func InferURL(name string) string {
 		"δεη":      "https://www.dei.gr/el/idiotikes-katikies/logariasmos-kai-pliromi/ilektroniki-pliromi/",
 		"vodafone": "https://www.vodafone.gr/my-vodafone/",
 		"cosmote":  "https://www.cosmote.gr/cs/mycosmote/",
+		"telekom":  "https://go.telekom.gr/openBills",
 		"nova":     "https://www.nova.gr/my-nova/",
 		"wind":     "https://www.wind.gr/my-wind/",
 		"eydap":    "https://www.eydap.gr/CustomerService/ElectronicServices/",
@@ -254,9 +266,12 @@ func buildSystemPrompt(cfg JobConfig) string {
 1. Πλοήγησε στη σελίδα πληρωμής του παρόχου.
 2. Συνδέσου αν χρειάζεται με τους παρεχόμενους κωδικούς.
 3. Βρες την ενότητα πληρωμής λογαριασμού. Ψάξε για το ποσό %.2f€ ή τον κωδικό RF.
-4. Αν χρειαστεί OTP via SMS για login, πες ακριβώς: "OTP_REQUIRED" και περίμενε.
-5. Εισάγαγε τα στοιχεία κάρτας όταν ζητηθούν.
-6. Αν χρειαστεί OTP για επιβεβαίωση πληρωμής, πες ακριβώς: "OTP_REQUIRED" και περίμενε.
+4. Αν χρειαστεί OTP via SMS για login ή πληρωμή, πες ακριβώς: "OTP_REQUIRED" και περίμενε.
+5. Αν χρειάζεσαι οποιαδήποτε άλλη πληροφορία από τον χρήστη (π.χ. αριθμός κινητού, PIN, κωδικός), πες:
+   "USER_INPUT_REQUIRED: [ερώτηση προς τον χρήστη]"
+   π.χ. "USER_INPUT_REQUIRED: Ποιος είναι ο αριθμός κινητού σας (10 ψηφία);"
+   Μετά περίμενε — ο χρήστης θα απαντήσει και θα λάβεις την απάντηση στο επόμενο μήνυμα.
+6. Εισάγαγε τα στοιχεία κάρτας όταν ζητηθούν.
 7. Ολοκλήρωσε. Μόλις τελειώσει, πες: "PAYMENT_COMPLETE" και τον αριθμό επιβεβαίωσης.
 
 ΚΑΝΟΝΕΣ:
