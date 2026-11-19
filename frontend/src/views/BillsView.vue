@@ -7,7 +7,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
 import { useReceiptUpload } from '@/composables/useReceiptUpload'
-import { formatDate, formatAmount, statusLabel, statusClass, monthLabel } from '@/utils/format'
+import { formatDate, formatAmount, statusLabel, statusClass, monthLabel, currentMonth } from '@/utils/format'
 import { detectProviderFromEmail } from '@/utils/emailPatterns'
 import GmailScanModal from '@/components/GmailScanModal.vue'
 import AgentPayModal from '@/components/AgentPayModal.vue'
@@ -27,7 +27,7 @@ const showGmailModal = ref(false)
 const editingBill = ref<string | null>(null)
 const filterStatus = ref<BillStatus | 'all'>('all')
 const filterMember = ref<string>('all')
-const filterMonth = ref<string>('all')
+const filterMonth = ref<string>(currentMonth())
 const selected = ref<Set<string>>(new Set())
 const saving = ref(false)
 const viewMode = ref<'list' | 'history' | 'calendar'>('list')
@@ -1424,9 +1424,8 @@ async function onQrFileSelected(event: Event) {
                 {{ t('bills.undo') }}
               </button>
 
-              <!-- AI auto-pay (always visible for unpaid) -->
+              <!-- AI auto-pay -->
               <button
-                v-if="item.bill.status !== 'paid'"
                 @click="agentBill = item.bill; showAgentModal = true"
                 class="w-12 h-12 flex items-center justify-center rounded-xl border border-blue-500/30 bg-blue-600/12 text-blue-400 hover:bg-blue-600/22 hover:border-blue-500/50 transition-all shrink-0 active:scale-[0.95]"
                 :title="locale === 'el' ? 'AI αυτόματη πληρωμή' : 'AI auto-pay'"

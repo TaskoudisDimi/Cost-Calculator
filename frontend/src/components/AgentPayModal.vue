@@ -13,7 +13,8 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-white">AI Αυτόματη Πληρωμή</p>
-              <p class="text-xs text-gray-400 truncate">{{ bill?.user_provider?.nickname || bill?.user_provider?.provider?.name }} — {{ formatAmount(bill?.amount ?? 0) }}</p>
+              <p v-if="activeBill" class="text-xs text-gray-400 truncate">{{ activeBill.user_provider?.nickname || activeBill.user_provider?.provider?.name }} — {{ formatAmount(activeBill.amount) }}</p>
+              <p v-else class="text-xs text-gray-400">Επίλεξε λογαριασμό</p>
             </div>
             <button v-if="!isRunning" @click="close" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
@@ -22,8 +23,44 @@
 
           <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
+            <!-- Bill picker (when no bill pre-selected) -->
+            <template v-if="phase === 'pick_bill'">
+              <div v-if="pickerLoading" class="space-y-2">
+                <div v-for="i in 3" :key="i" class="h-14 rounded-xl bg-white/[0.04] animate-pulse" />
+              </div>
+              <div v-else-if="pickerBills.length === 0" class="text-center py-6 text-sm text-gray-500">
+                Δεν βρέθηκαν λογαριασμοί.
+              </div>
+              <div v-else class="space-y-1.5">
+                <button
+                  v-for="b in pickerBills" :key="b.id"
+                  @click="pickBill(b)"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.07] hover:border-white/[0.15] hover:bg-white/[0.04] transition-colors text-left"
+                >
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-black text-white"
+                    :style="{ backgroundColor: b.user_provider?.provider?.color || '#6366f1' }">
+                    {{ (b.user_provider?.nickname || b.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-100 truncate">{{ b.user_provider?.nickname || b.user_provider?.provider?.name }}</p>
+                    <p class="text-xs text-gray-500">{{ formatDate(b.due_date) }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-sm font-bold"
+                      :class="b.status === 'overdue' ? 'text-red-400' : b.status === 'paid' ? 'text-gray-500' : 'text-white'">
+                      {{ formatAmount(b.amount) }}
+                    </span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                      :class="b.status === 'overdue' ? 'bg-red-500/15 text-red-400' : b.status === 'paid' ? 'bg-white/[0.06] text-gray-500' : 'bg-amber-500/15 text-amber-400'">
+                      {{ b.status === 'overdue' ? 'Ληξ.' : b.status === 'paid' ? 'Πλ.' : 'Εκκρ.' }}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </template>
+
             <!-- Setup form (before start) -->
-            <template v-if="phase === 'setup'">
+            <template v-else-if="phase === 'setup'">
 
               <!-- Credential selector -->
               <div>
@@ -197,7 +234,7 @@ import type { Bill } from '@/types'
 
 const props = defineProps<{
   modelValue: boolean
-  bill: Bill | null
+  bill?: Bill | null
 }>()
 
 const emit = defineEmits<{
@@ -209,7 +246,11 @@ function formatAmount(v: number): string {
   return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' }).format(v)
 }
 
-type Phase = 'setup' | 'running' | 'otp' | 'success' | 'error'
+function formatDate(d: string): string {
+  return new Date(d).toLocaleDateString('el-GR', { day: 'numeric', month: 'short' })
+}
+
+type Phase = 'pick_bill' | 'setup' | 'running' | 'otp' | 'success' | 'error'
 type CardSummary = { id: string; nickname: string; last_four: string; card_type: string; color: string; has_secure_details: boolean; is_default: boolean }
 
 const phase = ref<Phase>('setup')
@@ -225,20 +266,51 @@ const currentJobId = ref('')
 const isRunning = computed(() => phase.value === 'running' || phase.value === 'otp')
 const selectedCard = computed(() => cards.value.find(c => c.id === selectedCardId.value) ?? null)
 
+const internalBill = ref<Bill | null>(null)
+const activeBill = computed(() => props.bill ?? internalBill.value)
+
+const pickerBills = ref<Bill[]>([])
+const pickerLoading = ref(false)
+
 let eventSource: EventSource | null = null
 
 const canStart = computed(() => {
-  return selectedCredId.value !== '' || props.bill?.payment_code
+  return selectedCredId.value !== '' || activeBill.value?.payment_code
 })
 
 watch(() => props.modelValue, async (v) => {
   if (v) {
-    resetToSetup()
-    await Promise.all([loadCredentials(), loadCards()])
+    internalBill.value = null
+    if (!props.bill) {
+      phase.value = 'pick_bill'
+      pickerLoading.value = true
+      await Promise.all([loadCredentials(), loadCards(), fetchPickerBills()])
+      pickerLoading.value = false
+    } else {
+      resetToSetup()
+      await Promise.all([loadCredentials(), loadCards()])
+    }
   } else {
     cleanup()
   }
 })
+
+async function fetchPickerBills() {
+  try {
+    const { data } = await api.get('/bills')
+    const order: Record<string, number> = { overdue: 0, pending: 1, paid: 2 }
+    pickerBills.value = [...data].sort((a: Bill, b: Bill) =>
+      (order[a.status] ?? 1) - (order[b.status] ?? 1)
+    )
+  } catch {
+    pickerBills.value = []
+  }
+}
+
+function pickBill(bill: Bill) {
+  internalBill.value = bill
+  phase.value = 'setup'
+}
 
 async function loadCredentials() {
   try {
@@ -262,7 +334,7 @@ async function loadCards() {
 }
 
 async function startPayment() {
-  if (!props.bill) return
+  if (!activeBill.value) return
 
   phase.value = 'running'
   eventLog.value = []
@@ -276,7 +348,7 @@ async function startPayment() {
   const user = auth.currentUser
   const token = user ? await user.getIdToken() : ''
   const baseURL = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
-  const url = `${baseURL}/api/agent/pay/${props.bill.id}`
+  const url = `${baseURL}/api/agent/pay/${activeBill.value.id}`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -338,7 +410,7 @@ function handleAgentEvent(event: Record<string, any>) {
   if (type === 'success') {
     phase.value = 'success'
     successRef.value = event.reference || message || ''
-    if (props.bill) emit('paid', props.bill.id)
+    if (activeBill.value) emit('paid', activeBill.value.id)
   }
 
   if (type === 'error') {
@@ -387,7 +459,7 @@ function eventColor(type: string): string {
 }
 
 function resetToSetup() {
-  phase.value = 'setup'
+  phase.value = activeBill.value ? 'setup' : 'pick_bill'
   eventLog.value = []
   otpInput.value = ''
   successRef.value = ''

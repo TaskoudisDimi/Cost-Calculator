@@ -48,6 +48,9 @@ const totalPlanned = computed(() =>
 onMounted(() => store.fetchExpenses(month.value))
 
 async function onMonthChange() {
+  if (!month.value) {
+    month.value = currentMonth()
+  }
   await store.fetchExpenses(month.value)
 }
 

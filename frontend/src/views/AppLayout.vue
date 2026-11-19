@@ -9,6 +9,7 @@ import { useToast } from '@/composables/useToast'
 import { useLocale } from '@/composables/useLocale'
 import CalculatorModal from '@/components/CalculatorModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
+import AgentPayModal from '@/components/AgentPayModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -21,6 +22,7 @@ const { t, locale } = useLocale()
 
 const sidebarOpen = ref(true)
 const showSearch = ref(false)
+const showAgentModal = ref(false)
 
 const isGlobalLoading = computed(() => billsStore.loading)
 
@@ -328,6 +330,24 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- Global search -->
     <SearchModal v-if="showSearch" @close="showSearch = false" />
+
+    <!-- AI Agent floating button -->
+    <Teleport to="body">
+      <button
+        @click="showAgentModal = true"
+        class="fixed z-40 flex items-center justify-center rounded-2xl shadow-2xl shadow-blue-900/40 transition-all active:scale-95 hover:scale-105 bg-blue-600 hover:bg-blue-500 border border-blue-500/60"
+        style="width:52px;height:52px;bottom:calc(env(safe-area-inset-bottom) + 76px);right:16px"
+        title="AI Αυτόματη Πληρωμή"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-6 h-6 text-white">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+        </svg>
+      </button>
+      <AgentPayModal
+        v-model="showAgentModal"
+        @paid="showAgentModal = false"
+      />
+    </Teleport>
 
     <!-- ─── Mobile bottom tab bar ────────────────────── -->
     <nav
