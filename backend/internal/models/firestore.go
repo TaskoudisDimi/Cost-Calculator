@@ -59,6 +59,7 @@ type Bill struct {
 type Expense struct {
 	ID          string     `json:"id" firestore:"-"`
 	UserID      string     `json:"user_id" firestore:"user_id"`
+	MemberID    string     `json:"member_id" firestore:"member_id"`
 	Month       string     `json:"month" firestore:"month"` // YYYY-MM
 	Name        string     `json:"name" firestore:"name"`
 	Amount      float64    `json:"amount" firestore:"amount"`

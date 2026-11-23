@@ -53,6 +53,7 @@ type createExpenseRequest struct {
 	Amount      float64    `json:"amount" binding:"required,gt=0"`
 	Category    string     `json:"category"`
 	Month       string     `json:"month"` // YYYY-MM; defaults to current month if empty
+	MemberID    string     `json:"member_id"`
 	Store       string     `json:"store"`
 	Notes       string     `json:"notes"`
 	PlannedDate *time.Time `json:"planned_date"`
@@ -85,6 +86,7 @@ func (h *ExpensesHandler) Create(c *gin.Context) {
 	now := time.Now()
 	expense := models.Expense{
 		UserID:      userID,
+		MemberID:    req.MemberID,
 		Month:       month,
 		Name:        req.Name,
 		Amount:      req.Amount,
@@ -177,6 +179,7 @@ func (h *ExpensesHandler) Update(c *gin.Context) {
 		{Path: "name", Value: req.Name},
 		{Path: "amount", Value: req.Amount},
 		{Path: "category", Value: cat},
+		{Path: "member_id", Value: req.MemberID},
 		{Path: "store", Value: req.Store},
 		{Path: "notes", Value: req.Notes},
 		{Path: "planned_date", Value: req.PlannedDate},

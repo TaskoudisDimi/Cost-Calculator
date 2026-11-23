@@ -94,6 +94,7 @@ export type ExpenseCategory = 'shopping' | 'food' | 'transport' | 'health' | 'en
 export interface Expense {
   id: string
   user_id: string
+  member_id?: string
   month: string
   name: string
   amount: number
