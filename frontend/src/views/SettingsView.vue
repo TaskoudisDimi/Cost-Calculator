@@ -591,7 +591,7 @@ async function confirmDeleteAccount() {
   <div class="max-w-2xl mx-auto space-y-5">
 
     <div class="flex items-center gap-3 mb-6">
-      <h2 class="text-xl md:text-2xl font-bold text-gray-50">{{ t('settings.title') }}</h2>
+      <h2 class="text-2xl font-black text-gray-50 tracking-tight">{{ t('settings.title') }}</h2>
     </div>
 
     <!-- Profile section -->

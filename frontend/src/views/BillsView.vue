@@ -771,7 +771,7 @@ async function onQrFileSelected(event: Event) {
     <!-- ── Header ─────────────────────────────────────────────── -->
     <div class="flex items-center justify-between mb-6 gap-3">
       <div class="flex items-center gap-3">
-        <h2 class="text-2xl font-bold text-gray-50">{{ t('bills.title') }}</h2>
+        <h2 class="text-2xl font-black text-gray-50 tracking-tight">{{ t('bills.title') }}</h2>
         <!-- List / Calendar / History toggle -->
         <div class="flex rounded-xl border border-white/[0.06] overflow-hidden bg-[#111119]">
           <button
@@ -793,7 +793,7 @@ async function onQrFileSelected(event: Event) {
       </div>
       <button
         @click="openCreate"
-        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shrink-0 shadow-sm shadow-blue-900/40"
+        class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.97] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm shadow-blue-900/40"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

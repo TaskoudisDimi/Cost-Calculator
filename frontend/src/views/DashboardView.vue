@@ -121,13 +121,13 @@ async function payBill(id: string) {
     <!-- Header -->
     <div class="flex items-center justify-between mb-5 gap-3">
       <div>
-        <h2 class="text-xl font-bold text-white">{{ t('dashboard.title') }}</h2>
+        <h2 class="text-2xl font-black text-white tracking-tight">{{ t('dashboard.title') }}</h2>
         <p class="text-sm text-gray-500 mt-0.5 capitalize">{{ monthLabel(month) }}</p>
       </div>
       <input
         v-model="month"
         type="month"
-        class="px-3 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+        class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-transparent transition-all"
         @change="onMonthChange"
       />
     </div>
@@ -169,46 +169,56 @@ async function payBill(id: string) {
 
       <!-- ─── Hero card ─────────────────────────── -->
       <div
-        class="relative overflow-hidden rounded-2xl p-5 md:p-6"
+        class="relative overflow-hidden rounded-2xl p-5 md:p-6 border"
         :class="d.remaining >= 0
-          ? 'bg-gradient-to-br from-blue-950 via-gray-900 to-gray-900'
-          : 'bg-gradient-to-br from-red-950 via-gray-900 to-gray-900'"
+          ? 'bg-gradient-to-br from-blue-950/80 via-indigo-950/40 to-[#111119] border-blue-800/25'
+          : 'bg-gradient-to-br from-red-950/80 via-rose-950/40 to-[#111119] border-red-800/25'"
       >
-        <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl pointer-events-none"
-          :class="d.remaining >= 0 ? 'bg-blue-500/10' : 'bg-red-500/10'" />
+        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl pointer-events-none"
+          :class="d.remaining >= 0 ? 'bg-blue-600/15' : 'bg-red-600/15'" />
+        <div class="absolute bottom-0 left-0 right-0 h-px"
+          :class="d.remaining >= 0 ? 'bg-gradient-to-r from-transparent via-blue-500/20 to-transparent' : 'bg-gradient-to-r from-transparent via-red-500/20 to-transparent'" />
 
         <div class="flex items-center justify-between mb-3">
-          <p class="text-xs font-medium text-gray-400 tracking-widest uppercase">{{ t('dashboard.balance') }}</p>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          <p class="text-[11px] font-bold text-gray-500 tracking-widest uppercase">{{ t('dashboard.balance') }}</p>
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
             :class="d.remaining >= 0
-              ? 'bg-green-500/12 text-green-400 border border-green-500/20'
+              ? 'bg-emerald-500/12 text-emerald-400 border border-emerald-500/20'
               : 'bg-red-500/12 text-red-400 border border-red-500/20'"
           >
             <span class="w-1.5 h-1.5 rounded-full shrink-0"
-              :class="d.remaining >= 0 ? 'bg-green-400' : 'bg-red-400'" />
+              :class="d.remaining >= 0 ? 'bg-emerald-400' : 'bg-red-400'" />
             {{ d.remaining >= 0 ? 'OK' : t('dashboard.overspent') }}
           </div>
         </div>
 
-        <p class="text-4xl md:text-5xl font-bold tracking-tight mb-5"
+        <p class="text-5xl font-black tracking-tight mb-1"
           :class="d.remaining >= 0 ? 'text-white' : 'text-red-300'">
           {{ formatAmount(d.remaining) }}
         </p>
 
+        <!-- Progress bar -->
+        <div v-if="d.total_income > 0" class="h-1 rounded-full bg-white/[0.06] overflow-hidden mb-5 mt-3">
+          <div class="h-full rounded-full transition-all duration-700"
+            :class="spentPercent >= 90 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-blue-500 to-indigo-400'"
+            :style="{ width: spentPercent + '%' }" />
+        </div>
+        <div v-else class="mb-5" />
+
         <!-- Stats row -->
-        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-white/8">
+        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-white/[0.06]">
           <div>
-            <p class="text-[11px] text-gray-500 mb-0.5">{{ t('dashboard.income_label') }}</p>
-            <p class="text-sm font-bold text-emerald-400">{{ formatAmount(d.total_income) }}</p>
+            <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.income_label') }}</p>
+            <p class="text-sm font-bold text-emerald-400 tabular-nums">{{ formatAmount(d.total_income) }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-gray-500 mb-0.5">{{ t('dashboard.bills_label') }}</p>
-            <p class="text-sm font-bold text-gray-200">{{ formatAmount(d.amount_bills) }}</p>
-            <p v-if="d.amount_overdue > 0" class="text-[10px] text-red-400 mt-0.5">{{ formatAmount(d.amount_overdue) }} {{ t('dashboard.overdue_short') }}</p>
+            <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.bills_label') }}</p>
+            <p class="text-sm font-bold text-blue-300 tabular-nums">{{ formatAmount(d.amount_bills) }}</p>
+            <p v-if="d.amount_overdue > 0" class="text-[10px] text-red-400 mt-0.5 font-semibold">{{ formatAmount(d.amount_overdue) }} {{ t('dashboard.overdue_short') }}</p>
           </div>
           <div>
-            <p class="text-[11px] text-gray-500 mb-0.5">{{ t('dashboard.expenses_label') }}</p>
-            <p class="text-sm font-bold text-amber-400">{{ formatAmount(d.amount_expenses_planned) }}</p>
+            <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.expenses_label') }}</p>
+            <p class="text-sm font-bold text-amber-400 tabular-nums">{{ formatAmount(d.amount_expenses_planned) }}</p>
           </div>
         </div>
       </div>
@@ -217,10 +227,13 @@ async function payBill(id: string) {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
         <!-- Upcoming -->
-        <div class="bg-[#111119] rounded-2xl border border-white/[0.06] p-4">
+        <div class="bg-gradient-to-b from-white/[0.025] to-[#111119] rounded-2xl border border-white/[0.06] p-4">
           <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('dashboard.upcoming') }}</p>
-            <span class="text-xs font-bold text-blue-400">
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+              {{ t('dashboard.upcoming') }}
+            </p>
+            <span class="text-xs font-bold text-blue-400 tabular-nums">
               {{ formatAmount(d.amount_bills - d.amount_overdue) }}
             </span>
           </div>
@@ -265,14 +278,17 @@ async function payBill(id: string) {
         </div>
 
         <!-- Overdue -->
-        <div class="bg-[#111119] rounded-2xl border p-4"
-          :class="overdueBills.length > 0 ? 'border-red-900/60' : 'border-white/[0.06]'">
+        <div class="rounded-2xl border p-4"
+          :class="overdueBills.length > 0
+            ? 'bg-gradient-to-b from-red-950/25 to-[#111119] border-red-900/50'
+            : 'bg-gradient-to-b from-white/[0.025] to-[#111119] border-white/[0.06]'">
           <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold uppercase tracking-wider"
+            <p class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
               :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-500'">
+              <span class="w-1.5 h-1.5 rounded-full inline-block" :class="overdueBills.length > 0 ? 'bg-red-400' : 'bg-gray-600'" />
               {{ t('dashboard.overdue') }}
             </p>
-            <span class="text-xs font-bold" :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-700'">
+            <span class="text-xs font-bold tabular-nums" :class="overdueBills.length > 0 ? 'text-red-400' : 'text-gray-700'">
               {{ formatAmount(d.amount_overdue) }}
             </span>
           </div>
@@ -325,8 +341,9 @@ async function payBill(id: string) {
           class="flex items-center justify-between w-full mb-3 group"
         >
           <div class="flex items-center gap-2">
-            <h3 class="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">{{ t('dashboard.income_section') }}</h3>
-            <span v-if="totalIncome > 0" class="text-xs font-bold text-emerald-400">{{ formatAmount(totalIncome) }}</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider group-hover:text-gray-300 transition-colors">{{ t('dashboard.income_section') }}</h3>
+            <span v-if="totalIncome > 0" class="text-xs font-bold text-emerald-400 tabular-nums">{{ formatAmount(totalIncome) }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
             class="w-4 h-4 text-gray-600 transition-transform duration-200"

@@ -135,7 +135,7 @@ function nextYear() {
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-bold text-white">{{ t('analytics.title') }}</h2>
+      <h2 class="text-2xl font-black text-white tracking-tight">{{ t('analytics.title') }}</h2>
       <div class="flex items-center gap-2 bg-[#111119] border border-white/[0.06] rounded-xl px-1 py-1">
         <button @click="prevYear" class="p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">

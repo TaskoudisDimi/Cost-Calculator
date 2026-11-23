@@ -108,21 +108,21 @@ async function remove(id: string) {
   <div>
     <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
       <div>
-        <h2 class="text-xl md:text-2xl font-bold text-gray-50">{{ t('expenses.title') }}</h2>
-        <p class="text-sm text-gray-400 mt-0.5 capitalize">
-          {{ monthLabel(month) }} · <span class="font-semibold text-amber-400">{{ formatAmount(totalPlanned) }}</span>
+        <h2 class="text-2xl font-black text-gray-50 tracking-tight">{{ t('expenses.title') }}</h2>
+        <p class="text-sm text-gray-500 mt-0.5 capitalize">
+          {{ monthLabel(month) }} · <span class="font-bold text-amber-400">{{ formatAmount(totalPlanned) }}</span>
         </p>
       </div>
       <div class="flex items-center gap-2">
         <input
           v-model="month"
           type="month"
-          class="px-3 py-2 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-transparent transition-all"
           @change="onMonthChange"
         />
         <button
           @click="openCreate"
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+          class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold px-3 md:px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm shadow-blue-900/40"
         >
           {{ t('expenses.new_expense') }}
         </button>

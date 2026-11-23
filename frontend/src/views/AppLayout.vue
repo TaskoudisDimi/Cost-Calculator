@@ -146,7 +146,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- ─── Desktop sidebar ──────────────────────────── -->
     <aside
-      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-[#0e0e16] border-r border-white/[0.05] transition-[width] duration-200 overflow-hidden"
+      class="hidden md:flex flex-col fixed inset-y-0 z-30 bg-gradient-to-b from-[#0e0e18] to-[#0b0b14] border-r border-white/[0.05] transition-[width] duration-200 overflow-hidden"
       :class="sidebarOpen ? 'w-56' : 'w-[52px]'"
     >
       <!-- Logo / wordmark -->
@@ -163,7 +163,12 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
           </svg>
         </button>
-        <span v-show="sidebarOpen" class="font-bold tracking-tight whitespace-nowrap text-[15px]">
+        <span v-show="sidebarOpen" class="font-bold tracking-tight whitespace-nowrap text-[15px] flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-white">
+              <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6z" clip-rule="evenodd" />
+            </svg>
+          </span>
           <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
         </span>
       </div>
@@ -190,15 +195,17 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           v-for="item in mainNav"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all relative overflow-hidden"
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-blue-600/10 text-blue-100'
+              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
+          <span v-if="route.name === item.name && sidebarOpen"
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
             stroke="currentColor"
@@ -208,25 +215,27 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           <span v-show="sidebarOpen" class="whitespace-nowrap flex-1">{{ item.label }}</span>
           <span
             v-if="sidebarOpen && item.badge && overdueCount > 0"
-            class="text-[10px] font-bold bg-red-500/90 text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none shrink-0"
+            class="text-[10px] font-bold bg-red-500 text-white rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none shrink-0"
           >{{ overdueCount > 9 ? '9+' : overdueCount }}</span>
         </RouterLink>
 
-        <div class="my-3 mx-1 h-px bg-white/[0.05]" />
+        <div class="my-3 mx-1 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
         <RouterLink
           v-for="item in utilityNav"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all relative overflow-hidden"
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-blue-600/10 text-blue-100'
+              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
+          <span v-if="route.name === item.name && sidebarOpen"
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
             stroke="currentColor"
@@ -241,15 +250,17 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
       <div class="border-t border-white/[0.05] px-2 py-3 space-y-0.5">
         <RouterLink
           :to="{ name: 'settings' }"
-          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all"
+          class="flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all relative overflow-hidden"
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === 'settings'
-              ? 'bg-blue-600/10 text-blue-100'
+              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? t('nav.settings') : undefined"
         >
+          <span v-if="route.name === 'settings' && sidebarOpen"
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === 'settings' ? '2' : '1.75'"
             stroke="currentColor"
@@ -288,8 +299,13 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
     </aside>
 
     <!-- ─── Mobile top header ────────────────────────── -->
-    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-[#0e0e16]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-4 h-14">
-      <span class="font-bold tracking-tight text-[15px]">
+    <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-[#0b0b10]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-4 h-14">
+      <span class="font-bold tracking-tight text-[15px] flex items-center gap-1.5">
+        <span class="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-800/50">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-white">
+            <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6z" clip-rule="evenodd" />
+          </svg>
+        </span>
         <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
       </span>
       <div class="flex items-center gap-1">
@@ -335,7 +351,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
     <Teleport to="body">
       <button
         @click="showAgentModal = true"
-        class="fixed z-40 flex items-center justify-center rounded-2xl shadow-2xl shadow-blue-900/40 transition-all active:scale-95 hover:scale-105 bg-blue-600 hover:bg-blue-500 border border-blue-500/60"
+        class="fixed z-40 flex items-center justify-center rounded-2xl transition-all active:scale-95 hover:scale-105 bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-900/60 border border-blue-400/25"
         style="width:52px;height:52px;bottom:calc(env(safe-area-inset-bottom) + 76px);right:16px"
         title="AI Αυτόματη Πληρωμή"
       >
@@ -351,22 +367,30 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
 
     <!-- ─── Mobile bottom tab bar ────────────────────── -->
     <nav
-      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0e0e16]/95 backdrop-blur-md border-t border-white/[0.06]"
+      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#0b0b10]/95 backdrop-blur-md border-t border-white/[0.06]"
       style="padding-bottom: env(safe-area-inset-bottom)"
     >
-      <div class="flex px-2 py-1">
+      <div class="flex px-1 py-1">
         <RouterLink
           v-for="item in allNavForMobile"
           :key="item.name"
           :to="{ name: item.name }"
-          class="flex-1 flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl transition-all"
-          :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600 hover:text-gray-400'"
+          class="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 transition-all"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            :stroke-width="route.name === item.name ? '2.25' : '1.75'"
-            stroke="currentColor" class="w-5 h-5 transition-transform"
-            :class="route.name === item.name ? 'scale-110' : ''"
-            v-html="item.icon" />
+          <div
+            class="relative flex items-center justify-center w-10 h-8 rounded-xl transition-all"
+            :class="route.name === item.name ? 'bg-blue-600/18' : ''"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              :stroke-width="route.name === item.name ? '2.25' : '1.75'"
+              stroke="currentColor" class="w-5 h-5 transition-all"
+              :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600'"
+              v-html="item.icon" />
+            <span
+              v-if="item.badge && overdueCount > 0"
+              class="absolute -top-0.5 -right-0.5 w-4 h-4 text-[9px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center leading-none"
+            >{{ overdueCount > 9 ? '9+' : overdueCount }}</span>
+          </div>
           <span
             class="text-[10px] font-semibold leading-none tracking-wide transition-colors"
             :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600'"

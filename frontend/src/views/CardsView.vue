@@ -216,7 +216,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-xl font-bold text-gray-50">
+        <h1 class="text-2xl font-black text-gray-50 tracking-tight">
           {{ locale === 'el' ? 'Κάρτες Πληρωμής' : 'Payment Cards' }}
         </h1>
         <p class="text-sm text-gray-500 mt-0.5">
@@ -227,7 +227,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
       </div>
       <button
         @click="openCreate"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold transition-all shadow-sm shadow-blue-900/40"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

@@ -160,11 +160,11 @@ async function deleteTemplate(id: string) {
 <template>
   <div>
     <div class="flex items-center justify-between mb-5">
-      <h2 class="text-xl md:text-2xl font-bold text-gray-50">{{ t('providers.title') }}</h2>
+      <h2 class="text-2xl font-black text-gray-50 tracking-tight">{{ t('providers.title') }}</h2>
       <div class="flex gap-2">
         <button
           @click="openTemplateModal"
-          class="bg-white/[0.04] border border-white/[0.10] hover:border-blue-400 text-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.15] text-gray-400 hover:text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
         >
           {{ t('providers.new_template') }}
         </button>
