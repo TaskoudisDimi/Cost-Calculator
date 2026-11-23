@@ -20,6 +20,7 @@ const filterStatus = ref<'all' | 'planned' | 'bought'>('all')
 const month = ref(currentMonth())
 const dateFrom = ref('')
 const dateTo = ref('')
+const filterMode = ref<'month' | 'range'>('month')
 
 const form = ref({
   name: '',
@@ -201,46 +202,53 @@ async function remove(id: string) {
       </p>
     </div>
 
-    <!-- ── Period & date range ─────────────────────────────────── -->
-    <div class="space-y-2">
+    <!-- ── Period selector ───────────────────────────────────────── -->
+    <div class="space-y-2.5">
+      <!-- Month / Range toggle -->
+      <div class="flex gap-1 p-1 bg-[#111119] border border-white/[0.06] rounded-xl">
+        <button @click="filterMode = 'month'"
+          class="flex-1 h-9 rounded-lg text-sm font-semibold transition-all"
+          :class="filterMode === 'month' ? 'bg-violet-600 text-white shadow-sm shadow-violet-900/40' : 'text-gray-500 hover:text-gray-300'">
+          {{ locale === 'el' ? 'Μήνας' : 'Month' }}
+        </button>
+        <button @click="filterMode = 'range'"
+          class="flex-1 h-9 rounded-lg text-sm font-semibold transition-all"
+          :class="filterMode === 'range' ? 'bg-violet-600 text-white shadow-sm shadow-violet-900/40' : 'text-gray-500 hover:text-gray-300'">
+          {{ locale === 'el' ? 'Εύρος' : 'Range' }}
+        </button>
+      </div>
+
       <!-- Month navigation -->
-      <div class="flex items-center bg-[#111119] border border-white/[0.06] rounded-xl px-1 py-1">
-        <button @click="prevMonth" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] text-gray-400 hover:text-white transition-colors shrink-0">
+      <div v-if="filterMode === 'month'" class="flex items-center bg-[#111119] border border-white/[0.06] rounded-xl">
+        <button @click="prevMonth" class="w-11 h-11 flex items-center justify-center rounded-l-xl hover:bg-white/[0.06] text-gray-400 hover:text-white transition-colors shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
         <span class="flex-1 text-center text-sm font-bold text-white capitalize">{{ monthLabel(month) }}</span>
-        <button @click="nextMonth" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] text-gray-400 hover:text-white transition-colors shrink-0">
+        <button @click="nextMonth" class="w-11 h-11 flex items-center justify-center rounded-r-xl hover:bg-white/[0.06] text-gray-400 hover:text-white transition-colors shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
         </button>
       </div>
 
-      <!-- Date range filter -->
-      <div class="flex items-center gap-2">
-        <input
-          v-model="dateFrom"
-          type="date"
-          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
-          :class="dateFrom ? 'border-violet-500/40 text-gray-200' : ''"
-        />
-        <span class="text-gray-600 text-sm font-bold shrink-0">—</span>
-        <input
-          v-model="dateTo"
-          type="date"
-          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
-          :class="dateTo ? 'border-violet-500/40 text-gray-200' : ''"
-        />
-        <button
-          v-if="dateFrom || dateTo"
-          @click="dateFrom = ''; dateTo = ''"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-white/[0.06] text-gray-500 hover:text-white hover:border-white/[0.12] transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+      <!-- Date range (shown when filterMode === 'range') -->
+      <div v-else class="space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <input v-model="dateFrom" type="date"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+            :class="dateFrom ? 'border-violet-500/40 text-gray-200' : ''" />
+          <input v-model="dateTo" type="date"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+            :class="dateTo ? 'border-violet-500/40 text-gray-200' : ''" />
+        </div>
+        <button v-if="dateFrom || dateTo" @click="dateFrom = ''; dateTo = ''"
+          class="w-full h-9 flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] text-sm text-gray-400 hover:text-gray-200 hover:border-white/[0.1] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
+          {{ locale === 'el' ? 'Καθαρισμός εύρους' : 'Clear range' }}
         </button>
       </div>
     </div>
@@ -303,22 +311,31 @@ async function remove(id: string) {
           <div
             v-for="e in group.items"
             :key="e.id"
-            class="flex items-center gap-3 p-4 hover:bg-white/[0.025] transition-colors group/item"
+            class="flex gap-3 p-4 hover:bg-white/[0.025] active:bg-white/[0.04] transition-colors"
           >
-            <!-- Icon -->
+            <!-- Category icon -->
             <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors"
+              class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 mt-0.5"
               :class="e.status === 'bought' ? 'bg-emerald-900/20' : 'bg-violet-900/20'"
             >
               {{ group.icon }}
             </div>
 
-            <!-- Details -->
+            <!-- Right column -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <p class="text-sm font-semibold text-gray-100 truncate" :class="e.status === 'bought' ? 'line-through opacity-50' : ''">
+              <!-- Name + amount -->
+              <div class="flex items-baseline gap-2 mb-0.5">
+                <p class="flex-1 text-sm font-semibold text-gray-100 truncate"
+                  :class="e.status === 'bought' ? 'line-through opacity-50' : ''">
                   {{ e.name }}
                 </p>
+                <p class="text-sm font-black shrink-0 tabular-nums"
+                  :class="e.status === 'bought' ? 'text-emerald-400 opacity-70' : 'text-white'">
+                  {{ formatAmount(e.amount) }}
+                </p>
+              </div>
+              <!-- Meta: member, store, date, notes -->
+              <div class="flex items-center gap-1.5 flex-wrap mb-2.5">
                 <span
                   v-if="e.member_id && membersStore.members.find(m => m.id === e.member_id)"
                   class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white shrink-0"
@@ -326,57 +343,41 @@ async function remove(id: string) {
                 >
                   {{ membersStore.members.find(m => m.id === e.member_id)!.name }}
                 </span>
-              </div>
-              <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <span v-if="e.store" class="text-xs text-gray-500 font-medium">{{ e.store }}</span>
-                <span v-if="e.planned_date" class="text-xs text-gray-600">{{ e.store ? '·' : '' }} {{ formatDate(e.planned_date) }}</span>
-                <span v-if="e.notes" class="text-xs text-gray-600 italic truncate max-w-[120px]">· {{ e.notes }}</span>
+                <span v-if="e.planned_date" class="text-xs text-gray-600">
+                  {{ (e.store || e.member_id) ? '·' : '' }} {{ formatDate(e.planned_date) }}
+                </span>
+                <span v-if="e.notes" class="text-xs text-gray-600 italic truncate max-w-[140px]">· {{ e.notes }}</span>
               </div>
-            </div>
-
-            <!-- Status chip (desktop) -->
-            <span
-              class="hidden sm:inline px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
-              :class="expenseStatusClass(e.status)"
-            >
-              {{ expenseStatusLabel(e.status) }}
-            </span>
-
-            <!-- Amount -->
-            <p class="text-sm font-black shrink-0 tabular-nums" :class="e.status === 'bought' ? 'text-emerald-400 opacity-70' : 'text-white'">
-              {{ formatAmount(e.amount) }}
-            </p>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-1 shrink-0">
-              <button
-                v-if="e.status === 'planned'"
-                @click="markBought(e.id)"
-                class="w-8 h-8 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                :title="locale === 'el' ? 'Αγοράστηκε' : 'Mark bought'"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-              </button>
-              <button
-                @click="openEdit(e)"
-                class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-600 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
-                title="Επεξεργασία"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-                </svg>
-              </button>
-              <button
-                @click="remove(e.id)"
-                class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                :title="locale === 'el' ? 'Διαγραφή' : 'Delete'"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <!-- Actions -->
+              <div class="flex items-center gap-2">
+                <button v-if="e.status === 'planned'" @click="markBought(e.id)"
+                  class="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 active:scale-[0.97] transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  {{ locale === 'el' ? 'Αγοράστηκε' : 'Bought' }}
+                </button>
+                <span v-else class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-900/15 text-emerald-500 text-xs font-bold opacity-70">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  {{ locale === 'el' ? 'Αγοράστηκε' : 'Bought' }}
+                </span>
+                <div class="flex-1" />
+                <button @click="openEdit(e)"
+                  class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-600 hover:text-violet-400 hover:bg-violet-500/10 active:scale-[0.95] transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                  </svg>
+                </button>
+                <button @click="remove(e.id)"
+                  class="w-9 h-9 flex items-center justify-center rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-500/10 active:scale-[0.95] transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -1073,23 +1073,24 @@ async function onQrFileSelected(event: Event) {
       </div>
 
       <!-- Date range (always visible) -->
-      <div class="flex items-center gap-2 mb-2">
-        <input v-model="dateFrom" type="date" @change="filterMonth = 'all'; clearSelection()"
-          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
-          :class="dateFrom ? 'border-violet-500/40 text-gray-200' : ''" />
-        <span class="text-gray-600 shrink-0 text-sm font-bold">—</span>
-        <input v-model="dateTo" type="date" @change="filterMonth = 'all'; clearSelection()"
-          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
-          :class="dateTo ? 'border-violet-500/40 text-gray-200' : ''" />
+      <div class="space-y-2 mb-2">
+        <div class="grid grid-cols-2 gap-2">
+          <input v-model="dateFrom" type="date" @change="filterMonth = 'all'; clearSelection()"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+            :class="dateFrom ? 'border-violet-500/40 text-gray-200' : ''" />
+          <input v-model="dateTo" type="date" @change="filterMonth = 'all'; clearSelection()"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+            :class="dateTo ? 'border-violet-500/40 text-gray-200' : ''" />
+        </div>
         <button
           v-if="dateFrom || dateTo"
           @click="dateFrom = ''; dateTo = ''; clearSelection()"
-          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-white/[0.06] text-gray-500 hover:text-gray-200 hover:border-white/[0.12] transition-colors"
-          :title="locale === 'el' ? 'Καθαρισμός' : 'Clear'"
+          class="w-full h-9 flex items-center justify-center gap-2 rounded-xl border border-white/[0.06] text-sm text-gray-400 hover:text-gray-200 hover:border-white/[0.1] transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
+          {{ locale === 'el' ? 'Καθαρισμός εύρους' : 'Clear range' }}
         </button>
       </div>
 
