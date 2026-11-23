@@ -145,7 +145,7 @@ function btnClass(btn: string): string {
   <!-- Floating trigger button -->
   <button
     @click="open"
-    class="fixed bottom-24 right-4 md:bottom-6 z-40 w-12 h-12 rounded-full bg-violet-600 hover:bg-violet-500 text-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+    class="fixed bottom-24 left-4 md:bottom-6 md:left-auto md:right-4 z-40 w-12 h-12 rounded-full bg-violet-600 hover:bg-violet-500 text-white shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
     title="Αριθμομηχανή"
   >
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
