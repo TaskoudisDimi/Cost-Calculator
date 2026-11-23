@@ -239,8 +239,8 @@ async function importSelected() {
 
         <!-- Step: connect -->
         <div v-if="step === 'connect'" class="text-center py-4">
-          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-blue-400">
+          <div class="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-violet-400">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
             </svg>
           </div>
@@ -253,7 +253,7 @@ async function importSelected() {
           <p v-if="error" class="text-xs text-red-400 mb-3">{{ error }}</p>
           <button
             @click="connectGmail"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
@@ -264,7 +264,7 @@ async function importSelected() {
 
         <!-- Step: scanning -->
         <div v-else-if="step === 'scanning'" class="text-center py-8">
-          <div class="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
+          <div class="w-10 h-10 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mx-auto mb-4" />
           <p class="text-sm text-gray-300">
             {{ locale === 'el' ? 'Σάρωση email...' : 'Scanning emails...' }}
           </p>
@@ -292,10 +292,10 @@ async function importSelected() {
                 :key="i"
                 class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors"
                 :class="row.selected
-                  ? 'border-blue-500/40 bg-blue-500/8'
+                  ? 'border-violet-500/40 bg-violet-500/8'
                   : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]'"
               >
-                <input v-model="row.selected" type="checkbox" class="mt-0.5 accent-blue-500 shrink-0" />
+                <input v-model="row.selected" type="checkbox" class="mt-0.5 accent-violet-500 shrink-0" />
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-gray-200 truncate">{{ row.result?.provider_name || row.email.from }}</span>
@@ -347,7 +347,7 @@ async function importSelected() {
         <button
           @click="importSelected"
           :disabled="selectedRows.length === 0"
-          class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+          class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
         >
           {{ locale === 'el' ? 'Εισαγωγή' : 'Import' }}
         </button>

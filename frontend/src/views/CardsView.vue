@@ -227,7 +227,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
       </div>
       <button
         @click="openCreate"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold transition-all shadow-sm shadow-blue-900/40"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-bold transition-all shadow-sm shadow-violet-900/40"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -237,15 +237,15 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
     </div>
 
     <!-- Notice -->
-    <div class="mb-5 px-4 py-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5">
+    <div class="mb-5 px-4 py-3 rounded-xl bg-violet-500/8 border border-violet-500/20 flex gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-violet-400 shrink-0 mt-0.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
       </svg>
       <div>
-        <p class="text-xs font-medium text-blue-300">
+        <p class="text-xs font-medium text-violet-300">
           {{ locale === 'el' ? 'Ασφάλεια & AI Πληρωμές' : 'Security & AI Payments' }}
         </p>
-        <p class="text-xs text-blue-400/80 mt-0.5">
+        <p class="text-xs text-violet-400/80 mt-0.5">
           {{ locale === 'el'
             ? 'Μπορείς να αποθηκεύσεις τον πλήρη αριθμό κάρτας κρυπτογραφημένο (AES-256) ώστε ο AI agent να κάνει αυτόματες πληρωμές. Δεν εμφανίζεται ποτέ στην οθόνη.'
             : 'You can optionally store the full card number encrypted (AES-256) so the AI agent can make automatic payments. It is never shown on screen.' }}
@@ -286,7 +286,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
               <p class="text-sm font-semibold text-gray-200 mt-0.5">{{ card.nickname }}</p>
             </div>
             <div class="flex items-center gap-1.5">
-              <span v-if="card.is_default" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              <span v-if="card.is_default" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                 {{ locale === 'el' ? 'Προεπιλογή' : 'Default' }}
               </span>
               <span v-if="isExpired(card)" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
@@ -308,7 +308,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           <button
             v-if="!card.is_default"
             @click="setDefault(card)"
-            class="text-xs text-gray-500 hover:text-blue-400 transition-colors"
+            class="text-xs text-gray-500 hover:text-violet-400 transition-colors"
           >
             {{ locale === 'el' ? 'Ορισμός ως προεπιλογή' : 'Set as default' }}
           </button>
@@ -318,7 +318,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
             class="text-xs transition-colors flex items-center gap-1"
             :class="card.has_secure_details
               ? 'text-emerald-500 hover:text-emerald-400'
-              : 'text-gray-600 hover:text-blue-400'"
+              : 'text-gray-600 hover:text-violet-400'"
             :title="card.has_secure_details ? 'Αποθηκευμένη για agent' : 'Αποθήκευσε πλήρη στοιχεία για AI agent'"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5">
@@ -364,7 +364,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
         <div>
           <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Όνομα' : 'Name' }}</label>
           <input v-model="form.nickname" type="text" :placeholder="locale === 'el' ? 'π.χ. Eurobank Visa' : 'e.g. Eurobank Visa'"
-            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500" />
         </div>
 
         <!-- Card number (full or last 4) -->
@@ -377,7 +377,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
             @input="formatAiNumber"
             type="text" inputmode="numeric" maxlength="19"
             :placeholder="locale === 'el' ? '1234 5678 9012 3456' : '1234 5678 9012 3456'"
-            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono tracking-widest text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono tracking-widest text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
           <p class="text-[11px] text-gray-600 mt-1">{{ locale === 'el' ? 'Αποθηκεύεται κρυπτογραφημένος για AI πληρωμές. Τα τελευταία 4 ψηφία εξάγονται αυτόματα.' : 'Stored encrypted for AI payments. Last 4 digits extracted automatically.' }}</p>
         </div>
@@ -388,12 +388,12 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
             <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Τελευταία 4 ψηφία' : 'Last 4 digits' }}</label>
             <input v-model="form.last_four" type="text" maxlength="4" inputmode="numeric" :placeholder="locale === 'el' ? 'π.χ. 1234' : 'e.g. 1234'"
               disabled
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Τύπος' : 'Type' }}</label>
             <select v-model="form.card_type"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500">
               <option value="visa">Visa</option>
               <option value="mastercard">Mastercard</option>
               <option value="amex">Amex</option>
@@ -407,12 +407,12 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           <div>
             <label class="block text-xs font-medium text-gray-400 mb-1.5">CVV</label>
             <input v-model="form.aiCVV" type="password" maxlength="4" placeholder="•••"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500" />
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Όνομα κατόχου' : 'Cardholder' }}</label>
             <input v-model="form.aiCardholder" type="text" maxlength="30" placeholder="FULL NAME"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm uppercase font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm uppercase font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500" />
           </div>
         </div>
 
@@ -421,11 +421,11 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ locale === 'el' ? 'Ημερομηνία λήξης' : 'Expiry' }}</label>
           <div class="grid grid-cols-2 gap-3">
             <select v-model.number="form.expiry_mm"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500">
               <option v-for="m in months" :key="m" :value="m">{{ String(m).padStart(2, '0') }}</option>
             </select>
             <select v-model.number="form.expiry_yy"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-[#13131e] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500">
               <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
             </select>
           </div>
@@ -446,7 +446,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
         <label class="flex items-center gap-3 cursor-pointer">
           <div class="relative w-9 h-5">
             <input type="checkbox" v-model="form.is_default" class="sr-only" />
-            <div class="w-9 h-5 rounded-full transition-colors" :class="form.is_default ? 'bg-blue-600' : 'bg-white/[0.1]'" />
+            <div class="w-9 h-5 rounded-full transition-colors" :class="form.is_default ? 'bg-violet-600' : 'bg-white/[0.1]'" />
             <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="form.is_default ? 'translate-x-4' : ''" />
           </div>
           <span class="text-sm text-gray-300">{{ locale === 'el' ? 'Προεπιλεγμένη κάρτα' : 'Set as default card' }}</span>
@@ -459,7 +459,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           {{ locale === 'el' ? 'Ακύρωση' : 'Cancel' }}
         </button>
         <button @click="submit" :disabled="saving || !form.nickname || (editingId ? false : form.aiNumber.replace(/\s/g,'').length < 15 && form.last_four.length !== 4)"
-          class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-semibold transition-colors">
+          class="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-sm font-semibold transition-colors">
           {{ saving ? '...' : (locale === 'el' ? 'Αποθήκευση' : 'Save') }}
         </button>
       </div>
@@ -470,8 +470,8 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
   <div v-if="secureCardId" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0" @click.self="secureCardId = null">
     <div class="bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-sm p-5">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-blue-400">
+        <div class="w-9 h-9 rounded-xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-violet-400">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
           </svg>
         </div>
@@ -487,16 +487,16 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           @input="formatSecureCardNumber"
           placeholder="1234 5678 9012 3456"
           maxlength="19"
-          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono tracking-widest"
+          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 font-mono tracking-widest"
         />
         <div class="grid grid-cols-2 gap-2">
           <input v-model="secureForm.expiry" placeholder="MM/YY" maxlength="5"
-            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
+            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 font-mono" />
           <input v-model="secureForm.cvv" placeholder="CVV" maxlength="4" type="password"
-            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono" />
+            class="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 font-mono" />
         </div>
         <input v-model="secureForm.cardholder_name" placeholder="ΟΝΟΜΑΤΕΠΩΝΥΜΟ" maxlength="50"
-          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 uppercase font-mono" />
+          class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 uppercase font-mono" />
       </div>
 
       <div class="flex gap-2">
@@ -505,7 +505,7 @@ const years = Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i)
           Ακύρωση
         </button>
         <button @click="saveSecure" :disabled="secureSaving || !secureForm.number || !secureForm.cvv"
-          class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-bold transition-colors">
+          class="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-sm font-bold transition-colors">
           {{ secureSaving ? '...' : 'Αποθήκευση' }}
         </button>
       </div>

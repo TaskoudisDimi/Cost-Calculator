@@ -6,8 +6,8 @@
 
           <!-- Header -->
           <div class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-white/[0.06]">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-600/20 border border-blue-500/30">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-violet-600/20 border border-violet-500/30">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-violet-400">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
               </svg>
             </div>
@@ -67,7 +67,7 @@
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Κωδικοί σύνδεσης</label>
                 <div v-if="credentials.length === 0" class="text-xs text-gray-500 py-2">
                   Δεν βρέθηκαν αποθηκευμένοι κωδικοί.
-                  <button @click="emit('update:modelValue', false); router.push({ name: 'credentials' })" class="text-blue-400 ml-1 hover:underline">Πρόσθεσε →</button>
+                  <button @click="emit('update:modelValue', false); router.push({ name: 'credentials' })" class="text-violet-400 ml-1 hover:underline">Πρόσθεσε →</button>
                 </div>
                 <div v-else class="space-y-1.5">
                   <button
@@ -75,11 +75,11 @@
                     @click="selectedCredId = selectedCredId === cred.id ? '' : cred.id"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors text-left"
                     :class="selectedCredId === cred.id
-                      ? 'bg-blue-600/15 border-blue-500/40 text-white'
+                      ? 'bg-violet-600/15 border-violet-500/40 text-white'
                       : 'border-white/[0.07] text-gray-300 hover:border-white/[0.15] hover:bg-white/[0.04]'"
                   >
                     <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                      :class="selectedCredId === cred.id ? 'bg-blue-600/30' : 'bg-white/[0.06]'">
+                      :class="selectedCredId === cred.id ? 'bg-violet-600/30' : 'bg-white/[0.06]'">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 0 1 21.75 8.25Z" />
                       </svg>
@@ -98,7 +98,7 @@
                 </label>
                 <div v-if="cards.length === 0" class="text-xs text-gray-500 py-2">
                   Δεν βρέθηκαν κάρτες.
-                  <button @click="emit('update:modelValue', false); router.push({ name: 'cards' })" class="text-blue-400 ml-1 hover:underline">Πρόσθεσε →</button>
+                  <button @click="emit('update:modelValue', false); router.push({ name: 'cards' })" class="text-violet-400 ml-1 hover:underline">Πρόσθεσε →</button>
                 </div>
                 <div v-else class="space-y-1.5">
                   <button
@@ -106,7 +106,7 @@
                     @click="selectedCardId = selectedCardId === card.id ? '' : card.id"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors text-left"
                     :class="selectedCardId === card.id
-                      ? 'bg-indigo-600/15 border-indigo-500/40 text-white'
+                      ? 'bg-purple-600/15 border-purple-500/40 text-white'
                       : 'border-white/[0.07] text-gray-300 hover:border-white/[0.15] hover:bg-white/[0.04]'"
                   >
                     <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-black text-white"
@@ -133,7 +133,7 @@
                 :disabled="!canStart"
                 class="w-full py-3.5 rounded-xl font-bold text-sm transition-all"
                 :class="canStart
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  ? 'bg-violet-600 hover:bg-violet-500 text-white'
                   : 'bg-white/[0.04] text-gray-600 cursor-not-allowed'"
               >
                 Ξεκίνα αυτόματη πληρωμή
@@ -155,7 +155,7 @@
 
                 <!-- Spinner for running -->
                 <div v-if="phase === 'running'" class="flex items-center gap-2 text-sm text-gray-500 pt-1">
-                  <div class="w-3 h-3 rounded-full border-2 border-blue-500 border-t-transparent animate-spin shrink-0"></div>
+                  <div class="w-3 h-3 rounded-full border-2 border-violet-500 border-t-transparent animate-spin shrink-0"></div>
                   <span>Ο agent εργάζεται...</span>
                 </div>
               </div>
@@ -465,7 +465,7 @@ function eventColor(type: string): string {
   if (type === 'success') return 'text-emerald-400'
   if (type === 'error') return 'text-red-400'
   if (type === 'otp_required') return 'text-amber-400'
-  if (type === 'agent_message') return 'text-blue-300'
+  if (type === 'agent_message') return 'text-violet-300'
   return 'text-gray-400'
 }
 

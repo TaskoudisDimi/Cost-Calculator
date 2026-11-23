@@ -30,9 +30,14 @@ const incomes = computed(() => {
 const pendingBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'pending') ?? [])
 const overdueBills = computed(() => d.value?.upcoming_bills?.filter(b => b.status === 'overdue') ?? [])
 const totalIncome = computed(() => incomes.value.reduce((s, i) => s + i.amount, 0))
-const spentPercent = computed(() => {
-  if (!d.value || d.value.total_income <= 0) return 0
-  return Math.min(((d.value.amount_bills + d.value.amount_expenses_planned) / d.value.total_income) * 100, 100)
+const totalSpending = computed(() => {
+  if (!d.value) return 0
+  return d.value.amount_bills + d.value.amount_expenses_planned
+})
+
+const billsPercent = computed(() => {
+  if (!totalSpending.value) return 0
+  return Math.round((d.value!.amount_bills / totalSpending.value) * 100)
 })
 
 // Forecast: sum of all recurring bills as next month estimate
@@ -127,7 +132,7 @@ async function payBill(id: string) {
       <input
         v-model="month"
         type="month"
-        class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-transparent transition-all"
+        class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all"
         @change="onMonthChange"
       />
     </div>
@@ -168,57 +173,42 @@ async function payBill(id: string) {
       </div>
 
       <!-- ─── Hero card ─────────────────────────── -->
-      <div
-        class="relative overflow-hidden rounded-2xl p-5 md:p-6 border"
-        :class="d.remaining >= 0
-          ? 'bg-gradient-to-br from-blue-950/80 via-indigo-950/40 to-[#111119] border-blue-800/25'
-          : 'bg-gradient-to-br from-red-950/80 via-rose-950/40 to-[#111119] border-red-800/25'"
-      >
-        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl pointer-events-none"
-          :class="d.remaining >= 0 ? 'bg-blue-600/15' : 'bg-red-600/15'" />
-        <div class="absolute bottom-0 left-0 right-0 h-px"
-          :class="d.remaining >= 0 ? 'bg-gradient-to-r from-transparent via-blue-500/20 to-transparent' : 'bg-gradient-to-r from-transparent via-red-500/20 to-transparent'" />
+      <div class="relative overflow-hidden rounded-2xl p-5 md:p-6 border bg-gradient-to-br from-violet-950/80 via-purple-950/40 to-[#111119] border-violet-800/25">
+        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl pointer-events-none bg-violet-600/15" />
+        <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
 
         <div class="flex items-center justify-between mb-3">
-          <p class="text-[11px] font-bold text-gray-500 tracking-widest uppercase">{{ t('dashboard.balance') }}</p>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
-            :class="d.remaining >= 0
-              ? 'bg-emerald-500/12 text-emerald-400 border border-emerald-500/20'
-              : 'bg-red-500/12 text-red-400 border border-red-500/20'"
-          >
-            <span class="w-1.5 h-1.5 rounded-full shrink-0"
-              :class="d.remaining >= 0 ? 'bg-emerald-400' : 'bg-red-400'" />
-            {{ d.remaining >= 0 ? 'OK' : t('dashboard.overspent') }}
+          <p class="text-[11px] font-bold text-gray-500 tracking-widest uppercase">{{ locale === 'el' ? 'Συνολικές Δαπάνες' : 'Total Spending' }}</p>
+          <div v-if="d.amount_overdue > 0" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/12 text-red-400 border border-red-500/20">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-red-400" />
+            {{ d.total_overdue }} {{ locale === 'el' ? 'εκπρόθεσμα' : 'overdue' }}
           </div>
         </div>
 
-        <p class="text-5xl font-black tracking-tight mb-1"
-          :class="d.remaining >= 0 ? 'text-white' : 'text-red-300'">
-          {{ formatAmount(d.remaining) }}
-        </p>
+        <p class="text-5xl font-black tracking-tight text-white mb-1">{{ formatAmount(totalSpending) }}</p>
 
-        <!-- Progress bar -->
-        <div v-if="d.total_income > 0" class="h-1 rounded-full bg-white/[0.06] overflow-hidden mb-5 mt-3">
-          <div class="h-full rounded-full transition-all duration-700"
-            :class="spentPercent >= 90 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-blue-500 to-indigo-400'"
-            :style="{ width: spentPercent + '%' }" />
+        <!-- Bills vs expenses progress bar -->
+        <div class="h-1.5 rounded-full bg-white/[0.06] overflow-hidden flex mb-5 mt-3">
+          <div class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-violet-500 to-purple-400"
+            :style="{ width: billsPercent + '%' }" />
+          <div class="h-full transition-all duration-700 bg-amber-500/70"
+            :style="{ width: (100 - billsPercent) + '%' }" />
         </div>
-        <div v-else class="mb-5" />
 
         <!-- Stats row -->
         <div class="grid grid-cols-3 gap-3 pt-4 border-t border-white/[0.06]">
           <div>
-            <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.income_label') }}</p>
-            <p class="text-sm font-bold text-emerald-400 tabular-nums">{{ formatAmount(d.total_income) }}</p>
-          </div>
-          <div>
             <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.bills_label') }}</p>
-            <p class="text-sm font-bold text-blue-300 tabular-nums">{{ formatAmount(d.amount_bills) }}</p>
+            <p class="text-sm font-bold text-violet-300 tabular-nums">{{ formatAmount(d.amount_bills) }}</p>
             <p v-if="d.amount_overdue > 0" class="text-[10px] text-red-400 mt-0.5 font-semibold">{{ formatAmount(d.amount_overdue) }} {{ t('dashboard.overdue_short') }}</p>
           </div>
           <div>
             <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ t('dashboard.expenses_label') }}</p>
             <p class="text-sm font-bold text-amber-400 tabular-nums">{{ formatAmount(d.amount_expenses_planned) }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wide">{{ locale === 'el' ? 'Πληρωμένα' : 'Paid' }}</p>
+            <p class="text-sm font-bold text-emerald-400 tabular-nums">{{ d.total_paid }}</p>
           </div>
         </div>
       </div>
@@ -230,10 +220,10 @@ async function payBill(id: string) {
         <div class="bg-gradient-to-b from-white/[0.025] to-[#111119] rounded-2xl border border-white/[0.06] p-4">
           <div class="flex items-center justify-between mb-3">
             <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+              <span class="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />
               {{ t('dashboard.upcoming') }}
             </p>
-            <span class="text-xs font-bold text-blue-400 tabular-nums">
+            <span class="text-xs font-bold text-violet-400 tabular-nums">
               {{ formatAmount(d.amount_bills - d.amount_overdue) }}
             </span>
           </div>
@@ -442,48 +432,30 @@ async function payBill(id: string) {
         </div><!-- /v-if incomeExpanded -->
       </div>
 
-      <!-- ─── Progress bar ─── -->
-      <div v-if="d.total_income > 0" class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
-        <div class="flex justify-between text-xs text-gray-500 mb-2">
-          <span>{{ t('dashboard.spending_month') }}</span>
-          <span class="font-semibold" :class="spentPercent >= 90 ? 'text-red-400' : 'text-gray-400'">
-            {{ spentPercent.toFixed(0) }}%
-          </span>
-        </div>
-        <div class="h-1.5 bg-white/[0.04] rounded-full overflow-hidden flex mb-3">
-          <div
-            class="h-full transition-all duration-500"
-            :class="d.amount_overdue > 0 ? 'bg-red-500' : 'bg-blue-500'"
-            :style="{ width: Math.min((d.amount_bills / d.total_income) * 100, 100) + '%' }"
-          />
-          <div
-            class="h-full bg-amber-400 transition-all duration-500"
-            :style="{ width: Math.min((d.amount_expenses_planned / d.total_income) * 100, 100) + '%' }"
-          />
-        </div>
-        <div class="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />{{ d.total_pending }} {{ t('dashboard.pending_label') }}
-          </span>
-          <span v-if="d.total_overdue > 0" class="flex items-center gap-1.5 text-red-400 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />{{ d.total_overdue }} {{ t('dashboard.overdue_label') }}
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />{{ d.total_paid }} {{ t('dashboard.paid_label') }}
-          </span>
-        </div>
+      <!-- ─── Bill status summary ─── -->
+      <div class="bg-[#111119] border border-white/[0.06] rounded-2xl px-4 py-3 flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />{{ d.total_pending }} {{ t('dashboard.pending_label') }}
+        </span>
+        <span v-if="d.total_overdue > 0" class="flex items-center gap-1.5 text-red-400 font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />{{ d.total_overdue }} {{ t('dashboard.overdue_label') }}
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />{{ d.total_paid }} {{ t('dashboard.paid_label') }}
+        </span>
+        <span class="flex-1 text-right font-bold text-gray-400 tabular-nums">{{ formatAmount(totalSpending) }}</span>
       </div>
 
       <!-- ─── Forecast widget ───────────────────── -->
       <div v-if="forecast" class="bg-[#111119] border border-indigo-900/40 rounded-2xl p-4 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-indigo-900/30 flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-indigo-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-purple-400">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
             </svg>
           </div>
           <div>
-            <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wide">{{ t('dashboard.forecast_title') }}</p>
+            <p class="text-xs font-semibold text-purple-400 uppercase tracking-wide">{{ t('dashboard.forecast_title') }}</p>
             <p class="text-[11px] text-gray-500 mt-0.5">{{ t('dashboard.forecast_recurring') }}: {{ forecast.count }}</p>
           </div>
         </div>

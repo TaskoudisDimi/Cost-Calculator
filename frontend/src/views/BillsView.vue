@@ -757,11 +757,11 @@ async function onQrFileSelected(event: Event) {
     <!-- Notification banner -->
     <div
       v-if="notifSupported && !notifDismissed && !notifGranted"
-      class="flex items-center justify-between gap-3 bg-blue-900/20 border border-blue-700/40 rounded-2xl px-4 py-3 mb-4 text-sm"
+      class="flex items-center justify-between gap-3 bg-violet-900/20 border border-violet-700/40 rounded-2xl px-4 py-3 mb-4 text-sm"
     >
-      <span class="text-blue-300 text-sm">{{ t('bills.notif_banner') }}</span>
+      <span class="text-violet-300 text-sm">{{ t('bills.notif_banner') }}</span>
       <div class="flex gap-2 shrink-0">
-        <button @click="enableNotifications" class="text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+        <button @click="enableNotifications" class="text-white bg-violet-600 hover:bg-violet-500 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
           {{ t('bills.enable_notif') }}
         </button>
         <button @click="dismissNotifBanner" class="text-gray-500 hover:text-gray-300 p-1 rounded-lg transition-colors">✕</button>
@@ -793,7 +793,7 @@ async function onQrFileSelected(event: Event) {
       </div>
       <button
         @click="openCreate"
-        class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.97] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm shadow-blue-900/40"
+        class="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 active:scale-[0.97] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm shadow-violet-900/40"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -876,15 +876,15 @@ async function onQrFileSelected(event: Event) {
               cell === null ? '' : cell.bills.length > 0
                 ? 'cursor-pointer hover:bg-white/[0.06] active:bg-white/[0.08]'
                 : '',
-              cell && selectedCalendarDay === cell.day ? 'bg-blue-500/15 ring-1 ring-blue-500/40' : '',
-              cell && isCalendarToday(cell.day) && selectedCalendarDay !== cell.day ? 'ring-1 ring-blue-400/40' : '',
+              cell && selectedCalendarDay === cell.day ? 'bg-violet-500/15 ring-1 ring-violet-500/40' : '',
+              cell && isCalendarToday(cell.day) && selectedCalendarDay !== cell.day ? 'ring-1 ring-violet-400/40' : '',
             ]"
             @click="cell && cell.bills.length > 0 && (selectedCalendarDay = selectedCalendarDay === cell.day ? null : cell.day)"
           >
             <span
               v-if="cell"
               class="text-[12px] leading-none font-medium tabular-nums"
-              :class="isCalendarToday(cell.day) ? 'text-blue-400 font-bold' : cell.bills.length > 0 ? 'text-gray-300' : 'text-gray-600'"
+              :class="isCalendarToday(cell.day) ? 'text-violet-400 font-bold' : cell.bills.length > 0 ? 'text-gray-300' : 'text-gray-600'"
             >{{ cell.day }}</span>
             <div v-if="cell && cell.bills.length > 0" class="flex flex-wrap gap-[2px] justify-center mt-1">
               <div
@@ -902,7 +902,7 @@ async function onQrFileSelected(event: Event) {
       <!-- Legend -->
       <div class="flex items-center gap-3 px-1">
         <div class="flex items-center gap-1.5">
-          <div class="w-2 h-2 rounded-full ring-1 ring-blue-400/60 bg-transparent" />
+          <div class="w-2 h-2 rounded-full ring-1 ring-violet-400/60 bg-transparent" />
           <span class="text-[11px] text-gray-500">{{ locale === 'el' ? 'Σήμερα' : 'Today' }}</span>
         </div>
         <div class="flex items-center gap-1.5">
@@ -960,7 +960,7 @@ async function onQrFileSelected(event: Event) {
             @click="filterStatus = f; clearSelection()"
             class="whitespace-nowrap px-3.5 py-2 rounded-xl text-sm font-semibold transition-all shrink-0"
             :class="filterStatus === f ? {
-              all: 'bg-blue-600 text-white shadow-sm shadow-blue-900/40',
+              all: 'bg-violet-600 text-white shadow-sm shadow-violet-900/40',
               pending: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
               overdue: 'bg-red-500/20 text-red-300 border border-red-500/30',
               paid: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
@@ -970,20 +970,21 @@ async function onQrFileSelected(event: Event) {
           </button>
         </div>
 
-        <!-- Filter toggle -->
+        <!-- Filter toggle (members only) -->
         <button
+          v-if="membersStore.members.length > 0"
           @click="filterOpen = !filterOpen"
           class="shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-all relative"
-          :class="filterOpen || dateFrom || dateTo || filterMember !== 'all'
-            ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+          :class="filterOpen || filterMember !== 'all'
+            ? 'border-violet-500/40 bg-violet-500/10 text-violet-400'
             : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
-          :title="locale === 'el' ? 'Φίλτρα' : 'Filters'"
+          :title="locale === 'el' ? 'Φίλτρο μέλους' : 'Member filter'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
           </svg>
-          <span v-if="dateFrom || dateTo || filterMember !== 'all'"
-            class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-[#0b0b10]" />
+          <span v-if="filterMember !== 'all'"
+            class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-violet-500 border-2 border-[#0b0b10]" />
         </button>
 
         <!-- More actions menu -->
@@ -992,7 +993,7 @@ async function onQrFileSelected(event: Event) {
             @click.stop="showMoreMenu = !showMoreMenu"
             class="flex items-center justify-center w-10 h-10 rounded-xl border transition-all"
             :class="showMoreMenu || groupMode !== 'none' || selectionMode
-              ? 'border-blue-500/40 bg-blue-500/10 text-blue-400'
+              ? 'border-violet-500/40 bg-violet-500/10 text-violet-400'
               : 'border-white/[0.06] bg-[#111119] text-gray-500 hover:text-gray-300 hover:border-white/[0.12]'"
             :title="locale === 'el' ? 'Περισσότερες ενέργειες' : 'More actions'"
           >
@@ -1041,7 +1042,7 @@ async function onQrFileSelected(event: Event) {
                   @click="showCopyModal = true; showMoreMenu = false"
                   class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:bg-white/[0.05] hover:text-white transition-colors text-left"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                   </svg>
                   {{ locale === 'el' ? 'Αντιγραφή μήνα' : 'Copy month' }}
@@ -1058,9 +1059,9 @@ async function onQrFileSelected(event: Event) {
                 <button
                   @click="selectionMode ? exitSelectionMode() : (selectionMode = true); showMoreMenu = false"
                   class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left"
-                  :class="selectionMode ? 'text-blue-400 bg-blue-500/10' : 'text-gray-300 hover:bg-white/[0.05] hover:text-white'"
+                  :class="selectionMode ? 'text-violet-400 bg-violet-500/10' : 'text-gray-300 hover:bg-white/[0.05] hover:text-white'"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 shrink-0" :class="selectionMode ? 'text-blue-400' : 'text-gray-500'">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 shrink-0" :class="selectionMode ? 'text-violet-400' : 'text-gray-500'">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
                   {{ selectionMode ? (locale === 'el' ? 'Ακύρωση επιλογής' : 'Cancel select') : (locale === 'el' ? 'Επιλογή' : 'Select') }}
@@ -1069,6 +1070,27 @@ async function onQrFileSelected(event: Event) {
             </div>
           </Transition>
         </div>
+      </div>
+
+      <!-- Date range (always visible) -->
+      <div class="flex items-center gap-2 mb-2">
+        <input v-model="dateFrom" type="date" @change="filterMonth = 'all'; clearSelection()"
+          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+          :class="dateFrom ? 'border-violet-500/40 text-gray-200' : ''" />
+        <span class="text-gray-600 shrink-0 text-sm font-bold">—</span>
+        <input v-model="dateTo" type="date" @change="filterMonth = 'all'; clearSelection()"
+          class="flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all [color-scheme:dark]"
+          :class="dateTo ? 'border-violet-500/40 text-gray-200' : ''" />
+        <button
+          v-if="dateFrom || dateTo"
+          @click="dateFrom = ''; dateTo = ''; clearSelection()"
+          class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-white/[0.06] text-gray-500 hover:text-gray-200 hover:border-white/[0.12] transition-colors"
+          :title="locale === 'el' ? 'Καθαρισμός' : 'Clear'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Row 2: Month chips + Copy button -->
@@ -1128,23 +1150,9 @@ async function onQrFileSelected(event: Event) {
             </button>
           </div>
 
-          <!-- Date range -->
-          <div class="space-y-2">
-            <p v-if="filterMonth !== 'all'" class="text-[11px] text-gray-600">
-              {{ locale === 'el' ? 'Απενεργοποίησε τον μήνα για να χρησιμοποιήσεις εύρος ημερομηνιών' : 'Clear month filter to use date range' }}
-            </p>
-            <div class="flex items-center gap-2" :class="filterMonth !== 'all' ? 'opacity-40 pointer-events-none' : ''">
-              <input v-model="dateFrom" type="date" @change="filterMonth = 'all'; clearSelection()"
-                class="flex-1 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
-              <span class="text-gray-600 shrink-0">—</span>
-              <input v-model="dateTo" type="date" @change="filterMonth = 'all'; clearSelection()"
-                class="flex-1 px-3 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60" />
-            </div>
-          </div>
-
           <button
-            v-if="dateFrom || dateTo || filterMember !== 'all' || filterMonth !== 'all'"
-            @click="clearDateFilter"
+            v-if="filterMember !== 'all'"
+            @click="filterMember = 'all'; filterOpen = false; clearSelection()"
             class="w-full py-2 rounded-xl border border-white/[0.06] text-sm text-gray-400 hover:text-gray-200 hover:border-white/[0.12] transition-colors font-semibold"
           >
             {{ t('bills.clear_filter') }}
@@ -1212,7 +1220,7 @@ async function onQrFileSelected(event: Event) {
       <!-- ── Monthly Summary Card ─────────────────────────── -->
       <div
         v-if="!store.loading && filteredBills.length > 0"
-        class="mb-4 rounded-2xl overflow-hidden border border-blue-500/15 bg-gradient-to-br from-blue-950/40 via-indigo-950/20 to-[#111119]"
+        class="mb-4 rounded-2xl overflow-hidden border border-violet-500/15 bg-gradient-to-br from-violet-950/40 via-purple-950/20 to-[#111119]"
       >
         <div class="px-4 py-4">
           <div class="flex items-start justify-between mb-3">
@@ -1234,7 +1242,7 @@ async function onQrFileSelected(event: Event) {
           <div class="h-1 rounded-full bg-white/[0.06] overflow-hidden mb-3">
             <div
               class="h-full rounded-full transition-all duration-700"
-              :class="monthlyStats.paidPct === 100 ? 'bg-emerald-500' : monthlyStats.overdue > 0 ? 'bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500' : 'bg-gradient-to-r from-emerald-500 to-blue-500'"
+              :class="monthlyStats.paidPct === 100 ? 'bg-emerald-500' : monthlyStats.overdue > 0 ? 'bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500' : 'bg-gradient-to-r from-emerald-500 to-violet-500'"
               :style="{ width: Math.max(monthlyStats.paidPct, 2) + '%' }"
             />
           </div>
@@ -1264,7 +1272,7 @@ async function onQrFileSelected(event: Event) {
       <!-- Empty state -->
       <div v-else-if="filteredBills.length === 0" class="text-center py-20 bg-[#111119]/60 rounded-2xl border border-white/[0.06]">
         <p class="text-gray-500 font-medium">{{ t('bills.no_bills') }}</p>
-        <button @click="openCreate" class="mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+        <button @click="openCreate" class="mt-3 text-sm text-violet-400 hover:text-violet-300 transition-colors">
           {{ t('bills.add_first') }}
         </button>
       </div>
@@ -1312,7 +1320,7 @@ async function onQrFileSelected(event: Event) {
             v-else-if="item.bill"
             class="rounded-2xl border overflow-hidden transition-all duration-150"
             :class="selected.has(item.bill.id)
-              ? 'bg-blue-950/20 border-blue-600/30'
+              ? 'bg-violet-950/20 border-violet-600/30'
               : item.bill.status === 'overdue'
                 ? 'bg-[#111119] border-red-900/30 hover:border-red-700/40'
                 : 'bg-[#111119] border-white/[0.06] hover:border-white/[0.1]'"
@@ -1329,7 +1337,7 @@ async function onQrFileSelected(event: Event) {
                 type="checkbox"
                 :checked="selected.has(item.bill.id)"
                 @change="toggleSelect(item.bill.id)"
-                class="mt-1 w-4 h-4 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0"
+                class="mt-1 w-4 h-4 rounded border-gray-600 accent-violet-600 cursor-pointer shrink-0"
               />
 
               <div
@@ -1358,7 +1366,7 @@ async function onQrFileSelected(event: Event) {
                   >
                     {{ membersStore.members.find(m => m.id === item.bill!.member_id)!.name }}
                   </span>
-                  <span v-if="item.bill.recurring" class="text-[11px] text-blue-400 font-bold shrink-0">↻</span>
+                  <span v-if="item.bill.recurring" class="text-[11px] text-violet-400 font-bold shrink-0">↻</span>
                 </div>
               </div>
 
@@ -1386,7 +1394,7 @@ async function onQrFileSelected(event: Event) {
                 class="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border transition-all group"
                 :class="copiedId === item.bill.id
                   ? 'border-emerald-500/30 bg-emerald-500/8 text-emerald-300'
-                  : 'border-white/[0.06] bg-white/[0.03] text-blue-300/80 hover:border-blue-500/30 hover:bg-blue-950/30'"
+                  : 'border-white/[0.06] bg-white/[0.03] text-violet-300/80 hover:border-violet-500/30 hover:bg-violet-950/30'"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5 shrink-0 opacity-60">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
@@ -1395,7 +1403,7 @@ async function onQrFileSelected(event: Event) {
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0 transition-all"
                   :class="copiedId === item.bill.id
                     ? 'bg-emerald-500/15 text-emerald-300'
-                    : 'bg-white/[0.06] text-gray-500 group-hover:bg-blue-500/15 group-hover:text-blue-300'">
+                    : 'bg-white/[0.06] text-gray-500 group-hover:bg-violet-500/15 group-hover:text-violet-300'">
                   {{ copiedId === item.bill.id ? '✓ ' + (locale === 'el' ? 'Αντιγράφηκε' : 'Copied') : (locale === 'el' ? 'Αντιγραφή' : 'Copy') }}
                 </span>
               </button>
@@ -1424,7 +1432,7 @@ async function onQrFileSelected(event: Event) {
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                     </svg>
                   </div>
-                  <span class="text-xs text-blue-300 truncate">{{ locale === 'el' ? 'Δείτε παραστατικό' : 'View receipt' }}</span>
+                  <span class="text-xs text-violet-300 truncate">{{ locale === 'el' ? 'Δείτε παραστατικό' : 'View receipt' }}</span>
                 </a>
                 <button
                   @click.stop="deleteAttachment(item.bill)"
@@ -1492,7 +1500,7 @@ async function onQrFileSelected(event: Event) {
               <!-- AI auto-pay -->
               <button
                 @click="agentBill = item.bill; showAgentModal = true"
-                class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-all shrink-0 active:scale-[0.93]"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-violet-600/15 text-violet-400 hover:bg-violet-600/25 transition-all shrink-0 active:scale-[0.93]"
                 :title="locale === 'el' ? 'AI αυτόματη πληρωμή' : 'AI auto-pay'"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
@@ -1515,7 +1523,7 @@ async function onQrFileSelected(event: Event) {
                 v-else-if="(item.bill.payment_url || item.bill.user_provider?.provider?.payment_url) && item.bill.status !== 'paid'"
                 :href="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
                 target="_blank" rel="noopener noreferrer"
-                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-blue-300 hover:bg-blue-500/12 transition-all shrink-0"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-violet-300 hover:bg-violet-500/12 transition-all shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -1579,7 +1587,7 @@ async function onQrFileSelected(event: Event) {
             <!-- IRIS deeplink -->
             <button
               @click="tryIRISDeeplink(qrBill!)"
-              class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 transition-colors mb-3"
+              class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-500 transition-colors mb-3"
             >
               <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white">
@@ -1588,7 +1596,7 @@ async function onQrFileSelected(event: Event) {
               </div>
               <div class="text-left">
                 <p class="text-sm font-bold text-white">{{ locale === 'el' ? 'Άνοιξε IRIS' : 'Open IRIS' }}</p>
-                <p class="text-xs text-blue-200">{{ locale === 'el' ? 'Πλήρωσε από την τραπεζική εφαρμογή' : 'Pay via banking app' }}</p>
+                <p class="text-xs text-violet-200">{{ locale === 'el' ? 'Πλήρωσε από την τραπεζική εφαρμογή' : 'Pay via banking app' }}</p>
               </div>
             </button>
 
@@ -1608,7 +1616,7 @@ async function onQrFileSelected(event: Event) {
             <div class="bg-white/[0.03] rounded-xl border border-white/[0.06] p-3">
               <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-2">RF code</p>
               <div class="flex items-center gap-2">
-                <code class="text-sm font-mono text-blue-400 flex-1 select-all break-all">{{ qrBill.payment_code }}</code>
+                <code class="text-sm font-mono text-violet-400 flex-1 select-all break-all">{{ qrBill.payment_code }}</code>
                 <button
                   @click="copyPaymentCode(qrBill!.payment_code, qrBill!.id)"
                   class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
@@ -1720,7 +1728,7 @@ async function onQrFileSelected(event: Event) {
               @click="showEmailInput = !showEmailInput; emailError = ''"
               :disabled="scanning || parsingEmail || qrScanning"
               class="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border hover:bg-white/[0.06] text-gray-400 transition-colors disabled:opacity-60"
-              :class="showEmailInput ? 'border-blue-600 text-blue-400' : 'border-white/[0.08]'"
+              :class="showEmailInput ? 'border-violet-600 text-violet-400' : 'border-white/[0.08]'"
               :title="t('bills.email_btn')"
             >
               <span v-if="parsingEmail" class="animate-spin">⏳</span>
@@ -1733,20 +1741,20 @@ async function onQrFileSelected(event: Event) {
         <p v-if="scanError || qrScanError" class="text-amber-400 text-xs mb-3 bg-amber-900/20 px-3 py-2 rounded-lg">{{ scanError || qrScanError }}</p>
 
         <!-- Email paste area -->
-        <div v-if="showEmailInput && !editingBill" class="mb-4 bg-white/[0.03] rounded-xl p-3 border border-blue-700/40">
-          <label class="block text-xs font-medium text-blue-300 mb-1.5">{{ t('bills.email_paste_label') }}</label>
+        <div v-if="showEmailInput && !editingBill" class="mb-4 bg-white/[0.03] rounded-xl p-3 border border-violet-700/40">
+          <label class="block text-xs font-medium text-violet-300 mb-1.5">{{ t('bills.email_paste_label') }}</label>
           <textarea
             v-model="emailContent"
             rows="5"
             :placeholder="t('bills.email_paste_placeholder')"
-            class="w-full px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.04] text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            class="w-full px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.04] text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
           />
           <p v-if="emailError" class="text-red-400 text-xs mt-1">{{ emailError }}</p>
           <button
             type="button"
             @click="parseEmail"
             :disabled="parsingEmail || !emailContent.trim()"
-            class="mt-2 w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+            class="mt-2 w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-medium transition-colors"
           >
             {{ parsingEmail ? t('bills.parsing') : t('bills.email_extract') }}
           </button>
@@ -1758,7 +1766,7 @@ async function onQrFileSelected(event: Event) {
             <select
               v-model="form.user_provider_id"
               required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
             >
               <option value="" disabled>{{ t('bills.select_provider') }}</option>
               <option v-for="up in store.userProviders" :key="up.id" :value="up.id">
@@ -1805,7 +1813,7 @@ async function onQrFileSelected(event: Event) {
               step="0.01"
               min="0"
               required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="0.00"
             />
           </div>
@@ -1817,7 +1825,7 @@ async function onQrFileSelected(event: Event) {
                 v-model="form.due_date"
                 type="date"
                 required
-                class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               />
             </div>
             <div>
@@ -1825,7 +1833,7 @@ async function onQrFileSelected(event: Event) {
               <input
                 v-model="form.issued_date"
                 type="date"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -1835,7 +1843,7 @@ async function onQrFileSelected(event: Event) {
             <input
               v-model="form.notes"
               type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               :placeholder="t('common.optional')"
             />
           </div>
@@ -1845,7 +1853,7 @@ async function onQrFileSelected(event: Event) {
             <input
               v-model="form.payment_code"
               type="text"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm font-mono text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="π.χ. RF47 1234 5678 9012"
             />
             <p class="text-xs text-gray-500 mt-1">{{ t('bills.payment_code_hint') }}</p>
@@ -1859,7 +1867,7 @@ async function onQrFileSelected(event: Event) {
             <input
               v-model="form.payment_url"
               type="url"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
               :placeholder="locale === 'el' ? 'π.χ. https://www.dei.gr/pay' : 'e.g. https://provider.com/pay'"
             />
             <p class="text-xs text-gray-500 mt-1">
@@ -1875,18 +1883,18 @@ async function onQrFileSelected(event: Event) {
               @click="form.recurring = !form.recurring"
               class="w-full flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border transition-colors"
               :class="form.recurring
-                ? 'bg-blue-950/40 border-blue-700/60'
+                ? 'bg-violet-950/40 border-violet-700/60'
                 : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.12]'"
             >
               <div class="text-left">
-                <p class="text-sm font-medium" :class="form.recurring ? 'text-blue-200' : 'text-gray-200'">
+                <p class="text-sm font-medium" :class="form.recurring ? 'text-violet-200' : 'text-gray-200'">
                   {{ t('bills.recurring') }}
                 </p>
                 <p class="text-xs text-gray-500 mt-0.5">{{ t('bills.recurring_desc') }}</p>
               </div>
               <div
                 class="relative w-11 h-6 rounded-full transition-colors shrink-0"
-                :class="form.recurring ? 'bg-blue-600' : 'bg-white/[0.1]'"
+                :class="form.recurring ? 'bg-violet-600' : 'bg-white/[0.1]'"
               >
                 <span
                   class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200"
@@ -1907,7 +1915,7 @@ async function onQrFileSelected(event: Event) {
             <button
               type="submit"
               :disabled="saving"
-              class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-55 text-white text-sm font-semibold transition-colors"
+              class="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-55 text-white text-sm font-semibold transition-colors"
             >
               {{ saving ? t('common.saving') : t('common.save') }}
             </button>
@@ -1933,7 +1941,7 @@ async function onQrFileSelected(event: Event) {
             <input
               v-model="copyFromMonth"
               type="month"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <div>
@@ -1943,7 +1951,7 @@ async function onQrFileSelected(event: Event) {
             <input
               v-model="copyToMonth"
               type="month"
-              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
         </div>
@@ -1952,7 +1960,7 @@ async function onQrFileSelected(event: Event) {
         <div v-if="copySourceBills.length > 0" class="mb-4">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs text-gray-500">{{ copySourceBills.length }} {{ locale === 'el' ? 'λογαριασμοί' : 'bills' }}</span>
-            <button @click="toggleAllCopy" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+            <button @click="toggleAllCopy" class="text-xs text-purple-400 hover:text-indigo-300 transition-colors">
               {{ copySelectedIds.size === copySourceBills.length
                 ? (locale === 'el' ? 'Αποεπιλογή όλων' : 'Deselect all')
                 : (locale === 'el' ? 'Επιλογή όλων' : 'Select all') }}
@@ -1965,13 +1973,13 @@ async function onQrFileSelected(event: Event) {
               @click="toggleCopyId(b.id)"
               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left"
               :class="copySelectedIds.has(b.id)
-                ? 'border-indigo-500/40 bg-indigo-500/8'
+                ? 'border-purple-500/40 bg-purple-500/8'
                 : 'border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02]'"
             >
               <div
                 class="w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all"
                 :class="copySelectedIds.has(b.id)
-                  ? 'border-indigo-500 bg-indigo-600'
+                  ? 'border-purple-500 bg-purple-600'
                   : 'border-white/[0.20]'"
               >
                 <svg v-if="copySelectedIds.has(b.id)" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -2004,7 +2012,7 @@ async function onQrFileSelected(event: Event) {
           <button
             @click="confirmCopy"
             :disabled="copySelectedIds.size === 0 || copyLoading"
-            class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
           >
             {{ copyLoading
               ? (locale === 'el' ? 'Αντιγραφή…' : 'Copying…')

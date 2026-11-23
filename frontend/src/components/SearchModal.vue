@@ -112,12 +112,12 @@ onMounted(() => nextTick(() => inputRef.value?.focus()))
           v-for="(r, i) in results"
           :key="r.id"
           class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-          :class="i === selectedIndex ? 'bg-blue-600/10' : 'hover:bg-white/[0.03]'"
+          :class="i === selectedIndex ? 'bg-violet-600/10' : 'hover:bg-white/[0.03]'"
           @click="select(r)"
           @mouseenter="selectedIndex = i"
         >
           <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm"
-            :class="r.type === 'bill' ? 'bg-blue-900/30 text-blue-400' : 'bg-amber-900/30 text-amber-400'">
+            :class="r.type === 'bill' ? 'bg-violet-900/30 text-violet-400' : 'bg-amber-900/30 text-amber-400'">
             {{ r.type === 'bill' ? '📄' : '🛍️' }}
           </div>
           <div class="flex-1 min-w-0">

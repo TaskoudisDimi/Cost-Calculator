@@ -173,7 +173,7 @@ function nextYear() {
         </div>
         <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.bills') }}</p>
-          <p class="text-lg font-bold text-blue-400">{{ formatAmount(data.total_bills) }}</p>
+          <p class="text-lg font-bold text-violet-400">{{ formatAmount(data.total_bills) }}</p>
         </div>
         <div class="bg-[#111119] border border-white/[0.06] rounded-2xl p-4">
           <p class="text-[11px] text-gray-500 mb-1 uppercase tracking-wider">{{ t('analytics.expenses') }}</p>
@@ -194,7 +194,7 @@ function nextYear() {
           <p class="text-sm font-semibold text-gray-200">{{ t('analytics.monthly_overview') }}</p>
           <div class="flex items-center gap-3 text-xs text-gray-500">
             <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 shrink-0" />{{ t('analytics.income_legend') }}</span>
-            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 shrink-0" />{{ t('analytics.spending_legend') }}</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-violet-500 shrink-0" />{{ t('analytics.spending_legend') }}</span>
           </div>
         </div>
 

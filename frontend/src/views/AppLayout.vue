@@ -164,12 +164,12 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           </svg>
         </button>
         <span v-show="sidebarOpen" class="font-bold tracking-tight whitespace-nowrap text-[15px] flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-800/50">
+          <span class="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0 shadow-sm shadow-violet-800/50">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-white">
               <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6z" clip-rule="evenodd" />
             </svg>
           </span>
-          <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
+          <span class="text-violet-400">Bill</span><span class="text-white">Tracker</span>
         </span>
       </div>
 
@@ -199,18 +199,18 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
+              ? 'bg-gradient-to-r from-violet-600/15 to-purple-600/5 text-violet-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
           <span v-if="route.name === item.name && sidebarOpen"
-            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-violet-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
             stroke="currentColor"
             class="w-[18px] h-[18px] shrink-0 transition-colors"
-            :class="route.name === item.name ? 'text-blue-400' : ''"
+            :class="route.name === item.name ? 'text-violet-400' : ''"
             v-html="item.icon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap flex-1">{{ item.label }}</span>
           <span
@@ -229,18 +229,18 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === item.name
-              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
+              ? 'bg-gradient-to-r from-violet-600/15 to-purple-600/5 text-violet-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? item.label : undefined"
         >
           <span v-if="route.name === item.name && sidebarOpen"
-            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-violet-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === item.name ? '2' : '1.75'"
             stroke="currentColor"
             class="w-[18px] h-[18px] shrink-0"
-            :class="route.name === item.name ? 'text-blue-400' : ''"
+            :class="route.name === item.name ? 'text-violet-400' : ''"
             v-html="item.icon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap">{{ item.label }}</span>
         </RouterLink>
@@ -254,25 +254,25 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           :class="[
             sidebarOpen ? 'px-3 py-2.5' : 'px-0 py-2.5 justify-center',
             route.name === 'settings'
-              ? 'bg-gradient-to-r from-blue-600/15 to-indigo-600/5 text-blue-100'
+              ? 'bg-gradient-to-r from-violet-600/15 to-purple-600/5 text-violet-100'
               : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
           ]"
           :title="!sidebarOpen ? t('nav.settings') : undefined"
         >
           <span v-if="route.name === 'settings' && sidebarOpen"
-            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-blue-400" />
+            class="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-violet-400" />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             :stroke-width="route.name === 'settings' ? '2' : '1.75'"
             stroke="currentColor"
             class="w-[18px] h-[18px] shrink-0"
-            :class="route.name === 'settings' ? 'text-blue-400' : ''"
+            :class="route.name === 'settings' ? 'text-violet-400' : ''"
             v-html="settingsIcon" />
           <span v-show="sidebarOpen" class="whitespace-nowrap">{{ t('nav.settings') }}</span>
         </RouterLink>
 
         <!-- User row -->
         <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl" :class="!sidebarOpen && 'justify-center px-0'">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 select-none shadow-sm">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 select-none shadow-sm">
             {{ userInitials }}
           </div>
           <div v-show="sidebarOpen" class="min-w-0 flex-1">
@@ -301,12 +301,12 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
     <!-- ─── Mobile top header ────────────────────────── -->
     <header class="md:hidden fixed top-0 inset-x-0 z-30 bg-[#0b0b10]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-4 h-14">
       <span class="font-bold tracking-tight text-[15px] flex items-center gap-1.5">
-        <span class="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-800/50">
+        <span class="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0 shadow-sm shadow-violet-800/50">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-white">
             <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6z" clip-rule="evenodd" />
           </svg>
         </span>
-        <span class="text-blue-400">Bill</span><span class="text-white">Tracker</span>
+        <span class="text-violet-400">Bill</span><span class="text-white">Tracker</span>
       </span>
       <div class="flex items-center gap-1">
         <button @click="showSearch = true" class="p-2 text-gray-500 hover:text-gray-200 hover:bg-white/[0.06] rounded-xl transition-all">
@@ -317,7 +317,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
         <RouterLink
           :to="{ name: 'settings' }"
           class="p-2 rounded-xl transition-all"
-          :class="route.name === 'settings' ? 'text-blue-400 bg-blue-600/10' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.06]'"
+          :class="route.name === 'settings' ? 'text-violet-400 bg-violet-600/10' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.06]'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5" v-html="settingsIcon" />
         </RouterLink>
@@ -351,12 +351,14 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
     <Teleport to="body">
       <button
         @click="showAgentModal = true"
-        class="fixed z-40 flex items-center justify-center rounded-2xl transition-all active:scale-95 hover:scale-105 bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-900/60 border border-blue-400/25"
+        class="fixed z-40 flex items-center justify-center rounded-2xl transition-all active:scale-95 hover:scale-105 bg-gradient-to-br from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-900/60 border border-violet-400/25"
         style="width:52px;height:52px;bottom:calc(env(safe-area-inset-bottom) + 76px);right:16px"
         title="AI Αυτόματη Πληρωμή"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-6 h-6 text-white">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
         </svg>
       </button>
       <AgentPayModal
@@ -379,12 +381,12 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
         >
           <div
             class="relative flex items-center justify-center w-10 h-8 rounded-xl transition-all"
-            :class="route.name === item.name ? 'bg-blue-600/18' : ''"
+            :class="route.name === item.name ? 'bg-violet-600/18' : ''"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
               :stroke-width="route.name === item.name ? '2.25' : '1.75'"
               stroke="currentColor" class="w-5 h-5 transition-all"
-              :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600'"
+              :class="route.name === item.name ? 'text-violet-400' : 'text-gray-600'"
               v-html="item.icon" />
             <span
               v-if="item.badge && overdueCount > 0"
@@ -393,7 +395,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
           </div>
           <span
             class="text-[10px] font-semibold leading-none tracking-wide transition-colors"
-            :class="route.name === item.name ? 'text-blue-400' : 'text-gray-600'"
+            :class="route.name === item.name ? 'text-violet-400' : 'text-gray-600'"
           >{{ item.label.split(' ')[0] }}</span>
         </RouterLink>
       </div>
@@ -420,7 +422,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
                 'bg-green-500': t.type === 'success',
                 'bg-red-500': t.type === 'error',
                 'bg-amber-500': t.type === 'warning',
-                'bg-blue-500': t.type === 'info',
+                'bg-violet-500': t.type === 'info',
               }"
             />
             <div class="flex items-center gap-2.5 px-3.5 py-3">
@@ -429,7 +431,7 @@ const settingsIcon = `<path stroke-linecap="round" stroke-linejoin="round" d="M9
                   'text-green-400': t.type === 'success',
                   'text-red-400': t.type === 'error',
                   'text-amber-400': t.type === 'warning',
-                  'text-blue-400': t.type === 'info',
+                  'text-violet-400': t.type === 'info',
                 }">
                 {{ t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : t.type === 'warning' ? '!' : 'i' }}
               </span>

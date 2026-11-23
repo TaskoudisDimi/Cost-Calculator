@@ -85,7 +85,7 @@ async function copyText(text: string, key: string) {
       </div>
       <button
         @click="openAdd"
-        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+        class="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
       >
         {{ t('credentials.new_btn') }}
       </button>
@@ -103,7 +103,7 @@ async function copyText(text: string, key: string) {
       <p class="text-gray-400 font-medium">{{ t('credentials.no_creds') }}</p>
       <p class="text-sm text-gray-400 mt-1">{{ t('credentials.no_creds_desc') }}</p>
       <button @click="openAdd"
-        class="mt-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        class="mt-4 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
         {{ t('credentials.new_btn') }}
       </button>
     </div>
@@ -123,7 +123,7 @@ async function copyText(text: string, key: string) {
           </div>
           <div class="flex items-center gap-1 shrink-0">
             <button @click="openEdit(cred)"
-              class="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-900/20 transition-colors">
+              class="p-1.5 rounded-lg text-gray-400 hover:text-violet-500 hover:bg-violet-900/20 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/>
               </svg>
@@ -146,7 +146,7 @@ async function copyText(text: string, key: string) {
             class="shrink-0 text-xs px-2 py-1 rounded-md font-medium transition-colors"
             :class="copiedKey === cred.id + '-u'
               ? 'bg-green-900/30 text-green-400'
-              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-blue-300 hover:text-blue-400'"
+              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-violet-300 hover:text-violet-400'"
           >
             {{ copiedKey === cred.id + '-u' ? t('common.copied') : t('common.copy') }}
           </button>
@@ -176,7 +176,7 @@ async function copyText(text: string, key: string) {
             class="shrink-0 text-xs px-2 py-1 rounded-md font-medium transition-colors"
             :class="copiedKey === cred.id + '-p'
               ? 'bg-green-900/30 text-green-400'
-              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-blue-300 hover:text-blue-400'"
+              : 'bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:border-violet-300 hover:text-violet-400'"
           >
             {{ copiedKey === cred.id + '-p' ? t('common.copied') : t('common.copy') }}
           </button>
@@ -184,7 +184,7 @@ async function copyText(text: string, key: string) {
 
         <!-- Open URL -->
         <a v-if="cred.url" :href="cred.url" target="_blank" rel="noopener"
-          class="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-400 hover:underline mt-1">
+          class="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-400 hover:underline mt-1">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5 shrink-0">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
           </svg>
@@ -204,35 +204,35 @@ async function copyText(text: string, key: string) {
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.label') }}</label>
             <input v-model="form.label" type="text" required
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               :placeholder="t('credentials.label_placeholder')" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.username') }}</label>
             <input v-model="form.username" type="text" autocomplete="off"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="username or email" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.password') }}</label>
             <input v-model="form.password" type="text" autocomplete="new-password"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
               :placeholder="t('credentials.password').toLowerCase()" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.url') }}</label>
             <input v-model="form.url" type="url"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               placeholder="https://..." />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('credentials.notes') }}</label>
             <input v-model="form.notes" type="text"
-              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2.5 rounded-lg border border-white/[0.10] text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               :placeholder="t('common.optional')" />
           </div>
 
@@ -242,7 +242,7 @@ async function copyText(text: string, key: string) {
               {{ t('common.cancel') }}
             </button>
             <button type="submit"
-              class="flex-1 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+              class="flex-1 px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors">
               {{ editingId ? t('common.save') : t('common.add') }}
             </button>
           </div>

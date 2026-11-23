@@ -599,7 +599,7 @@ async function confirmDeleteAccount() {
       <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">{{ t('settings.profile') }}</h3>
 
       <div class="flex items-center gap-4 mb-5">
-        <div class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
+        <div class="w-14 h-14 rounded-2xl bg-violet-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
           {{ userInitials }}
         </div>
         <div>
@@ -616,12 +616,12 @@ async function confirmDeleteAccount() {
               v-model="displayName"
               type="text"
               :placeholder="t('settings.name_placeholder')"
-              class="flex-1 px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="flex-1 px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
             />
             <button
               @click="saveProfile"
               :disabled="savingProfile || !displayName.trim()"
-              class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              class="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
             >
               {{ savingProfile ? '…' : t('settings.save_profile') }}
             </button>
@@ -642,7 +642,7 @@ async function confirmDeleteAccount() {
           <button
             @click="sendPasswordReset"
             :disabled="resetEmailSent"
-            class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 disabled:text-gray-500 transition-colors font-medium"
+            class="flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 disabled:text-gray-500 transition-colors font-medium"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
@@ -678,7 +678,7 @@ async function confirmDeleteAccount() {
           <button
             @click="settingsStore.notifEnabled = !settingsStore.notifEnabled"
             class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-            :class="settingsStore.notifEnabled ? 'bg-blue-600' : 'bg-white/[0.08]'"
+            :class="settingsStore.notifEnabled ? 'bg-violet-600' : 'bg-white/[0.08]'"
           >
             <span
               class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -698,7 +698,7 @@ async function confirmDeleteAccount() {
               @click="settingsStore.notifDays = days"
               class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors"
               :class="settingsStore.notifDays === days
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-300'"
             >
               {{ days === 1 ? `1 ${t('settings.day')}` : `${days} ${t('settings.days')}` }}
@@ -729,7 +729,7 @@ async function confirmDeleteAccount() {
               @click="settingsStore.currency = opt.value; settingsStore.saveSettings()"
               class="flex-1 py-2 rounded-xl text-sm font-medium border transition-colors"
               :class="settingsStore.currency === opt.value
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               {{ opt.label }}
@@ -744,7 +744,7 @@ async function confirmDeleteAccount() {
               @click="setLocale('el')"
               class="flex items-center gap-2 flex-1 py-2 rounded-xl text-sm font-medium border transition-colors"
               :class="locale === 'el'
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               <span class="text-base leading-none">🇬🇷</span> Ελληνικά
@@ -753,7 +753,7 @@ async function confirmDeleteAccount() {
               @click="setLocale('en')"
               class="flex items-center gap-2 flex-1 py-2 rounded-xl text-sm font-medium border transition-colors justify-center"
               :class="locale === 'en'
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-white/[0.10] text-gray-400 hover:border-gray-500 hover:text-gray-200'"
             >
               <span class="text-base leading-none">🇬🇧</span> English
@@ -800,7 +800,7 @@ async function confirmDeleteAccount() {
                 else delete settingsStore.budgetLimits[cat.key]
                 settingsStore.saveSettings()
               }"
-              class="w-full px-3 py-2 pr-10 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              class="w-full px-3 py-2 pr-10 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
               :placeholder="locale === 'el' ? 'Χωρίς όριο' : 'No limit'"
             />
             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{{ settingsStore.currency }}</span>
@@ -840,10 +840,10 @@ async function confirmDeleteAccount() {
             <input
               v-model="editingMemberName"
               type="text"
-              class="flex-1 bg-white/[0.06] rounded-lg px-2.5 py-1 text-sm text-gray-100 border border-white/[0.10] focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="flex-1 bg-white/[0.06] rounded-lg px-2.5 py-1 text-sm text-gray-100 border border-white/[0.10] focus:outline-none focus:ring-1 focus:ring-violet-500"
               @keyup.enter="saveEditMember"
             />
-            <button @click="saveEditMember" class="text-xs text-blue-400 hover:text-blue-300 font-medium px-2">{{ t('common.save') }}</button>
+            <button @click="saveEditMember" class="text-xs text-violet-400 hover:text-violet-300 font-medium px-2">{{ t('common.save') }}</button>
             <button @click="editingMemberID = null" class="text-xs text-gray-500 hover:text-gray-300 px-1">{{ t('common.cancel') }}</button>
           </template>
           <template v-else>
@@ -884,13 +884,13 @@ async function confirmDeleteAccount() {
             v-model="newMemberName"
             type="text"
             :placeholder="t('settings.member_name_placeholder')"
-            class="flex-1 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-500"
+            class="flex-1 px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all placeholder-gray-500"
             @keyup.enter="addMember"
           />
           <button
             @click="addMember"
             :disabled="addingMember || !newMemberName.trim()"
-            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
+            class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50 shrink-0"
           >
             {{ addingMember ? '…' : t('settings.add_member') }}
           </button>
@@ -901,8 +901,8 @@ async function confirmDeleteAccount() {
     <!-- Bank connection -->
     <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-blue-900/30 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-blue-400">
+        <div class="w-9 h-9 rounded-xl bg-violet-900/30 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-violet-400">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
           </svg>
         </div>
@@ -912,7 +912,7 @@ async function confirmDeleteAccount() {
         </div>
         <RouterLink
           to="/bank"
-          class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm font-medium text-gray-300 hover:text-white hover:border-blue-600/60 hover:bg-blue-600/10 transition-all"
+          class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm font-medium text-gray-300 hover:text-white hover:border-violet-600/60 hover:bg-violet-600/10 transition-all"
         >
           {{ locale === 'el' ? 'Διαχείριση' : 'Manage' }}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
@@ -929,7 +929,7 @@ async function confirmDeleteAccount() {
       <div class="flex flex-wrap gap-3">
         <button
           @click="exportBillsCSV"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-violet-600/60 hover:bg-violet-600/10 text-sm font-medium text-gray-300 hover:text-violet-300 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1068,7 +1068,7 @@ async function confirmDeleteAccount() {
         <button
           @click="connectGmail"
           :disabled="gmailScanning"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-blue-600/60 hover:bg-blue-600/10 text-sm font-medium text-gray-300 hover:text-blue-300 transition-all disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.10] hover:border-violet-600/60 hover:bg-violet-600/10 text-sm font-medium text-gray-300 hover:text-violet-300 transition-all disabled:opacity-50"
         >
           <svg v-if="gmailScanning" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -1084,7 +1084,7 @@ async function confirmDeleteAccount() {
           <span>{{ t('settings.gmail_days').replace('{n}', String(gmailDays)) }}</span>
           <button v-for="d in [7, 30, 60]" :key="d" @click="gmailDays = d"
             class="px-2 py-0.5 rounded-md border text-xs transition-colors"
-            :class="gmailDays === d ? 'border-blue-600 text-blue-400 bg-blue-600/10' : 'border-white/[0.08] text-gray-500 hover:border-white/[0.10]'">
+            :class="gmailDays === d ? 'border-violet-600 text-violet-400 bg-violet-600/10' : 'border-white/[0.08] text-gray-500 hover:border-white/[0.10]'">
             {{ d }}d
           </button>
         </div>
@@ -1132,7 +1132,7 @@ async function confirmDeleteAccount() {
           <button
             @click="importGmailBills"
             :disabled="gmailImporting || gmailFoundBills.filter(b => b.userProviderID).length === 0"
-            class="flex-1 px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
           >
             {{ gmailImporting ? t('settings.gmail_importing') : `${t('settings.gmail_import_all')} (${gmailFoundBills.filter(b => b.userProviderID).length})` }}
           </button>
@@ -1144,7 +1144,7 @@ async function confirmDeleteAccount() {
     <section class="bg-[#111119] rounded-2xl border border-white/[0.06] p-5">
       <div class="flex items-start gap-3">
         <div class="w-8 h-8 rounded-lg bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-indigo-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-purple-400">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
           </svg>
         </div>
@@ -1152,7 +1152,7 @@ async function confirmDeleteAccount() {
           <h3 class="text-sm font-semibold text-gray-300">{{ t('settings.email_notif_title') }}</h3>
           <p class="text-xs text-gray-500 mt-0.5">{{ t('settings.email_notif_desc') }}</p>
           <div class="mt-2 flex items-center gap-2 text-xs text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5 text-indigo-400 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5 text-purple-400 shrink-0">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
             </svg>
             <span class="truncate">{{ authStore.user?.email }}</span>

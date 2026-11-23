@@ -167,13 +167,13 @@ onMounted(async () => {
 
       <!-- Callback success banner -->
       <div v-if="isCallback"
-        class="flex items-center gap-3 bg-blue-900/30 border border-blue-700/50 rounded-2xl px-5 py-4">
+        class="flex items-center gap-3 bg-violet-900/30 border border-violet-700/50 rounded-2xl px-5 py-4">
         <span class="text-2xl">🏦</span>
         <div>
-          <p class="text-sm font-semibold text-blue-200">
+          <p class="text-sm font-semibold text-violet-200">
             {{ locale === 'en' ? 'Authorization completed!' : 'Εξουσιοδότηση ολοκληρώθηκε!' }}
           </p>
-          <p class="text-xs text-blue-400 mt-0.5">
+          <p class="text-xs text-violet-400 mt-0.5">
             {{ locale === 'en'
               ? 'Your bank is being linked. This may take a moment.'
               : 'Η τράπεζά σου συνδέεται. Μπορεί να χρειαστεί λίγη ώρα.' }}
@@ -228,7 +228,7 @@ onMounted(async () => {
             <button
               @click="sync"
               :disabled="syncing"
-              class="shrink-0 flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-55 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              class="shrink-0 flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-55 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
             >
               <svg v-if="syncing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -300,7 +300,7 @@ onMounted(async () => {
           <button
             @click="fetchInstitutions"
             :disabled="loadingInstitutions"
-            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-55 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
+            class="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-55 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
           >
             <svg v-if="loadingInstitutions" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -322,7 +322,7 @@ onMounted(async () => {
           v-model="searchQuery"
           type="search"
           :placeholder="locale === 'en' ? 'Search…' : 'Αναζήτηση…'"
-          class="w-full px-3.5 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+          class="w-full px-3.5 py-2 rounded-xl border border-white/[0.08] bg-white/[0.04] text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 mb-3"
         />
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
           <button
@@ -330,10 +330,10 @@ onMounted(async () => {
             :key="inst.id"
             @click="connect(inst)"
             :disabled="connecting !== ''"
-            class="flex items-center gap-3 p-3 rounded-xl border border-white/[0.08] hover:border-blue-500 hover:bg-blue-900/10 text-left transition-colors disabled:opacity-50"
+            class="flex items-center gap-3 p-3 rounded-xl border border-white/[0.08] hover:border-violet-500 hover:bg-violet-900/10 text-left transition-colors disabled:opacity-50"
           >
             <img v-if="inst.logo" :src="inst.logo" :alt="inst.name" class="w-8 h-8 rounded-lg object-contain bg-white p-0.5 shrink-0" />
-            <div v-else class="w-8 h-8 rounded-lg bg-blue-900/40 flex items-center justify-center text-blue-400 text-sm font-bold shrink-0">
+            <div v-else class="w-8 h-8 rounded-lg bg-violet-900/40 flex items-center justify-center text-violet-400 text-sm font-bold shrink-0">
               {{ inst.name.charAt(0) }}
             </div>
             <div class="min-w-0">
@@ -341,7 +341,7 @@ onMounted(async () => {
               <p class="text-xs text-gray-500">{{ inst.bic }}</p>
             </div>
             <div v-if="connecting === inst.id" class="ml-auto shrink-0">
-              <svg class="w-4 h-4 animate-spin text-blue-400" fill="none" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
@@ -360,19 +360,19 @@ onMounted(async () => {
         </p>
         <ul class="space-y-1.5 text-xs text-gray-500">
           <li class="flex items-start gap-2">
-            <span class="text-blue-400 shrink-0 mt-0.5">1.</span>
+            <span class="text-violet-400 shrink-0 mt-0.5">1.</span>
             {{ locale === 'en'
               ? 'You choose your bank and complete a one-time authorization.'
               : 'Επιλέγεις την τράπεζά σου και κάνεις μια εφάπαξ εξουσιοδότηση.' }}
           </li>
           <li class="flex items-start gap-2">
-            <span class="text-blue-400 shrink-0 mt-0.5">2.</span>
+            <span class="text-violet-400 shrink-0 mt-0.5">2.</span>
             {{ locale === 'en'
               ? 'We get read-only access to your transactions (via GoCardless Open Banking / PSD2).'
               : 'Αποκτούμε read-only πρόσβαση στις συναλλαγές σου (μέσω GoCardless / PSD2).' }}
           </li>
           <li class="flex items-start gap-2">
-            <span class="text-blue-400 shrink-0 mt-0.5">3.</span>
+            <span class="text-violet-400 shrink-0 mt-0.5">3.</span>
             {{ locale === 'en'
               ? '"Sync now" matches transactions to your pending bills and marks them as paid.'
               : 'Ο "Συγχρονισμός" αντιστοιχεί τις συναλλαγές με εκκρεμείς λογαριασμούς και τους σημειώνει ως πληρωμένους.' }}

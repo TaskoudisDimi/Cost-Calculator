@@ -117,12 +117,12 @@ async function remove(id: string) {
         <input
           v-model="month"
           type="month"
-          class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-transparent transition-all"
+          class="px-3 py-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500/60 focus:border-transparent transition-all"
           @change="onMonthChange"
         />
         <button
           @click="openCreate"
-          class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold px-3 md:px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm shadow-blue-900/40"
+          class="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-bold px-3 md:px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm shadow-violet-900/40"
         >
           {{ t('expenses.new_expense') }}
         </button>
@@ -136,7 +136,7 @@ async function remove(id: string) {
         :key="f"
         @click="filterStatus = f"
         class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        :class="filterStatus === f ? 'bg-blue-600 text-white' : 'bg-white/[0.04] text-gray-400 border border-white/[0.08] hover:bg-white/[0.06]'"
+        :class="filterStatus === f ? 'bg-violet-600 text-white' : 'bg-white/[0.04] text-gray-400 border border-white/[0.08] hover:bg-white/[0.06]'"
       >
         {{ f === 'all' ? t('expenses.all_filter') : expenseStatusLabel(f) }}
       </button>
@@ -149,7 +149,7 @@ async function remove(id: string) {
     <div v-else-if="filtered.length === 0" class="text-center py-16 bg-[#111119] rounded-2xl border border-white/[0.06]">
       <div class="text-3xl mb-3">🛍️</div>
       <p class="text-sm font-medium text-gray-400">{{ t('expenses.no_expenses') }}</p>
-      <button @click="showModal = true" class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+      <button @click="showModal = true" class="mt-3 text-xs text-violet-400 hover:text-violet-300 transition-colors">
         {{ t('expenses.add_expense') }}
       </button>
     </div>
@@ -194,7 +194,7 @@ async function remove(id: string) {
           </button>
           <button
             @click="openEdit(e)"
-            class="text-gray-500 hover:text-blue-400 px-1.5 py-1.5 rounded-lg transition-colors"
+            class="text-gray-500 hover:text-violet-400 px-1.5 py-1.5 rounded-lg transition-colors"
             title="Επεξεργασία"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
@@ -226,7 +226,7 @@ async function remove(id: string) {
               type="text"
               required
               autofocus
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="π.χ. Βιβλιοθήκη BILLY"
             />
           </div>
@@ -240,7 +240,7 @@ async function remove(id: string) {
                 step="0.01"
                 min="0"
                 required
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                 placeholder="0.00"
               />
             </div>
@@ -248,7 +248,7 @@ async function remove(id: string) {
               <label class="block text-xs font-medium text-gray-400 mb-1.5">{{ t('expenses.category') }}</label>
               <select
                 v-model="form.category"
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               >
                 <option v-for="c in categories" :key="c.value" :value="c.value">{{ c.label }}</option>
               </select>
@@ -261,7 +261,7 @@ async function remove(id: string) {
               <input
                 v-model="form.store"
                 type="text"
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                 placeholder="π.χ. IKEA"
               />
             </div>
@@ -270,7 +270,7 @@ async function remove(id: string) {
               <input
                 v-model="form.planned_date"
                 type="date"
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -280,7 +280,7 @@ async function remove(id: string) {
             <input
               v-model="form.notes"
               type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               :placeholder="t('common.optional')"
             />
           </div>
@@ -291,7 +291,7 @@ async function remove(id: string) {
               {{ t('common.cancel') }}
             </button>
             <button type="submit"
-              class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+              class="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors">
               {{ editingExpense ? (locale === 'el' ? 'Αποθήκευση' : 'Save') : t('expenses.add') }}
             </button>
           </div>

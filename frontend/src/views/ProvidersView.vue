@@ -170,7 +170,7 @@ async function deleteTemplate(id: string) {
         </button>
         <button
           @click="openListModal()"
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          class="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           {{ t('providers.from_list_btn') }}
         </button>
@@ -231,7 +231,7 @@ async function deleteTemplate(id: string) {
             v-for="p in providersByCategory(cat)"
             :key="p.id"
             class="bg-white/[0.04] rounded-xl border p-3 flex flex-col items-center gap-2 transition-all"
-            :class="isAdded(p.id) ? 'border-green-200 opacity-60' : 'border-white/[0.08] hover:border-blue-300 cursor-pointer'"
+            :class="isAdded(p.id) ? 'border-green-200 opacity-60' : 'border-white/[0.08] hover:border-violet-300 cursor-pointer'"
             @click="!isAdded(p.id) && openListModal(p.id)"
           >
             <div
@@ -249,7 +249,7 @@ async function deleteTemplate(id: string) {
             v-for="tpl in templatesByCategory(cat)"
             :key="tpl.id"
             class="bg-white/[0.04] rounded-xl border p-3 flex flex-col items-center gap-2 transition-all relative"
-            :class="isAdded(tpl.id) ? 'border-green-200 opacity-60' : 'border-dashed border-white/[0.10] hover:border-blue-300 cursor-pointer'"
+            :class="isAdded(tpl.id) ? 'border-green-200 opacity-60' : 'border-dashed border-white/[0.10] hover:border-violet-300 cursor-pointer'"
             @click="activateTemplate(tpl.id)"
           >
             <button
@@ -282,14 +282,14 @@ async function deleteTemplate(id: string) {
           <button
             @click="modalMode = 'list'"
             class="flex-1 py-1.5 rounded-md text-sm font-medium transition-colors"
-            :class="modalMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-300'"
+            :class="modalMode === 'list' ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-gray-300'"
           >
             {{ t('providers.modal_from_list') }}
           </button>
           <button
             @click="modalMode = 'template'"
             class="flex-1 py-1.5 rounded-md text-sm font-medium transition-colors"
-            :class="modalMode === 'template' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-gray-300'"
+            :class="modalMode === 'template' ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-gray-300'"
           >
             {{ t('providers.modal_new_template') }}
           </button>
@@ -302,7 +302,7 @@ async function deleteTemplate(id: string) {
             <select
               v-model="listForm.provider_id"
               required
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
             >
               <option value="" disabled>{{ t('providers.select') }}</option>
               <option v-for="p in store.providers" :key="p.id" :value="p.id" :disabled="isAdded(p.id)">
@@ -313,13 +313,13 @@ async function deleteTemplate(id: string) {
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.nickname') }}</label>
             <input v-model="listForm.nickname" type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="π.χ. ΔΕΗ σπίτι" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.account_num') }}</label>
             <input v-model="listForm.account_num" type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="π.χ. 12345678" />
           </div>
           <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
@@ -327,7 +327,7 @@ async function deleteTemplate(id: string) {
             <button type="button" @click="closeModal"
               class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">{{ t('common.cancel') }}</button>
             <button type="submit" :disabled="saving"
-              class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
+              class="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
               {{ saving ? t('common.saving') : t('common.add') }}
             </button>
           </div>
@@ -339,20 +339,20 @@ async function deleteTemplate(id: string) {
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.name') }} <span class="text-red-400">*</span></label>
             <input v-model="templateForm.name" type="text" required
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="π.χ. Ενοίκιο γραφείου, Δάνειο αυτοκινήτου…" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.category') }}</label>
             <select v-model="templateForm.category"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all">
               <option v-for="c in builtinCategories" :key="c.value" :value="c.value">{{ c.label }}</option>
             </select>
           </div>
           <div v-if="templateForm.category === '__custom__'">
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.custom_category_label') }} <span class="text-red-400">*</span></label>
             <input v-model="templateForm.customCategory" type="text" required
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="π.χ. Αθλητισμός, Εκπαίδευση…" />
           </div>
           <div>
@@ -372,7 +372,7 @@ async function deleteTemplate(id: string) {
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">{{ t('providers.payment_url') }}</label>
             <input v-model="templateForm.payment_url" type="url"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              class="w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
               placeholder="https://…" />
           </div>
           <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
@@ -380,7 +380,7 @@ async function deleteTemplate(id: string) {
             <button type="button" @click="closeModal"
               class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors">{{ t('common.cancel') }}</button>
             <button type="submit" :disabled="saving"
-              class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
+              class="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors disabled:opacity-55">
               {{ saving ? t('common.saving') : t('common.save') }}
             </button>
           </div>
