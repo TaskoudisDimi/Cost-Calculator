@@ -769,37 +769,38 @@ async function onQrFileSelected(event: Event) {
     </div>
 
     <!-- ── Header ─────────────────────────────────────────────── -->
-    <div class="flex items-center justify-between mb-6 gap-3">
-      <div class="flex items-center gap-3">
+    <div class="mb-5">
+      <!-- Row 1: title + new button -->
+      <div class="flex items-center justify-between gap-3 mb-3">
         <h2 class="text-2xl font-black text-gray-50 tracking-tight">{{ t('bills.title') }}</h2>
-        <!-- List / Calendar / History toggle -->
-        <div class="flex rounded-xl border border-white/[0.06] overflow-hidden bg-[#111119]">
-          <button
-            @click="viewMode = 'list'; exitSelectionMode()"
-            class="text-xs font-semibold px-3 py-2 transition-colors"
-            :class="viewMode === 'list' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
-          >{{ t('bills.list_tab') }}</button>
-          <button
-            @click="viewMode = 'calendar'; exitSelectionMode()"
-            class="text-xs font-semibold px-3 py-2 transition-colors"
-            :class="viewMode === 'calendar' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
-          >{{ locale === 'el' ? 'Ημερολόγιο' : 'Calendar' }}</button>
-          <button
-            @click="viewMode = 'history'; exitSelectionMode()"
-            class="text-xs font-semibold px-3 py-2 transition-colors"
-            :class="viewMode === 'history' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
-          >{{ t('bills.history_tab') }}</button>
-        </div>
+        <button
+          @click="openCreate"
+          class="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 active:scale-[0.97] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm shadow-violet-900/40"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          {{ locale === 'el' ? 'Νέος' : 'New' }}
+        </button>
       </div>
-      <button
-        @click="openCreate"
-        class="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 active:scale-[0.97] text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm shadow-violet-900/40"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        {{ locale === 'el' ? 'Νέος' : 'New' }}
-      </button>
+      <!-- Row 2: List / Calendar / History toggle (full width) -->
+      <div class="flex rounded-xl border border-white/[0.06] overflow-hidden bg-[#111119]">
+        <button
+          @click="viewMode = 'list'; exitSelectionMode()"
+          class="flex-1 text-xs font-semibold py-2.5 transition-colors"
+          :class="viewMode === 'list' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
+        >{{ t('bills.list_tab') }}</button>
+        <button
+          @click="viewMode = 'calendar'; exitSelectionMode()"
+          class="flex-1 text-xs font-semibold py-2.5 transition-colors border-x border-white/[0.05]"
+          :class="viewMode === 'calendar' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
+        >{{ locale === 'el' ? 'Ημερολόγιο' : 'Calendar' }}</button>
+        <button
+          @click="viewMode = 'history'; exitSelectionMode()"
+          class="flex-1 text-xs font-semibold py-2.5 transition-colors"
+          :class="viewMode === 'history' ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'"
+        >{{ t('bills.history_tab') }}</button>
+      </div>
     </div>
 
     <!-- ── History view ──────────────────────────────────────── -->
@@ -1410,10 +1411,9 @@ async function onQrFileSelected(event: Event) {
               </button>
             </div>
 
-            <!-- Attachment -->
-            <div class="px-4 pb-3">
-              <!-- Existing attachment preview -->
-              <div v-if="item.bill.attachment_url" class="flex items-center gap-2 group">
+            <!-- Attachment (shown only when file exists) -->
+            <div v-if="item.bill.attachment_url" class="px-4 pb-3">
+              <div class="flex items-center gap-2 group">
                 <a
                   :href="item.bill.attachment_url"
                   target="_blank"
@@ -1421,7 +1421,6 @@ async function onQrFileSelected(event: Event) {
                   class="flex items-center gap-2 flex-1 px-3 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05] transition-all min-w-0"
                   @click.stop
                 >
-                  <!-- Image preview thumbnail or PDF icon -->
                   <img
                     v-if="/\.(jpg|jpeg|png|webp|gif)$/i.test(item.bill.attachment_url)"
                     :src="item.bill.attachment_url"
@@ -1445,30 +1444,17 @@ async function onQrFileSelected(event: Event) {
                   </svg>
                 </button>
               </div>
-
-              <!-- Upload button (no attachment yet) -->
-              <div v-else>
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  class="hidden"
-                  :ref="el => { if (item.bill) receiptInputs[item.bill.id] = el as HTMLInputElement }"
-                  @change="onReceiptSelected(item.bill, $event)"
-                  @click.stop
-                />
-                <button
-                  @click.stop="receiptInputs[item.bill.id]?.click()"
-                  :disabled="receiptUploading"
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/[0.08] text-gray-600 hover:text-gray-300 hover:border-white/[0.16] hover:bg-white/[0.03] transition-all text-xs w-full"
-                >
-                  <svg v-if="!receiptUploading" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
-                  </svg>
-                  <span v-if="receiptUploading" class="animate-spin text-sm">⏳</span>
-                  {{ receiptUploading ? (locale === 'el' ? 'Ανέβασμα…' : 'Uploading…') : (locale === 'el' ? 'Επισύναψη παραστατικού' : 'Attach receipt') }}
-                </button>
-              </div>
             </div>
+            <!-- Hidden file input (always present for JS ref access) -->
+            <input
+              v-if="!item.bill.attachment_url"
+              type="file"
+              accept="image/*,.pdf"
+              class="hidden"
+              :ref="el => { if (item.bill) receiptInputs[item.bill.id] = el as HTMLInputElement }"
+              @change="onReceiptSelected(item.bill, $event)"
+              @click.stop
+            />
 
             <!-- Actions -->
             <div class="flex items-center gap-1.5 px-3 pb-3 pt-1">
@@ -1530,6 +1516,20 @@ async function onQrFileSelected(event: Event) {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                 </svg>
               </a>
+
+              <!-- Attach receipt (when no attachment) -->
+              <button
+                v-if="!item.bill.attachment_url"
+                @click.stop="receiptInputs[item.bill.id]?.click()"
+                :disabled="receiptUploading"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:bg-white/[0.08] transition-all shrink-0 active:scale-[0.93]"
+                :title="receiptUploading ? (locale === 'el' ? 'Ανέβασμα…' : 'Uploading…') : (locale === 'el' ? 'Επισύναψη παραστατικού' : 'Attach receipt')"
+              >
+                <svg v-if="!receiptUploading" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
+                </svg>
+                <span v-else class="text-sm animate-spin">⏳</span>
+              </button>
 
               <!-- Edit — always visible -->
               <button
