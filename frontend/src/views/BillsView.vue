@@ -250,6 +250,19 @@ const filteredBills = computed(() => {
   return all.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
 })
 
+// Monthly totals summary
+const monthlyStats = computed(() => {
+  const bills = filteredBills.value
+  const total = bills.reduce((s, b) => s + b.amount, 0)
+  const paid = bills.filter(b => b.status === 'paid').reduce((s, b) => s + b.amount, 0)
+  const overdue = bills.filter(b => b.status === 'overdue').reduce((s, b) => s + b.amount, 0)
+  const pending = bills.filter(b => b.status === 'pending').reduce((s, b) => s + b.amount, 0)
+  const paidPct = total > 0 ? (paid / total) * 100 : 0
+  const paidCount = bills.filter(b => b.status === 'paid').length
+  const unpaidCount = bills.filter(b => b.status !== 'paid').length
+  return { total, paid, overdue, pending, paidPct, count: bills.length, paidCount, unpaidCount }
+})
+
 // Feature 2: Due soon
 const dueSoonBills = computed(() => {
   const today = new Date()
@@ -946,9 +959,12 @@ async function onQrFileSelected(event: Event) {
             :key="f"
             @click="filterStatus = f; clearSelection()"
             class="whitespace-nowrap px-3.5 py-2 rounded-xl text-sm font-semibold transition-all shrink-0"
-            :class="filterStatus === f
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-[#111119] text-gray-400 border border-white/[0.06] hover:border-white/[0.12] hover:text-gray-300'"
+            :class="filterStatus === f ? {
+              all: 'bg-blue-600 text-white shadow-sm shadow-blue-900/40',
+              pending: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+              overdue: 'bg-red-500/20 text-red-300 border border-red-500/30',
+              paid: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+            }[f] : 'bg-[#111119] text-gray-500 border border-white/[0.06] hover:border-white/[0.12] hover:text-gray-300'"
           >
             {{ f === 'all' ? t('bills.all_filter') : statusLabel(f) }}
           </button>
@@ -1193,6 +1209,53 @@ async function onQrFileSelected(event: Event) {
         <div class="my-4 h-px bg-white/[0.04]" />
       </div>
 
+      <!-- ── Monthly Summary Card ─────────────────────────── -->
+      <div
+        v-if="!store.loading && filteredBills.length > 0"
+        class="mb-4 rounded-2xl overflow-hidden border border-blue-500/15 bg-gradient-to-br from-blue-950/40 via-indigo-950/20 to-[#111119]"
+      >
+        <div class="px-4 py-4">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">
+                {{ filterMonth !== 'all' ? monthLabel(filterMonth) : (locale === 'el' ? 'Επιλεγμένη περίοδος' : 'Selected period') }}
+              </p>
+              <p class="text-[32px] font-black text-white tabular-nums leading-none">{{ formatAmount(monthlyStats.total) }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[11px] text-gray-600 font-semibold mb-1">{{ monthlyStats.paidCount }}/{{ monthlyStats.count }}</p>
+              <p class="text-[11px] font-bold"
+                :class="monthlyStats.paidPct === 100 ? 'text-emerald-400' : monthlyStats.overdue > 0 ? 'text-red-400' : 'text-amber-400'">
+                {{ monthlyStats.paidPct === 100 ? (locale === 'el' ? 'Όλα πληρωμένα ✓' : 'All paid ✓') : `${monthlyStats.paidPct.toFixed(0)}%` }}
+              </p>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="h-1 rounded-full bg-white/[0.06] overflow-hidden mb-3">
+            <div
+              class="h-full rounded-full transition-all duration-700"
+              :class="monthlyStats.paidPct === 100 ? 'bg-emerald-500' : monthlyStats.overdue > 0 ? 'bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500' : 'bg-gradient-to-r from-emerald-500 to-blue-500'"
+              :style="{ width: Math.max(monthlyStats.paidPct, 2) + '%' }"
+            />
+          </div>
+          <!-- Stat pills -->
+          <div class="flex gap-2 flex-wrap">
+            <span v-if="monthlyStats.paid > 0" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+              {{ formatAmount(monthlyStats.paid) }}
+            </span>
+            <span v-if="monthlyStats.pending > 0" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              {{ formatAmount(monthlyStats.pending) }}
+            </span>
+            <span v-if="monthlyStats.overdue > 0" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[11px] font-bold text-red-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+              {{ formatAmount(monthlyStats.overdue) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading skeletons -->
       <div v-if="store.loading" class="space-y-3">
         <div v-for="i in 4" :key="i" class="bg-[#111119] rounded-2xl border border-white/[0.06] h-28 animate-pulse" />
@@ -1250,26 +1313,30 @@ async function onQrFileSelected(event: Event) {
             class="rounded-2xl border overflow-hidden transition-all duration-150"
             :class="selected.has(item.bill.id)
               ? 'bg-blue-950/20 border-blue-600/30'
-              : 'bg-[#111119] border-white/[0.06] hover:border-white/[0.1]'"
+              : item.bill.status === 'overdue'
+                ? 'bg-[#111119] border-red-900/30 hover:border-red-700/40'
+                : 'bg-[#111119] border-white/[0.06] hover:border-white/[0.1]'"
           >
-            <!-- Card header -->
+            <!-- Card header with subtle provider-color tint -->
             <div class="flex items-start gap-3 px-4 pt-4 pb-3 relative">
-              <div class="absolute left-0 top-0 bottom-0 w-[3px]"
-                :style="{ backgroundColor: item.bill.user_provider?.provider?.color || '#6B7280' }" />
+              <div
+                class="absolute inset-x-0 top-0 h-[2px] rounded-t-2xl"
+                :style="{ backgroundColor: item.bill.user_provider?.provider?.color || '#6B7280' }"
+              />
 
               <input
                 v-if="selectionMode"
                 type="checkbox"
                 :checked="selected.has(item.bill.id)"
                 @change="toggleSelect(item.bill.id)"
-                class="mt-1 w-4 h-4 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0 ml-2"
+                class="mt-1 w-4 h-4 rounded border-gray-600 accent-blue-600 cursor-pointer shrink-0"
               />
 
               <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-[15px] font-black shrink-0 ml-2 shadow-lg"
+                class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-[15px] font-black shrink-0 shadow-lg"
                 :style="{
                   backgroundColor: item.bill.user_provider?.provider?.color || '#6B7280',
-                  boxShadow: `0 4px 12px ${item.bill.user_provider?.provider?.color || '#6B7280'}40`
+                  boxShadow: `0 4px 14px ${item.bill.user_provider?.provider?.color || '#6B7280'}50`
                 }"
               >
                 {{ (item.bill.user_provider?.nickname || item.bill.user_provider?.provider?.name || '?').charAt(0).toUpperCase() }}
@@ -1394,21 +1461,19 @@ async function onQrFileSelected(event: Event) {
               </div>
             </div>
 
-            <div class="mx-4 h-px bg-white/[0.04] mb-3" />
-
-            <!-- Actions — 3-button layout: Pay | AI-Pay | (IRIS or link or edit) -->
-            <div class="flex items-center gap-2 px-4 pb-4">
+            <!-- Actions -->
+            <div class="flex items-center gap-1.5 px-3 pb-3 pt-1">
 
               <!-- Primary: Mark Paid / Undo -->
               <button
                 v-if="item.bill.status !== 'paid'"
                 @click="markPaid(item.bill.id)"
-                class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px]"
+                class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all"
                 :class="item.bill.status === 'overdue'
-                  ? 'bg-red-500/10 border border-red-500/25 text-red-300 hover:bg-red-500/18 hover:border-red-500/40 active:scale-[0.97]'
-                  : 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/18 hover:border-emerald-500/40 active:scale-[0.97]'"
+                  ? 'bg-red-500/15 text-red-300 hover:bg-red-500/25 active:scale-[0.97]'
+                  : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 active:scale-[0.97]'"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 shrink-0">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                 </svg>
                 {{ t('bills.mark_paid') }}
@@ -1416,9 +1481,9 @@ async function onQrFileSelected(event: Event) {
               <button
                 v-else
                 @click="markUnpaid(item.bill.id)"
-                class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-amber-300 hover:border-amber-500/25 hover:bg-amber-500/8 text-sm font-semibold transition-all min-h-[48px] active:scale-[0.97]"
+                class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/[0.04] text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 text-xs font-semibold transition-all active:scale-[0.97]"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 shrink-0">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                 </svg>
                 {{ t('bills.undo') }}
@@ -1427,10 +1492,10 @@ async function onQrFileSelected(event: Event) {
               <!-- AI auto-pay -->
               <button
                 @click="agentBill = item.bill; showAgentModal = true"
-                class="w-12 h-12 flex items-center justify-center rounded-xl border border-blue-500/30 bg-blue-600/12 text-blue-400 hover:bg-blue-600/22 hover:border-blue-500/50 transition-all shrink-0 active:scale-[0.95]"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-600/15 text-blue-400 hover:bg-blue-600/25 transition-all shrink-0 active:scale-[0.93]"
                 :title="locale === 'el' ? 'AI αυτόματη πληρωμή' : 'AI auto-pay'"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
                 </svg>
               </button>
@@ -1439,7 +1504,7 @@ async function onQrFileSelected(event: Event) {
               <button
                 v-if="item.bill.payment_code && item.bill.status !== 'paid'"
                 @click="payWithIRIS(item.bill)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/8 text-violet-400 hover:bg-violet-500/15 hover:border-violet-500/35 transition-all shrink-0 active:scale-[0.95]"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-violet-500/12 text-violet-400 hover:bg-violet-500/22 transition-all shrink-0 active:scale-[0.93]"
                 :title="t('bills.pay_iris')"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
@@ -1450,7 +1515,7 @@ async function onQrFileSelected(event: Event) {
                 v-else-if="(item.bill.payment_url || item.bill.user_provider?.provider?.payment_url) && item.bill.status !== 'paid'"
                 :href="item.bill.payment_url || item.bill.user_provider?.provider?.payment_url"
                 target="_blank" rel="noopener noreferrer"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-blue-300 hover:border-blue-500/25 hover:bg-blue-500/8 transition-all shrink-0"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-blue-300 hover:bg-blue-500/12 transition-all shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -1460,20 +1525,20 @@ async function onQrFileSelected(event: Event) {
               <!-- Edit — always visible -->
               <button
                 @click="openEdit(item.bill.id)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-white hover:border-white/[0.12] hover:bg-white/[0.06] transition-all shrink-0 active:scale-[0.95]"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-white hover:bg-white/[0.08] transition-all shrink-0 active:scale-[0.93]"
                 :title="locale === 'el' ? 'Επεξεργασία' : 'Edit'"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
                 </svg>
               </button>
 
               <button
                 @click="deleteBill(item.bill.id)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-gray-500 hover:text-red-400 hover:border-red-500/25 hover:bg-red-500/8 transition-all shrink-0"
+                class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/[0.04] text-gray-500 hover:text-red-400 hover:bg-red-500/12 transition-all shrink-0"
                 :title="locale === 'el' ? 'Διαγραφή' : 'Delete'"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-3.5 h-3.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
               </button>
