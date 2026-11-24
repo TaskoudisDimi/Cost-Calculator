@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useCredentialsStore } from '@/stores/credentials'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLocale } from '@/composables/useLocale'
+import { useToast } from '@/composables/useToast'
 import type { UserCredential } from '@/types'
 
 const store = useCredentialsStore()
 const { confirm } = useConfirm()
 const { t, locale } = useLocale()
+const { toast } = useToast()
 
 const showModal = ref(false)
 const editingId = ref<string | null>(null)
@@ -21,6 +23,139 @@ const form = ref({
   url: '',
   notes: '',
 })
+
+// ── Bitwarden CSV import ──────────────────────────────────────────────
+interface ImportRow {
+  label: string
+  username: string
+  password: string
+  url: string
+  notes: string
+}
+
+const showImportModal = ref(false)
+const importItems = ref<ImportRow[]>([])
+const importSelected = ref<Set<number>>(new Set())
+const importLoading = ref(false)
+const importError = ref('')
+const csvInput = ref<HTMLInputElement | null>(null)
+
+function parseBitwardenCsv(text: string): ImportRow[] {
+  // Strip UTF-8 BOM if present
+  const raw = text.startsWith('﻿') ? text.slice(1) : text
+
+  const lines = raw.split(/\r?\n/).filter(l => l.trim())
+  if (lines.length < 2) return []
+
+  // Parse CSV respecting quoted fields
+  function parseRow(line: string): string[] {
+    const cols: string[] = []
+    let cur = ''
+    let inQuote = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        if (inQuote && line[i + 1] === '"') { cur += '"'; i++ }
+        else inQuote = !inQuote
+      } else if (ch === ',' && !inQuote) {
+        cols.push(cur); cur = ''
+      } else {
+        cur += ch
+      }
+    }
+    cols.push(cur)
+    return cols
+  }
+
+  const header = parseRow(lines[0]!).map(h => h.toLowerCase().trim())
+  const idx = (name: string) => header.indexOf(name)
+
+  const iType     = idx('type')
+  const iName     = idx('name')
+  const iNotes    = idx('notes')
+  const iUri      = idx('login_uri')
+  const iUser     = idx('login_username')
+  const iPass     = idx('login_password')
+
+  const rows: ImportRow[] = []
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseRow(lines[i]!)
+    if (iType !== -1 && cols[iType]?.toLowerCase() !== 'login') continue
+    const label = (iName !== -1 ? cols[iName] : '') ?? ''
+    if (!label) continue
+    rows.push({
+      label,
+      username: (iUser  !== -1 ? cols[iUser]  : '') ?? '',
+      password: (iPass  !== -1 ? cols[iPass]  : '') ?? '',
+      url:      (iUri   !== -1 ? cols[iUri]   : '') ?? '',
+      notes:    (iNotes !== -1 ? cols[iNotes] : '') ?? '',
+    })
+  }
+  return rows
+}
+
+function onCsvFile(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  importError.value = ''
+  const reader = new FileReader()
+  reader.onload = ev => {
+    try {
+      const rows = parseBitwardenCsv(ev.target!.result as string)
+      if (rows.length === 0) {
+        importError.value = locale.value === 'el'
+          ? 'Δεν βρέθηκαν login items στο αρχείο.'
+          : 'No login items found in file.'
+        return
+      }
+      importItems.value = rows
+      importSelected.value = new Set(rows.map((_, i) => i))
+      showImportModal.value = true
+    } catch {
+      importError.value = locale.value === 'el'
+        ? 'Σφάλμα ανάλυσης αρχείου CSV.'
+        : 'Failed to parse CSV file.'
+    }
+    if (csvInput.value) csvInput.value.value = ''
+  }
+  reader.readAsText(file)
+}
+
+function toggleImportItem(i: number) {
+  const s = new Set(importSelected.value)
+  if (s.has(i)) s.delete(i); else s.add(i)
+  importSelected.value = s
+}
+
+function toggleAllImport() {
+  if (importSelected.value.size === importItems.value.length)
+    importSelected.value = new Set()
+  else
+    importSelected.value = new Set(importItems.value.map((_, i) => i))
+}
+
+const importCount = computed(() => importSelected.value.size)
+
+async function runImport() {
+  if (importCount.value === 0) return
+  importLoading.value = true
+  let done = 0
+  for (const i of importSelected.value) {
+    const row = importItems.value[i]!
+    await store.create(row)
+    done++
+  }
+  importLoading.value = false
+  showImportModal.value = false
+  importItems.value = []
+  importSelected.value = new Set()
+  toast(
+    locale.value === 'el'
+      ? `Εισήχθησαν ${done} κωδικοί από Bitwarden`
+      : `Imported ${done} credentials from Bitwarden`,
+    'success',
+  )
+}
 
 onMounted(() => store.startSync())
 onUnmounted(() => store.stopSync())
@@ -78,17 +213,33 @@ async function copyText(text: string, key: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-5">
-      <div>
+    <!-- Hidden CSV input -->
+    <input ref="csvInput" type="file" accept=".csv,text/csv" class="hidden" @change="onCsvFile" />
+
+    <div class="flex items-center justify-between mb-5 gap-3">
+      <div class="min-w-0">
         <h2 class="text-xl md:text-2xl font-bold text-gray-50">{{ t('credentials.title') }}</h2>
         <p class="text-sm text-gray-400 mt-0.5">{{ t('credentials.subtitle') }}</p>
       </div>
-      <button
-        @click="openAdd"
-        class="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-      >
-        {{ t('credentials.new_btn') }}
-      </button>
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Import from Bitwarden -->
+        <button
+          @click="csvInput?.click()"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.03] text-sm font-medium text-gray-400 hover:text-gray-200 hover:border-white/[0.14] hover:bg-white/[0.06] transition-all"
+          :title="locale === 'el' ? 'Εισαγωγή από Bitwarden CSV' : 'Import from Bitwarden CSV'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-blue-400">
+            <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3c0-2.9-2.35-5.25-5.25-5.25Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clip-rule="evenodd" />
+          </svg>
+          {{ locale === 'el' ? 'Import' : 'Import' }}
+        </button>
+        <button
+          @click="openAdd"
+          class="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+        >
+          {{ t('credentials.new_btn') }}
+        </button>
+      </div>
     </div>
 
     <!-- Loading skeleton -->
@@ -190,6 +341,91 @@ async function copyText(text: string, key: string) {
           </svg>
           {{ t('credentials.open_url') }}
         </a>
+      </div>
+    </div>
+
+    <!-- ── Bitwarden Import Modal ──────────────────────────── -->
+    <div v-if="showImportModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
+      <div class="bg-[#111119] border border-white/[0.08] rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/[0.06] shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-blue-400">
+                <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3c0-2.9-2.35-5.25-5.25-5.25Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gray-50">
+                {{ locale === 'el' ? 'Εισαγωγή από Bitwarden' : 'Import from Bitwarden' }}
+              </h3>
+              <p class="text-xs text-gray-500">
+                {{ importItems.length }} {{ locale === 'el' ? 'login items βρέθηκαν' : 'login items found' }}
+              </p>
+            </div>
+          </div>
+          <button @click="showImportModal = false" class="p-2 text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] rounded-xl transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Select all / deselect all -->
+        <div class="flex items-center justify-between px-5 py-2.5 border-b border-white/[0.04] shrink-0">
+          <button @click="toggleAllImport" class="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+            {{ importSelected.size === importItems.length
+              ? (locale === 'el' ? 'Αποεπιλογή όλων' : 'Deselect all')
+              : (locale === 'el' ? 'Επιλογή όλων' : 'Select all') }}
+          </button>
+          <span class="text-xs text-gray-500">
+            {{ importSelected.size }}/{{ importItems.length }} {{ locale === 'el' ? 'επιλεγμένα' : 'selected' }}
+          </span>
+        </div>
+
+        <!-- Item list -->
+        <div class="overflow-y-auto flex-1 py-1">
+          <label
+            v-for="(item, i) in importItems"
+            :key="i"
+            class="flex items-start gap-3 px-5 py-3 hover:bg-white/[0.03] active:bg-white/[0.05] cursor-pointer transition-colors"
+          >
+            <input
+              type="checkbox"
+              :checked="importSelected.has(i)"
+              @change="toggleImportItem(i)"
+              class="mt-0.5 w-4 h-4 rounded border-gray-600 accent-violet-600 cursor-pointer shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-gray-100 truncate">{{ item.label }}</p>
+              <p v-if="item.username" class="text-xs text-gray-500 truncate font-mono mt-0.5">{{ item.username }}</p>
+              <p v-if="item.url" class="text-[11px] text-gray-600 truncate mt-0.5">{{ item.url }}</p>
+            </div>
+            <span v-if="item.password" class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shrink-0 mt-0.5">pw</span>
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 py-4 border-t border-white/[0.06] flex gap-3 shrink-0">
+          <button
+            @click="showImportModal = false"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-colors"
+          >{{ locale === 'el' ? 'Ακύρωση' : 'Cancel' }}</button>
+          <button
+            @click="runImport"
+            :disabled="importCount === 0 || importLoading"
+            class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            <svg v-if="importLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            {{ importLoading
+              ? (locale === 'el' ? 'Εισαγωγή...' : 'Importing...')
+              : (locale === 'el' ? `Εισαγωγή ${importCount}` : `Import ${importCount}`) }}
+          </button>
+        </div>
       </div>
     </div>
 
