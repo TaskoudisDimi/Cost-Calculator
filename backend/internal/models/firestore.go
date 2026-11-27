@@ -85,17 +85,18 @@ type UserProviderTemplate struct {
 
 // Card stores payment card metadata (no actual card numbers — PCI DSS)
 type Card struct {
-	ID        string    `json:"id" firestore:"-"`
-	UserID    string    `json:"user_id" firestore:"user_id"`
-	Nickname  string    `json:"nickname" firestore:"nickname"`
-	LastFour  string    `json:"last_four" firestore:"last_four"`
-	ExpiryMM  int       `json:"expiry_mm" firestore:"expiry_mm"`
-	ExpiryYY  int       `json:"expiry_yy" firestore:"expiry_yy"`
-	CardType  string    `json:"card_type" firestore:"card_type"` // visa, mastercard, amex, other
-	IsDefault bool      `json:"is_default" firestore:"is_default"`
-	Color     string    `json:"color" firestore:"color"`
-	CreatedAt time.Time `json:"created_at" firestore:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" firestore:"updated_at"`
+	ID               string    `json:"id" firestore:"-"`
+	UserID           string    `json:"user_id" firestore:"user_id"`
+	Nickname         string    `json:"nickname" firestore:"nickname"`
+	LastFour         string    `json:"last_four" firestore:"last_four"`
+	ExpiryMM         int       `json:"expiry_mm" firestore:"expiry_mm"`
+	ExpiryYY         int       `json:"expiry_yy" firestore:"expiry_yy"`
+	CardType         string    `json:"card_type" firestore:"card_type"` // visa, mastercard, amex, other
+	IsDefault        bool      `json:"is_default" firestore:"is_default"`
+	Color            string    `json:"color" firestore:"color"`
+	HasSecureDetails bool      `json:"has_secure_details" firestore:"has_secure_details"`
+	CreatedAt        time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at" firestore:"updated_at"`
 }
 
 // BankConnection stores the Nordigen/GoCardless bank link for a user
