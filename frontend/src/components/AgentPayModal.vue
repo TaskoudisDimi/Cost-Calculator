@@ -127,16 +127,50 @@
                 </div>
               </div>
 
+              <!-- Amount confirmation -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Ποσό πληρωμής</label>
+                <div class="flex gap-2 mb-2">
+                  <button
+                    @click="payAmount = activeBill!.amount"
+                    class="flex-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors"
+                    :class="payAmount === activeBill?.amount
+                      ? 'bg-violet-600/15 border-violet-500/40 text-violet-300'
+                      : 'border-white/[0.07] text-gray-400 hover:border-white/[0.15] hover:bg-white/[0.04]'"
+                  >
+                    Ποσό λογαριασμού ({{ formatAmount(activeBill?.amount ?? 0) }})
+                  </button>
+                  <button
+                    @click="payAmount = 0"
+                    class="flex-1 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors"
+                    :class="payAmount !== activeBill?.amount
+                      ? 'bg-violet-600/15 border-violet-500/40 text-violet-300'
+                      : 'border-white/[0.07] text-gray-400 hover:border-white/[0.15] hover:bg-white/[0.04]'"
+                  >
+                    Άλλο ποσό
+                  </button>
+                </div>
+                <input
+                  v-if="payAmount !== activeBill?.amount"
+                  v-model.number="payAmount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0.00"
+                  class="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder-gray-600 focus:outline-none focus:border-violet-500/50"
+                />
+              </div>
+
               <!-- Start button -->
               <button
                 @click="startPayment"
-                :disabled="!canStart"
+                :disabled="!canStart || !payAmount"
                 class="w-full py-3.5 rounded-xl font-bold text-sm transition-all"
-                :class="canStart
+                :class="canStart && payAmount
                   ? 'bg-violet-600 hover:bg-violet-500 text-white'
                   : 'bg-white/[0.04] text-gray-600 cursor-not-allowed'"
               >
-                Ξεκίνα αυτόματη πληρωμή
+                Ξεκίνα αυτόματη πληρωμή {{ payAmount ? `· ${formatAmount(payAmount)}` : '' }}
               </button>
             </template>
 
@@ -270,6 +304,7 @@ const isRunning = computed(() => phase.value === 'running' || phase.value === 'o
 const inputPrompt = ref('Εισάγετε τον OTP που λάβατε στο κινητό σας.')
 const selectedCard = computed(() => cards.value.find(c => c.id === selectedCardId.value) ?? null)
 
+const payAmount = ref<number>(0)
 const internalBill = ref<Bill | null>(null)
 const activeBill = computed(() => props.bill ?? internalBill.value)
 
@@ -293,6 +328,7 @@ watch(() => props.modelValue, async (v) => {
       await Promise.all([loadCredentials(), loadCards(), fetchPickerBills()])
       pickerLoading.value = false
     } else {
+      payAmount.value = props.bill?.amount ?? 0
       resetToSetup()
       await Promise.all([loadCredentials(), loadCards()])
     }
@@ -315,6 +351,7 @@ async function fetchPickerBills() {
 
 function pickBill(bill: Bill) {
   internalBill.value = bill
+  payAmount.value = bill.amount
   phase.value = 'setup'
 }
 
@@ -349,6 +386,7 @@ async function startPayment() {
   const body = {
     credential_id: selectedCredId.value,
     card_id: selectedCardId.value,
+    amount: payAmount.value || activeBill.value.amount,
   }
 
   const user = auth.currentUser
@@ -473,6 +511,7 @@ function eventColor(type: string): string {
 
 function resetToSetup() {
   phase.value = activeBill.value ? 'setup' : 'pick_bill'
+  payAmount.value = activeBill.value?.amount ?? 0
   eventLog.value = []
   otpInput.value = ''
   successRef.value = ''

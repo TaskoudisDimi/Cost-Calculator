@@ -33,8 +33,9 @@ func NewAgentHandler(fs *firestore.Client, anthropicKey string) *AgentHandler {
 }
 
 type agentStartRequest struct {
-	CredentialID string `json:"credential_id"`
-	CardID       string `json:"card_id"`
+	CredentialID string  `json:"credential_id"`
+	CardID       string  `json:"card_id"`
+	Amount       float64 `json:"amount"`
 }
 
 // active jobs: job_id → OTP channel
@@ -137,7 +138,12 @@ func (h *AgentHandler) Pay(c *gin.Context) {
 		JobID:        jobID,
 		APIKey:       h.anthropicKey,
 		ProviderName: providerName,
-		Amount:       bill.Amount,
+		Amount: func() float64 {
+			if req.Amount > 0 {
+				return req.Amount
+			}
+			return bill.Amount
+		}(),
 		PaymentCode:  bill.PaymentCode,
 		PaymentURL:   paymentURL,
 		CredLabel:    credLabel,
