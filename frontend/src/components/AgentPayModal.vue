@@ -94,7 +94,7 @@
               <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Κάρτα πληρωμής
-                  <span class="text-gray-600 font-normal normal-case ml-1">(προαιρετικό αν υπάρχει RF)</span>
+                  <span class="text-gray-600 font-normal normal-case ml-1">(αρκεί αν δεν υπάρχουν κωδικοί)</span>
                 </label>
                 <div v-if="cards.length === 0" class="text-xs text-gray-500 py-2">
                   Δεν βρέθηκαν κάρτες.
@@ -279,7 +279,9 @@ const pickerLoading = ref(false)
 let eventSource: EventSource | null = null
 
 const canStart = computed(() => {
-  return selectedCredId.value !== '' || activeBill.value?.payment_code
+  return selectedCredId.value !== ''
+    || !!activeBill.value?.payment_code
+    || (!!selectedCardId.value && !!selectedCard.value?.has_secure_details)
 })
 
 watch(() => props.modelValue, async (v) => {
